@@ -58,7 +58,7 @@ class CommonClient:
         self._owner=self
         self._registered_name=None
         self.RegisterDisconnectHandler(self.DisconnectHandler)
-        self.connected=None
+        self.connected=''
 
     def RegisterDisconnectHandler(self,handler):
         self.disconnect_handlers.append(handler)
@@ -67,7 +67,7 @@ class CommonClient:
         self.disconnect_handlers.remove(handler)
 
     def disconnected(self):
-        self.connected=None
+        self.connected=''
         self.DEBUG(self.DBG,'Disconnect detected','stop')
         self.disconnect_handlers.reverse()
         for i in self.disconnect_handlers: i()
