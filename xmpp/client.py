@@ -98,6 +98,7 @@ class CommonClient:
         self.disconnect_handlers.reverse()
         for i in self.disconnect_handlers: i()
         self.disconnect_handlers.reverse()
+        if self.__dict__.has_key('TLS'): self.TLS.PlugOut()
 
     def DisconnectHandler(self):        # default stuff. To be overriden or unregistered.
         raise IOError('Disconnected from server.')
