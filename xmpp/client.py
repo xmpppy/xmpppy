@@ -25,6 +25,7 @@ Debug.Debug.colors['component']=debug.color_cyan
 Debug.Debug.colors['dispatcher']=debug.color_green
 Debug.Debug.colors['auth']=debug.color_yellow
 Debug.Debug.colors['roster']=debug.color_magenta
+Debug.Debug.colors['ibb']=debug.color_yellow
 
 Debug.Debug.colors['down']=debug.color_brown
 Debug.Debug.colors['up']=debug.color_brown

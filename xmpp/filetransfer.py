@@ -33,6 +33,7 @@ class IBB(PlugIn):
 
     def IqHandler(self,conn,stanza):
         typ=stanza.getType()
+        self.DEBUG('IqHandler called typ->%s'%typ,'info')
         if typ=='set' and stanza.getTag('open',namespace=NS_IBB): self.StreamOpenHandler(conn,stanza)
         elif typ=='set' and stanza.getTag('close',namespace=NS_IBB): self.StreamCloseHandler(conn,stanza)
         elif typ=='result': self.StreamCommitHandler(conn,stanza)
@@ -53,6 +54,7 @@ class IBB(PlugIn):
 """
         err=None
         sid,blocksize=stanza.getTagAttr('open','sid'),stanza.getTagAttr('open','block-size')
+        self.DEBUG('StreamOpenHandler called sid->%s blocksize->%s'%(sid,blocksize),'info')
         try: blocksize=int(blocksize)
         except: err=ERR_BAD_REQUEST
         if not sid or not blocksize: err=ERR_BAD_REQUEST
@@ -61,13 +63,13 @@ class IBB(PlugIn):
         else:
             self.DEBUG("Opening stream: id %s, block-size %s"%(sid,blocksize),'info')
             rep=Protocol('iq',stanza.getFrom(),'result',stanza.getTo(),{'id':stanza.getID()})
-            self._streams[sid]={'direction':'<'+str(stanza.getFrom()),'block-size':blocksize,'data':'','seq':0,'syn_id':stanza.getID()}
+            self._streams[sid]={'direction':'<'+str(stanza.getFrom()),'block-size':blocksize,'fp':open('/tmp/xmpp_file_'+sid,'w'),'seq':0,'syn_id':stanza.getID()}
         conn.send(rep)
 
-    def OpenStream(self,sid,to,data,blocksize=4096):
+    def OpenStream(self,sid,to,fp,blocksize=4096):
         if sid in self._streams.keys(): return
         if not JID(to).getResource(): return
-        self._streams[sid]={'direction':'|>'+to,'block-size':blocksize,'data':data,'seq':0}
+        self._streams[sid]={'direction':'|>'+to,'block-size':blocksize,'fp':fp,'seq':0}
         self._owner.RegisterCycleHandler(self.SendHandler)
         syn=Protocol('iq',to,'set',payload=[Node(NS_IBB+' open',{'sid':sid,'block-size':blocksize})])
         self._owner.send(syn)
@@ -75,26 +77,25 @@ class IBB(PlugIn):
         return self._streams[sid]
 
     def SendHandler(self,conn):
-        cont=0
+        self.DEBUG('SendHandler called','info')
         for sid in self._streams.keys():
             stream=self._streams[sid]
             if stream['direction'][:2]=='|>': cont=1
             elif stream['direction'][0]=='>':
-                chunk=stream['data'][:stream['block-size']]
-                stream['data']=stream['data'][stream['block-size']:]
+                chunk=stream['fp'].read(stream['block-size'])
                 if chunk:
                     datanode=Node(NS_IBB+' data',{'sid':sid,'seq':stream['seq']},base64.encodestring(chunk))
                     stream['seq']+=1
                     if stream['seq']==65536: stream['seq']=0
                     conn.send(Protocol('message',stream['direction'][1:],payload=[datanode,self._ampnode]))
-                if stream['data']: cont=1
                 else:
                     """ нужно отправить пакет закрывающий поток на той стороне
                         нужно сообщить локальному пользователю о том что данные успешно переданы
                         нужно удалить локальный поток"""
                     conn.send(Protocol('iq',stream['direction'][1:],'set',payload=[Node(NS_IBB+' close',{'sid':sid})]))
-                    conn.Event(DBG_IBB,'SUCCESSFULL SEND',stream)
+                    conn.Event(self.DBG_LINE,'SUCCESSFULL SEND',stream)
                     del self._streams[sid]
+                    self._owner.UnregisterCycleHandler(self.SendHandler)
 
                     """
 <message from='romeo@montague.net/orchard' to='juliet@capulet.com/balcony' id='msg1'>
@@ -111,10 +112,10 @@ class IBB(PlugIn):
   </amp>
 </message>
 """
-        if not cont: self._owner.UnregisterCycleHandler(self.SendHandler)
 
     def ReceiveHandler(self,conn,stanza):
         sid,seq,data=stanza.getTagAttr('data','sid'),stanza.getTagAttr('data','seq'),stanza.getTagData('data')
+        self.DEBUG('ReceiveHandler called sid->%s seq->%s'%(sid,seq),'info')
         try: seq=int(seq); data=base64.decodestring(data)
         except: seq=''; data=''
         err=None
@@ -124,38 +125,44 @@ class IBB(PlugIn):
             if not data: err=ERR_BAD_REQUEST
             elif seq<>stream['seq']: err=ERR_UNEXPECTED_REQUEST
             else:
+                self.DEBUG('Successfull receive sid->%s %s+%s bytes'%(sid,stream['fp'].tell(),len(data)),'ok')
                 stream['seq']+=1
-                stream['data']+=data
-        if err: conn.send(Error(Iq(to=stanza.getFrom(),frm=stanza.getTo(),payload=[Node(NS_IBB+' close')]),err,reply=0))
+                stream['fp'].write(data)
+        if err:
+            self.DEBUG('Error on receive: %s'%err,'error')
+            conn.send(Error(Iq(to=stanza.getFrom(),frm=stanza.getTo(),payload=[Node(NS_IBB+' close')]),err,reply=0))
 
     def StreamCloseHandler(self,conn,stanza):
         sid=stanza.getTagAttr('close','sid')
+        self.DEBUG('StreamCloseHandler called sid->%s'%sid,'info')
         if sid in self._streams.keys():
             conn.send(stanza.buildReply('result'))
-            conn.Event(DBG_IBB,'SUCCESSFULL RECEIVE',self._streams[sid])
+            conn.Event(self.DBG_LINE,'SUCCESSFULL RECEIVE',self._streams[sid])
             del self._streams[sid]
         else: conn.send(Error(stanza,ERR_ITEM_NOT_FOUND))
 
     def StreamBrokenHandler(self,conn,stanza):
         syn_id=stanza.getID()
+        self.DEBUG('StreamBrokenHandler called syn_id->%s'%syn_id,'info')
         for sid in self._streams.keys():
             stream=self._streams[sid]
             if stream['syn_id']==syn_id:
-                if stream['direction'][0]=='<': conn.Event(DBG_IBB,'ERROR ON RECEIVE',stream)
-                else: conn.Event(DBG_IBB,'ERROR ON SEND',stream)
+                if stream['direction'][0]=='<': conn.Event(self.DBG_LINE,'ERROR ON RECEIVE',stream)
+                else: conn.Event(self.DBG_LINE,'ERROR ON SEND',stream)
                 del self._streams[sid]
 
     def StreamOpenReplyHandler(self,conn,stanza):
         syn_id=stanza.getID()
+        self.DEBUG('StreamOpenReplyHandler called syn_id->%s'%syn_id,'info')
         for sid in self._streams.keys():
             stream=self._streams[sid]
             if stream['syn_id']==syn_id:
                 if stanza.getType()=='error':
-                    if stream['direction'][0]=='<': conn.Event(DBG_IBB,'ERROR ON RECEIVE',stream)
-                    else: conn.Event(DBG_IBB,'ERROR ON SEND',stream)
+                    if stream['direction'][0]=='<': conn.Event(self.DBG_LINE,'ERROR ON RECEIVE',stream)
+                    else: conn.Event(self.DBG_LINE,'ERROR ON SEND',stream)
                     del self._streams[sid]
                 elif stanza.getType()=='result':
                     if stream['direction'][0]=='|':
                         stream['direction']=stream['direction'][1:]
-                        conn.Event(DBG_IBB,'STREAM COMMITTED',stream)
+                        conn.Event(self.DBG_LINE,'STREAM COMMITTED',stream)
                     else: conn.send(Error(stanza,ERR_UNEXPECTED_REQUEST))
