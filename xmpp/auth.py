@@ -207,9 +207,13 @@ class Bind(PlugIn):
         if isResultNode(resp):
             self.bound.append(resp.getTag('bind').getTagData('jid'))
             self.DEBUG('Successfully bound %s.'%self.bound[-1],'ok')
+            jid=JID(resp.getTag('bind').getTagData('jid'))
+            owner.User=jid.getNode()
+            owner.Resource=jid.getResource()
             resp=self._owner.SendAndWaitForResponse(Protocol('iq',typ='set',payload=[Node('session',attrs={'xmlns':NS_SESSION})]))
             if isResultNode(resp):
                 self.DEBUG('Successfully opened session.','ok')
+                self.session=1
                 return 'ok'
             else:
                 self.DEBUG('Session open failed.','error')
