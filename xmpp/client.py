@@ -81,32 +81,41 @@ class CommonClient:
 
     def isConnected(self): return self.connected
 
+    def reconnectAndReauth(self):
+        handlerssave=self.Dispatcher.dumpHandlers()
+        if not self.connect(server=self._Server,proxy=self._Proxy): return
+        if not self.auth(self._User,self._Password,self._Resource): return
+        self.Dispatcher.restoreHandlers(handlerssave)
+        return self.connected
+
     def connect(self,server=None,proxy=None):
         if not server: server=(self.Server,self.Port)
         if proxy: connected=transports.HTTPPROXYsocket(proxy,server).PlugIn(self)
         else: connected=transports.TCPsocket(server).PlugIn(self)
         if not connected: return
+        self._Server,self._Proxy=server,proxy
         self.connected='tcp'
         if self.Connection.getPort()==5223:
             transports.TLS().PlugIn(self,now=1)
             self.connected='tls'
         dispatcher.Dispatcher().PlugIn(self)
         while self.Dispatcher.Stream._document_attrs is None: self.Process(1)
-        return 'ok'
+        return self.connected
 
 class Client(CommonClient):
     def connect(self,server=None,proxy=None):
-        if not CommonClient.connect(self,server,proxy): return
+        if not CommonClient.connect(self,server,proxy): return self.connected
         transports.TLS().PlugIn(self)
-        if not self.Dispatcher.Stream._document_attrs.has_key('version') or not self.Dispatcher.Stream._document_attrs['version']=='1.0': return
+        if not self.Dispatcher.Stream._document_attrs.has_key('version') or not self.Dispatcher.Stream._document_attrs['version']=='1.0': return self.connected
         while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
-        if not self.Dispatcher.Stream.features.getTag('starttls'): return       # TLS not supported by server
+        if not self.Dispatcher.Stream.features.getTag('starttls'): return self.connected       # TLS not supported by server
         while not self.TLS.starttls and self.Process(): pass
-        if self.TLS.starttls<>'success': self.event('tls_failed'); return 'tls failed'
+        if self.TLS.starttls<>'success': self.event('tls_failed'); return self.connected
         self.connected='tls'
-        return 'ok'
+        return self.connected
 
     def auth(self,user,password,resource='xmpppy'):
+        self._User,self._Password,self._Resource=user,password,resource
         auth.SASL(user,password).PlugIn(self)
         while not self.Dispatcher.Stream._document_attrs and self.Process(): pass
         if self.Dispatcher.Stream._document_attrs.has_key('version') and self.Dispatcher.Stream._document_attrs['version']=='1.0':
@@ -116,13 +125,13 @@ class Client(CommonClient):
         if self.SASL.startsasl=='failure':
             if auth.NonSASL(user,password,resource).PlugIn(self):
                 self.connected+='+old_auth'
-                return 'ok'
+                return 'old_auth'
         else:
             auth.Bind().PlugIn(self)
             while self.Bind.bound is None: self.Process()
             if self.Bind.Bind(resource):
                 self.connected+='+sasl'
-                return 'ok'
+                return 'sasl'
 
     def sendInitPresence(self,requestRoster=1):
         self.sendPresence(requestRoster=requestRoster)
@@ -132,5 +141,6 @@ class Client(CommonClient):
         self.send(dispatcher.protocol.Presence(to=jid, type=type))
 
 class Component(CommonClient):
-    def auth(self,name,password):
+    def auth(self,name,password,dup=None):
+        self._User,self._Password,self._Resource=name,password,''
         return auth.NonSASL(name,password,'').PlugIn(self)
