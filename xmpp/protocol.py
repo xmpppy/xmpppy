@@ -230,7 +230,10 @@ class Iq(Protocol):
     def setQueryNS(self,namespace): self.setTag('query').setNamespace(namespace)
     def setQueryPayload(self,payload): self.setTag('query').setPayload(payload)
     def setQuerynode(self,node): self.setTagAttr('query','node',node)
-    def buildReply(self,typ): return Iq(typ,to=self.getFrom(),frm=self.getTo(),attrs={'id':self.getID()})
+    def buildReply(self,typ):
+        iq=Iq(typ,to=self.getFrom(),frm=self.getTo(),attrs={'id':self.getID()})
+        if self.getTag('query'): iq.setQueryNS(self.getQueryNS())
+        return iq
 
 class DataForm(Node):
     def __init__(self,data=None,node=None):
@@ -270,7 +273,9 @@ class ErrorNode(Node):
         if code: cod=code
         if text: txt=text
         Node.__init__(self,'error',{'type':type},[Node(NS_STANZAS+' '+name)])
-        if txt: self.addChild(node=Node(NS_STANZAS+' text',{},[txt]))
+        if txt:
+            self.addChild(node=Node(NS_STANZAS+' text',{},[txt]))
+            self.addData(txt)
         if cod: self.setAttr('code',cod)
 
 class Error(Protocol):
