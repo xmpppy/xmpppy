@@ -46,7 +46,6 @@ from string import join
 import types
 
 
-debug_flags = []
 
 color_none         = chr(27) + "[0m"
 color_black        = chr(27) + "[30m"
@@ -158,6 +157,7 @@ class Debug:
                   welcome = -1
                   ):
         
+        self.debug_flags = []
         if welcome == -1:
             if active_flags and len(active_flags):
                 welcome = 1
@@ -308,7 +308,7 @@ class Debug:
         elif type( active_flags ) in ( types.TupleType, types.ListType ):
             flags = self._as_one_list( active_flags )
             for t in flags:
-                if t not in debug_flags:
+                if t not in self.debug_flags:
                     print 'Invalid debugflag given', t
                 ok_flags.append( t )
                 
@@ -323,7 +323,7 @@ class Debug:
                 self.show( '*** Invalid debug param given: %s' % active_flags )
                 self.show( '*** please correct your param!' )
                 self.show( '*** due to this, full debuging is enabled' )
-                self.active = debug_flags
+                self.active = self.debug_flags
             
             for f in flags:
                 s = f.strip()
@@ -372,7 +372,7 @@ class Debug:
         'verify that flag is defined.'
         if flags:
             for f in self._as_one_list( flags ):
-                if not f in debug_flags:
+                if not f in self.debug_flags:
                     msg2 = '%s' % f
                     raise 'Invalid debugflag given', msg2
 
@@ -381,13 +381,11 @@ class Debug:
         if multiple instances of Debug is used in same app, 
         some flags might be created multiple time, filter out dupes
         """
-        global debug_flags
-        
         unique_flags = []
-        for f in debug_flags:
+        for f in self.debug_flags:
             if f not in unique_flags:
                 unique_flags.append(f)
-        debug_flags = unique_flags
+        self.debug_flags = unique_flags
 
     colors={}
     def Show(self, flag, msg, prefix=''):

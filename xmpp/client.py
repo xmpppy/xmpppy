@@ -46,7 +46,8 @@ class PlugIn:
         self.DBG_LINE=self.__class__.__name__.lower()
 
     def PlugIn(self,owner):
-        owner.debug_flags.append(self.DBG_LINE)
+        if self.DBG_LINE not in owner.debug_flags:
+            owner.debug_flags.append(self.DBG_LINE)
         self._owner=owner
         self.DEBUG('Plugging %s into %s'%(self,self._owner),'start')
         self._old_owners_methods=[]
@@ -78,7 +79,7 @@ class CommonClient:
         self.Port=port
         self._DEBUG=Debug.Debug(debug)
         self.DEBUG=self._DEBUG.Show
-        self.debug_flags=Debug.debug_flags
+        self.debug_flags=self._DEBUG.debug_flags
         self.debug_flags.append(self.DBG)
         self._owner=self
         self._registered_name=None
