@@ -68,6 +68,7 @@ class Roster(PlugIn):
             jid=item.getAttr('jid')
             if item.getAttr('subscription')=='remove':
                 if self._data.has_key(jid): del self._data[jid]
+                return
             self.DEBUG('Setting roster item %s...'%jid,'ok')
             if not self._data.has_key(jid): self._data[jid]={}
             self._data[jid]['name']=item.getAttr('name')
