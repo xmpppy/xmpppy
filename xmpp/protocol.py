@@ -51,6 +51,7 @@ NS_TLS          ='urn:ietf:params:xml:ns:xmpp-tls'
 NS_VACATION     ='http://jabber.org/protocol/vacation'
 NS_VCARD        ='vcard-temp'
 NS_VERSION      ='jabber:iq:version'
+NS_XMPP_STREAMS ='urn:ietf:params:xml:ns:xmpp-streams'
 
 xmpp_stream_error_conditions="""
 bad-format --  --  -- The entity has sent XML that cannot be processed.
@@ -88,6 +89,7 @@ item-not-found -- 404 -- cancel -- The addressed JID or item requested cannot be
 jid-malformed -- 400 -- modify -- The value of the 'to' attribute in the sender's stanza does not adhere to the syntax defined in Addressing Scheme.
 not-acceptable -- 406 -- cancel -- The recipient or server understands the request but is refusing to process it because it does not meet criteria defined by the recipient or server.
 not-allowed -- 405 -- cancel -- The recipient or server does not allow any entity to perform the action.
+not-authorized -- 401 -- auth -- The sender must provide proper credentials before being allowed to perform the action, or has provided improper credentials.
 payment-required -- 402 -- auth -- The requesting entity is not authorized to access the requested service because payment is required.
 recipient-unavailable -- 404 -- wait -- The intended recipient is temporarily unavailable.
 redirect -- 302 -- modify -- The recipient or server is redirecting requests for this information to another entity.
@@ -109,19 +111,16 @@ not-authorized --  --  -- The authentication failed because the initiating entit
 temporary-auth-failure --  --  -- The authentication failed because of a temporary error condition within the receiving entity; sent in reply to an <auth/> element or <response/> element."""
 
 ERRORS,_errorcodes={},{}
-for err in (xmpp_stream_error_conditions+xmpp_stanza_error_conditions)[1:].split('\n'):
-    cond,code,typ,text=err.split(' -- ')
-    name='ERR_'+cond.upper().replace('-','_')
-    locals()[name]=cond
-    ERRORS[cond]=[code,typ,text]
-    _errorcodes[code]=cond
-for err in (sasl_error_conditions)[1:].split('\n'):
-    cond,code,typ,text=err.split(' -- ')
-    name='SASL_'+cond.upper().replace('-','_')
-    locals()[name]=cond
-    ERRORS[cond]=[code,typ,text]
-    _errorcodes[code]=cond
-del err,cond,code,typ,text
+for ns,errname,errpool in [(NS_XMPP_STREAMS,'STREAM',xmpp_stream_error_conditions),
+                           (NS_STANZAS     ,'ERR'   ,xmpp_stanza_error_conditions),
+                           (NS_SASL        ,'SASL'  ,sasl_error_conditions)]:
+    for err in errpool.split('\n')[1:]:
+        cond,code,typ,text=err.split(' -- ')
+        name=errname+'_'+cond.upper().replace('-','_')
+        locals()[name]=ns+' '+cond
+        ERRORS[ns+' '+cond]=[code,typ,text]
+        if code: _errorcodes[code]=cond
+del ns,errname,errpool,err,cond,code,typ,text
 
 def isResultNode(node): return node and node.getType()=='result'
 def isErrorNode(node): return node and node.getType()=='error'
@@ -159,12 +158,15 @@ class JID:
     def __hash__(self): return hash(self.__str__())
 
 class Protocol(Node):
-    def __init__(self, name=None, to=None, typ=None, frm=None, attrs={}, payload=[], timestamp=None, node=None):
+    def __init__(self, name=None, to=None, typ=None, frm=None, attrs={}, payload=[], timestamp=None, xmlns=NS_CLIENT, node=None):
         if not attrs: attrs={}
         if to: attrs['to']=to
         if frm: attrs['from']=frm
         if typ: attrs['type']=typ
         Node.__init__(self, tag=name, attrs=attrs, payload=payload, node=node)
+        if not node: self.setNamespace(xmlns)
+        if self['to']: self.setTo(self['to'])
+        if self['from']: self.setFrom(self['from'])
         if node and type(self)==type(node) and self.__class__==node.__class__ and self.attrs.has_key('id'): del self.attrs['id']
         self.timestamp=None
         for x in self.getTags('x',namespace=NS_DELAY):
@@ -173,16 +175,16 @@ class Protocol(Node):
             except: pass
         if timestamp is not None: self.setTimestamp(timestamp)  # To auto-timestamp stanza just pass timestamp=''
     def getTo(self):
-        try: return JID(self.getAttr('to'))
+        try: return self['to']
         except: return None
     def getFrom(self):
-        try: return JID(self.getAttr('from'))
+        try: return self['from']
         except: return None
     def getTimestamp(self): return self.timestamp
     def getID(self): return self.getAttr('id')
-    def setTo(self,val): self.setAttr('to', val)
+    def setTo(self,val): self.setAttr('to', JID(val))
     def getType(self): return self.getAttr('type')
-    def setFrom(self,val): self.setAttr('from', val)
+    def setFrom(self,val): self.setAttr('from', JID(val))
     def setType(self,val): self.setAttr('type', val)
     def setID(self,val): self.setAttr('id', val)
     def getError(self):
@@ -209,10 +211,13 @@ class Protocol(Node):
             prop=child.getNamespace()
             if prop not in props: props.append(prop)
         return props
+    def __setitem__(self,item,val):
+        if item in ['to','from']: val=JID(val)
+        return self.setAttr(item,val)
 
 class Message(Protocol):
-    def __init__(self, to=None, body=None, typ=None, subject=None, attrs={}, frm=None, payload=[], timestamp=None, node=None):
-        Protocol.__init__(self, 'message', to=to, typ=typ, attrs=attrs, frm=frm, payload=payload, timestamp=timestamp, node=node)
+    def __init__(self, to=None, body=None, typ=None, subject=None, attrs={}, frm=None, payload=[], timestamp=None, xmlns=NS_CLIENT, node=None):
+        Protocol.__init__(self, 'message', to=to, typ=typ, attrs=attrs, frm=frm, payload=payload, timestamp=timestamp, xmlns=xmlns, node=node)
         if body: self.setBody(body)
         if subject: self.setSubject(subject)
     def getBody(self): return self.getTagData('body')
@@ -224,8 +229,8 @@ class Message(Protocol):
     def buildReply(self,text=None): return Message(to=self.getFrom(),frm=self.getTo(),body=text,node=self)
 
 class Presence(Protocol):
-    def __init__(self, to=None, typ=None, priority=None, show=None, status=None, attrs={}, frm=None, timestamp=None, payload=[], node=None):
-        Protocol.__init__(self, 'presence', to=to, typ=typ, attrs=attrs, frm=frm, payload=payload, timestamp=timestamp, node=node)
+    def __init__(self, to=None, typ=None, priority=None, show=None, status=None, attrs={}, frm=None, timestamp=None, payload=[], xmlns=NS_CLIENT, node=None):
+        Protocol.__init__(self, 'presence', to=to, typ=typ, attrs=attrs, frm=frm, payload=payload, timestamp=timestamp, xmlns=xmlns, node=node)
         if priority: self.setPriority(priority)
         if show: self.setShow(show)
         if status: self.setStatus(status)
@@ -237,8 +242,8 @@ class Presence(Protocol):
     def setStatus(self,val): self.setTagData('status',val)
 
 class Iq(Protocol): 
-    def __init__(self, typ=None, queryNS=None, attrs={}, to=None, frm=None, payload=[], node=None):
-        Protocol.__init__(self, 'iq', to=to, typ=typ, attrs=attrs, frm=frm, node=node)
+    def __init__(self, typ=None, queryNS=None, attrs={}, to=None, frm=None, payload=[], xmlns=NS_CLIENT, node=None):
+        Protocol.__init__(self, 'iq', to=to, typ=typ, attrs=attrs, frm=frm, xmlns=xmlns, node=node)
         if payload: self.setQueryPayload(payload)
         if queryNS: self.setQueryNS(queryNS)
     def getQueryNS(self):
@@ -263,16 +268,16 @@ class ErrorNode(Node):
     def __init__(self,name,code=None,typ=None,text=None):
         """ Mandatory parameter: name
             Optional parameters: code, typ, text."""
-        if ERRORS.has_key(name): cod,type,txt=ERRORS[name]
-        else: cod,type,txt='500','cancel',''
+        if ERRORS.has_key(name):
+            cod,type,txt=ERRORS[name]
+            ns=name.split()[0]
+        else: cod,ns,type,txt='500',NS_STANZAS,'cancel',''
         if typ: type=typ
         if code: cod=code
         if text: txt=text
-        Node.__init__(self,'error',{'type':type},[Node(NS_STANZAS+' '+name)])
+        Node.__init__(self,'error',{'type':type},[Node(name)])
         if not cod: self.setName('stream:error')
-        if txt:
-            self.addChild(node=Node(NS_STANZAS+' text',{},[txt]))
-#            self.addData(txt)                   # Backward compartibility for old clients
+        if txt: self.addChild(node=Node(ns+' text',{},[txt]))
         if cod: self.setAttr('code',cod)
 
 class Error(Protocol):
