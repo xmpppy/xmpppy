@@ -109,7 +109,7 @@ class Node:
             if namespace and namespace<>node.getNamespace(): continue
             if node.getName() == name:
                 for key in attrs.keys():
-                   if not node.attrs.has_key() or node.attrs[key]<>attrs[key]: break
+                   if not node.attrs.has_key(key) or node.attrs[key]<>attrs[key]: break
                 else: nodes.append(node)
             if one and nodes: return nodes[0]
         if not one: return nodes
