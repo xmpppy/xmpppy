@@ -35,9 +35,10 @@ class NonSASL:
     def PlugOut(self): pass
     def PlugIn(self,owner):
         owner.debug_flags.append(DBG_AUTH)
+        if not self.resource: return self.authComponent(owner)
         owner.DEBUG(DBG_AUTH,'Querying server about possible auth methods','start')
         resp=owner.Dispatcher.SendAndWaitForResponse(Iq('get',NS_AUTH,payload=[Node('username',payload=[self.user])]))
-        if not resp or resp.getType()<>'result':
+        if not resultNode(resp):
             owner.DEBUG(DBG_AUTH,'No result node arrived! Aborting...','error')
             return
         iq=Iq(type='set',node=resp)
@@ -59,12 +60,27 @@ class NonSASL:
             owner.DEBUG(DBG_AUTH,"Sequre methods unsupported, performing plain text authentication",'warn')
             query.setTagData('password',self.password)
         resp=owner.Dispatcher.SendAndWaitForResponse(iq)
-        if resp and not resp.getError():
+        if resultNode(resp):
             owner.DEBUG(DBG_AUTH,'Sucessfully authenticated with remove host.','ok')
             owner.User=self.user
             owner.Resource=self.resource
+            owner._registered_name=owner.User+'@'+owner.Server+'/'+owner.Resource
             return 1
         owner.DEBUG(DBG_AUTH,'Authentication failed!','error')
+
+    def authComponent(self,owner):
+        self.handshake=0
+        owner.send(Protocol('handshake',payload=[sha.new(owner.Dispatcher.Stream._document_attrs['id']+self.password).hexdigest()]))
+        owner.RegisterHandler('handshake',self.handshakeHandler)
+        while not self.handshake:
+            owner.DEBUG(DBG_AUTH,"waiting on handshake",'notify')
+            owner.Process(1)
+        owner._registered_name=self.user
+        return self.handshake+1
+
+    def handshakeHandler(self,disp,stanza):
+        if stanza.getName()=='handshake': self.handshake=1
+        else: self.handshake=-1
 
 DBG_SASL='SASL_auth'
 NS_SASL='urn:ietf:params:xml:ns:xmpp-sasl'
@@ -184,11 +200,11 @@ class Bind:
         if resource: resource=[Node('resource',payload=[resource])]
         else: resource=[]
         resp=self._owner.SendAndWaitForResponse(Protocol('iq',type='set',payload=[Node('bind',attrs={'xmlns':NS_BIND},payload=resource)]))
-        if resp and resp.getType()=='result':
+        if resultNode(resp):
             self.bound.append(resp.getTag('bind').getTagData('jid'))
             self._owner.DEBUG(DBG_BIND,'Successfully bound %s.'%self.bound[-1],'ok')
             resp=self._owner.SendAndWaitForResponse(Protocol('iq',type='set',payload=[Node('session',attrs={'xmlns':NS_SESSION})]))
-            if resp and resp.getType()=='result': self._owner.DEBUG(DBG_BIND,'Successfully opened session.','ok')
+            if resultNode(resp): self._owner.DEBUG(DBG_BIND,'Successfully opened session.','ok')
             else:
                 self._owner.DEBUG(DBG_BIND,'Session open failed.','error')
                 self.session=0
