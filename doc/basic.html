@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<!-- $Id$ -->
 <html xml:lang="ru-RU" lang="ru-RU" xmlns="http://www.w3.org/1999/xhtml">
+<!-- $Id$ -->
     <head>
         <meta content="text/html; charset=koi8-r" http-equiv="content-type" />
         <title>Xmpppy usage - basics.</title>
@@ -15,19 +15,21 @@ expert
 описание API каждого модуля
 -->
 <h1>Preface.</h1>
-<p>I'm very poor at my English. If you see any bugs in this text - please, let me know.</p>
+<p>English is not my native language. If you see any bugs in this text, please, let me know.</p>
 <h1>Basic</h1>
 <h2>Introduction.</h2>
-<p>This topic intended for people who want to quickly try xmpppy for a simple task - like 
+<p>This documents topic is for people who want to quickly try xmpppy for a simple task, like
 writing a command-line script for sending a single message.</p>
 <h2>Writing a simple script</h2>
-<p>Imagine simple script that sends message to one recipient.
+<p>This example demonstrates a simple script that sends message to one
+recipient.
 Example:</p>
 <pre>
 xsend test@jabber.org Hello there!
 </pre>
-<p>You do not have such script in your repository? It can be created easily with use of xmpppy library.
-<br />What? Already have one? Hmm. May be you want to simplify things a bit or just curious how
+<p>You don't have a similar tool in your toolkit? Using the xmpppy
+library it can be created easily.
+<br />What? Already have one? Hmm. Maybe you want to simplify things a bit, or just curious how
 to do it one more way? Anyway - let's start now!
 <br />
 First - we declare ourself as a python script and importing needed modules:</p>
@@ -35,19 +37,20 @@ First - we declare ourself as a python script and importing needed modules:</p>
 #!/usr/bin/python
 import sys,os,xmpp
 </pre>
-<p>after it we have to check if we have enough arguments</p>
+<p>After it we have to check if we have enough arguments on the command-line:</p>
 <pre>
 if len(sys.argv) &lt; 2:
     print "Syntax: xsend JID text"
     sys.exit(0)
 </pre>
-<p>after it we must decode arguments. Omitting all checks to simplify our script</p>
+<p>After it we must decode arguments. Omitting all checks to simplify our script:</p>
 <pre>
 tojid=sys.argv[1]
 text=' '.join(sys.argv[2:])
 </pre>
-<p>One more non-jabber step: we have to to get our JabberID params. Presuming that all info
-stored in ~/.xsend file</p>
+<p>One more non-jabber step: We have to to get our Jabber ID and login
+details. Presuming that all info
+stored in ~/.xsend file:</p>
 <pre>
 jidparams={}
 if os.access(os.environ['HOME']+'/.xsend',os.R_OK):
@@ -57,14 +60,14 @@ if os.access(os.environ['HOME']+'/.xsend',os.R_OK):
 for mandatory in ['jid','password']:
     if mandatory not in jidparams.keys():
         open(os.environ['HOME']+'/.xsend','w').write('#JID=romeo@montague.net\n#PASSWORD=juliet\n')
-        print 'Please point ~/.xsend config file to valid JID for sending messages.'
+        print 'Please ensure the ~/.xsend file has valid JID for sending messages.'
         sys.exit(0)
 </pre>
-<p>Thew! The most complex (non-jabber ;) ) part is finished. From now on we have to:</p>
+<p>Phew! The most complex (non-jabber ;) ) part is finished. From now on we have to:</p>
 <ul>
-<li>connect to jabber server</li>
-<li>authenticate ourself</li>
-<li>submit a message</li>
+  <li>connect to jabber server</li>
+  <li>authenticate ourselves</li>
+  <li>submit a message</li>
 </ul>
 <p>Let's start:
 <br />
@@ -74,33 +77,34 @@ creating Client class instance for it:</p>
 jid=xmpp.protocol.JID(jidparams['jid'])
 cl=xmpp.Client(jid.getDomain(),debug=[])
 </pre>
-<p>1. Connecting and authenticating with credentials from the config file.</p>
+<p>1. Connect and authenticate with credentials from the config file.</p>
 <pre>
 cl.connect()
 cl.auth(jid.getNode(),jidparams['password'])
 </pre>
-<p>2. We can go online now but will not do it since it is not nessessary for sending a message.
-So - sending a message now!</p>
+<p>2. We can go online now (by sending the inital presence) but will not do that, as it is not nessessary for sending a message.
+So we send a message now!</p>
 <pre>
 #cl.sendInitialPresence()
 cl.send(xmpp.protocol.Message(tojid,text))
 </pre>
 <p>We're done! The session must now be closed but since we have not registered
 disconnect handler we will just leave it to python and TCP/IP layer.
-All jabberds that I know handles well such disconnects.
+All jabber servers that I know handle <span style="font-style: italic;">such</span>
+disconnects correctly.
 <br />
 You can download this script <a href="examples/xsend.py">here</a>.</p>
 <h3>What now?</h3>
-<p>If you were impressed of how the things were done with xmppy you may be interested in
+<p>If you were impressed of how the things were done with xmpppy, you may be interested in
 more thorough examination of xmpppy library. The &quot;advanced&quot; and &quot;expert&quot;
-parts of this document is here to help you.
+parts of this document are here to help you.
 <br />
 &quot;<a href="advanced.html">Advanced</a>&quot; (isn't writed yet) part is much like another tutorial and
-describing common principles of XMPP usage via xmpppy prizm. In describes ideas that were
-laid in fundament of XML handling with simplexml library, essence of dispatcher's work and
-some guidelines to write more complex programs than sending a single message from command line.
+describing common principles of XMPP usage via xmpppy prism. It describes ideas that are the foundation of XML handling with the
+simplexml library, the essence of dispatcher's work and how messages are processed, and
+some guidelines to write more complex programs and uses of the library.
 <br />
-&quot;<a href="expert.html">Expert</a>&quot; (isn't writed yet) part is full library API documentation.
+&quot;<a href="expert.html">Expert</a>&quot; (isn't writed yet) part is full library API description document.
 It is structured by modules names and describes every function of every module.
 </p>
 </body>
