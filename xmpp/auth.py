@@ -116,7 +116,7 @@ class SASL:
             node=Node('auth',attrs={'xmlns':NS_SASL,'mechanism':'PLAIN'},payload=[base64.encodestring(sasl_data)])
         else:
             self.startsasl='failure'
-            self._owner.DEBUG(DBG_SASL,'I can only use PLAIN mecanism for now.','error')
+            self._owner.DEBUG(DBG_SASL,'I can only use DIGEST-MD5 and PLAIN mecanisms.','error')
             return
         self.startsasl='in-process'
         self._owner.send(node.__str__())
