@@ -54,20 +54,17 @@ install: build
 
 	# Add here commands to install the package into debian/python-xmpp
 	install -m 0644 $(CURDIR)/xmpp/*py \
-	        $(CURDIR)/debian/python2.1-xmpp/usr/lib/python2.1/site-packages
+	        $(CURDIR)/debian/python2.1-xmpp/usr/lib/python2.1/site-packages/xmpp
 	install -m 0644 $(CURDIR)/xmpp/*py \
-	        $(CURDIR)/debian/python2.2-xmpp/usr/lib/python2.2/site-packages
+	        $(CURDIR)/debian/python2.2-xmpp/usr/lib/python2.2/site-packages/xmpp
 	install -m 0644 $(CURDIR)/xmpp/*py \
-	        $(CURDIR)/debian/python2.3-xmpp/usr/lib/python2.3/site-packages
+	        $(CURDIR)/debian/python2.3-xmpp/usr/lib/python2.3/site-packages/xmpp
 
 
 # Build architecture-independent files here.
 binary-indep: build install
 	dh_testdir -i
 	dh_testroot -i
-	
-	install -m 0644 $(CURDIR)/README.py \
-	        $(CURDIR)/debian/docs
 	
 	dh_installdocs -i
 	dh_installexamples -i
