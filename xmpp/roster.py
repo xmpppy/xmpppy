@@ -82,7 +82,7 @@ class Roster(PlugIn):
         return self._data[jid][dataname]
     def _getResourceData(self,jid,dataname):
         if jid.find('/')+1:
-            jid,resource=jid.split('/')
+            jid,resource=jid.split('/',1)
             if self._data[jid]['resources'].has_key(resource): return self._data[jid]['resources'][resource][dataname]
         elif self._data[jid]['resources'].keys():
             lastpri=-129

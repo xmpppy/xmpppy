@@ -87,9 +87,9 @@ class JID:
         elif type(jid)==type(self): self.node,self.domain,self.resource=jid.node,jid.domain,jid.resource
         elif domain: self.node,self.domain,self.resource=node,domain,resource
         else:
-            if jid.find('@')+1: self.node,jid=jid.split('@')
+            if jid.find('@')+1: self.node,jid=jid.split('@',1)
             else: self.node=''
-            if jid.find('/')+1: self.domain,self.resource=jid.split('/')
+            if jid.find('/')+1: self.domain,self.resource=jid.split('/',1)
             else: self.domain,self.resource=jid,''
     def getNode(self): return self.node
     def setNode(self,node): self.node=node
