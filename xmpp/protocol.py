@@ -18,6 +18,7 @@ from simplexml import Node
 import time
 
 NS_DELAY='jabber:x:delay'
+NS_DATA ='jabber:x:data'
 
 def resultNode(node): return node and node.getType()=='result'
 def errorNode(node): return node and node.getType()=='error'
@@ -41,13 +42,13 @@ class JID:
     def getStripped(self): return self.__str__(0)
     def __eq__(self, other):
         other=JID(other)
-        return self.resource==other.resource and self.__str__(0).lower() == other.__str__(0).lower()
-    def bareMatch(self, other): return self.__str__(0).lower() == JID(other).__str__(0).lower()
+        return self.resource==other.resource and self.__str__(0) == other.__str__(0)
+    def bareMatch(self, other): return self.__str__(0) == JID(other).__str__(0)
     def __str__(self,wresource=1):
         if self.node: jid=self.node+'@'+self.domain
         else: jid=self.domain
         if wresource and self.resource: return jid+'/'+self.resource
-        return jid
+        return jid.lower()
 
 class Protocol(Node):
     def __init__(self, name=None, to=None, type=None, frm=None, attrs={}, payload=[], timestamp=None, node=None):
@@ -122,6 +123,15 @@ class Iq(Protocol):
     def setQueryPayload(self,payload): self.setTag('query').setPayload(payload)
 
 class DataForm(Node):
+    def __init__(self,data):
+        Node.__init__(self,'x')
+        self.setNamespace(NS_DATA)
+        if type(data) in [type(()),type([])]:
+            dict={}
+            for i in data: dict[i]=''
+        else: dict=data
+        for key in dict.keys():
+            self.setField(key,dict[key])
     def asDict(self):
         ret={}
         for i in self.getTags('field'):
