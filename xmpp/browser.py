@@ -22,7 +22,7 @@ class Browser(PlugIn):
         PlugIn.__init__(self)
         DBG_LINE='browser'
         self._exported_methods=[]
-        self._handlers={}
+        self._handlers={'':{}}
 
     def plugin(self, owner):
         owner.RegisterHandler('iq',self._DiscoveryHandler,ns=NS_DISCO_INFO)
@@ -32,7 +32,7 @@ class Browser(PlugIn):
         self._owner.UnregisterHandler('iq',self._DiscoveryHandler,ns=NS_DISCO_INFO)
         self._owner.UnregisterHandler('iq',self._DiscoveryHandler,ns=NS_DISCO_ITEMS)
 
-    def _traversePath(self,node,set=0):
+    def _traversePath(self,node,jid,set=0):
         """Returns dictionary and key or None,None
         None - root node (w/o "node" attribute)
         /a/b/c - node
@@ -40,7 +40,11 @@ class Browser(PlugIn):
         Set returns '' or None as the key
         get returns '' or None as the key or None as the dict"""
 
-        cur=self._handlers
+        if self._handlers.has_key(jid): cur=self._handlers[jid]
+        elif set:
+            self._handlers[jid]={}
+            cur=self._handlers[jid]
+        else: cur=self._handlers['']
         if node is None: node=[None]
         else: node=node.replace('/',' /').split('/')
         for i in node:
@@ -51,23 +55,23 @@ class Browser(PlugIn):
         if cur.has_key(1) or set: return cur,1
         raise "Corrupted data"
 
-    def setDiscoHandler(self,Handler,node=''):
-        node,key=self._traversePath(node,1)
-        node[key]=Handler
+    def setDiscoHandler(self,handler,node='',jid=''):
+        node,key=self._traversePath(node,jid,1)
+        node[key]=handler
 
-    def getDiscoHandler(self,node=''):
-        node,key=self._traversePath(node)
+    def getDiscoHandler(self,node='',jid=''):
+        node,key=self._traversePath(node,jid)
         if node: return node[key]
 
-    def delDiscoHandler(self,node=''):
-        node,key=self._traversePath(node)
+    def delDiscoHandler(self,node='',jid=''):
+        node,key=self._traversePath(node,jid)
         if node:
             handler=node[key]
             del node[dict][node[str]]
             return handler
 
     def _DiscoveryHandler(self,conn,request):
-        handler=self.getDiscoHandler(request.getQuerynode())
+        handler=self.getDiscoHandler(request.getQuerynode(),request.getTo())
         if not handler: return conn.send(Error(request,ERR_ITEM_NOT_FOUND))
         rep=request.buildReply('result')
         q=rep.getTag('query')
