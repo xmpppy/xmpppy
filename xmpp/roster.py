@@ -91,9 +91,8 @@ class Roster(PlugIn):
         typ=pres.getType()
 
         if not typ:
-            if not item['resources'].has_key(jid.getResource()): item['resources'][jid.getResource()]={'show':None,'status':None,'priority':'0','timestamp':None}
             self.DEBUG('Setting roster item %s for resource %s...'%(jid.getStripped(),jid.getResource()),'ok')
-            res=item['resources'][jid.getResource()]
+            item['resources'][jid.getResource()]=res={'show':None,'status':None,'priority':'0','timestamp':None}
             if pres.getTag('show'): res['show']=pres.getShow()
             if pres.getTag('status'): res['status']=pres.getStatus()
             if pres.getTag('priority'): res['priority']=pres.getPriority()
