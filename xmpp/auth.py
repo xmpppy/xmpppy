@@ -16,7 +16,12 @@
 # $Id$
 
 from protocol import *
-import sha,base64,random,md5
+import sha,base64,random,dispatcher
+
+import md5
+def HH(some): return md5.new(some).hexdigest()
+def H(some): return md5.new(some).digest()
+def C(some): return ':'.join(some)
 
 NS_AUTH="jabber:iq:auth"
 
@@ -57,6 +62,7 @@ class NonSASL:
         if resp and not resp.getError():
             owner.DEBUG(DBG_AUTH,'Sucessfully authenticated with remove host.','ok')
             owner.User=self.user
+            owner.Resource=self.resource
             return 1
         owner.DEBUG(DBG_AUTH,'Authentication failed!','error')
 
@@ -80,7 +86,7 @@ class SASL:
     def FeaturesHandler(self,conn,feats):
         if not feats.getTag('mechanisms',namespace=NS_SASL):
             self.startsasl='failure'
-            self._owner.DEBUG(DBG_SASL,'SASL not supported','error')
+            self._owner.DEBUG(DBG_SASL,'SASL not supported by server','error')
             return
         mecs=[]
         for mec in feats.getTag('mechanisms',namespace=NS_SASL).getTags('mechanism'):
@@ -110,6 +116,10 @@ class SASL:
         elif challenge.getName()=='success':
             self.startsasl='success'
             self._owner.DEBUG(DBG_SASL,'Successfully authenticated with remote server.','ok')
+            self._owner.Dispatcher.PlugOut()
+            dispatcher.Dispatcher().PlugIn(self._owner)
+            self._owner.send_header()
+            self._owner.User=self.username
             return
 ########################################3333
         incoming_data=challenge.getData()       # может быть потребуется str
@@ -151,7 +161,32 @@ class SASL:
             self._owner.DEBUG(DBG_SASL,'Failed SASL authentification: unknown challenge','error')
             return
 
-def HH(some): return md5.new(some).hexdigest()
-def H(some): return md5.new(some).digest()
-def C(some): return ':'.join(some)
+DBG_BIND='bind'
+NS_BIND='urn:ietf:params:xml:ns:xmpp-bind'
+class Bind:
+    def __init__(self):
+        self.bound=None
 
+    def PlugIn(self,owner):
+        self._owner=owner
+        owner.debug_flags.append(DBG_BIND)
+        owner.DEBUG(DBG_BIND,'Plugging into %s'%owner,'start')
+        self._owner.Bind=self
+        self._owner.RegisterHandler('features',self.FeaturesHandler)
+
+    def FeaturesHandler(self,conn,feats):
+        if not feats.getTag('bind',namespace=NS_BIND):
+            self.bound='failure'
+            self._owner.DEBUG(DBG_BIND,'Server does not requested binding.','error')
+            return
+        self.bound=[]
+
+    def Bind(self,resource):
+        while self.bound is None and self._owner.Process(1): pass
+#        resp=self._owner.SendAndWaitForResponse(Protocol('iq',type='set',payload=[Node('bind',attrs={'xmlns':NS_BIND},payload=[Node('resource',payload=[resource])])]))
+        resp=self._owner.SendAndWaitForResponse(Protocol('iq',type='set',payload=[Node('bind',attrs={'xmlns':NS_BIND})]))
+        if resp and resp.getType()=='result':
+            self.bound.append(resp.getTag('bind').getTagData('jid'))
+            self._owner.DEBUG(DBG_BIND,'Successfully bound %s.'%self.bound[-1],'ok')
+        elif resp: self._owner.DEBUG(DBG_BIND,'Binding failed: %s.'%resp.getTag('error'),'error')
+        else: self._owner.DEBUG(DBG_BIND,'Binding failed: timeout expired.','error')

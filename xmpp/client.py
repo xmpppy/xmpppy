@@ -17,6 +17,8 @@
 # $Id$
 
 import transports,dispatcher,debug,auth,roster
+from features import *
+
 Debug=debug
 Debug.DEBUGGING_IS_ON=1
 Debug.Debug.colors['socket']=debug.color_dark_gray
@@ -40,7 +42,7 @@ Debug.Debug.colors['got']=debug.color_bright_cyan
 
 DBG_CLIENT='client'
 class Client:
-    def __init__(self,server,debug=['always', 'nodebuilder']):
+    def __init__(self,server,debug=['socket']):#['always', 'nodebuilder']):
         self.disconnect_handlers=[]
         self.Namespace='jabber:client'
         self.Server=server
@@ -48,6 +50,7 @@ class Client:
         self.DEBUG=self._DEBUG.Show
         self.debug_flags=Debug.debug_flags
         self.debug_flags.append(DBG_CLIENT)
+        self._owner=self
 
     def RegisterDisconnectHandler(self,handler):
         self.disconnect_handlers.append(handler)
@@ -76,17 +79,21 @@ class Client:
         if self.TLS.starttls<>'proceed': self.disconnected()
 
     def auth(self,user,password,resource):
-        auth.SASL(user,password).PlugIn(m)
+        auth.SASL(user,password).PlugIn(self)
         while self.Process() and not self.Dispatcher.Stream._document_attrs: pass
         if self.Dispatcher.Stream._document_attrs.has_key('version') and self.Dispatcher.Stream._document_attrs['version']=='1.0':
             while self.Process() and not self.SASL.startsasl: pass
         if self.SASL.startsasl<>'success': auth.NonSASL(user,password,resource).PlugIn(m)
-        else: pass # binding
+        else:
+            auth.Bind().PlugIn(self)
+            self.Bind.Bind(resource)
 
     def sendInitPresence(self,requestRoster=1):
+        self.sendPresence(requestRoster=requestRoster)
+
+    def sendPresence(self,jid=None,type=None,requestRoster=0):
         if requestRoster: roster.Roster().PlugIn(m)
-        self.send('<presence/>')
-        self.Process()
+        self.send(dispatcher.protocol.Presence(to=jid, type=type))
 
 test_client=1
 if test_client:
@@ -103,22 +110,7 @@ if test_client:
     if 1:
         m.Process(5)
         print m.Roster._data
-else:
-    """
-SASL test. Must be performed on offline machine to prevent real connection.
-See RFC2831 for more info
-"""
-    m=Client('elwood.innosoft.com')
-    m.connect()
-    m.Dispatcher.Stream._document_attrs={'version':'1.0'}
-    m.auth('chris','secret','test')
-    X=auth.Node('a')
-    import simplexml
-    xml="""<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
-cmVhbG09ImVsd29vZC5pbm5vc29mdC5jb20iLG5vbmNlPSJPQTZNRzl0
-RVFHbTJoaCIscW9wPSJhdXRoIixhbGdvcml0aG09bWQ1LXNlc3MsY2hh
-cnNldD11dGYtOA==
-</challenge>"""
-    m.SASL.uri='imap'
-    print 'Must be : charset=utf-8,username="chris",realm="elwood.innosoft.com",nonce="OA6MG9tEQGm2hh",nc=00000001,cnonce="OA6MHXh6VqTrRk",digest-uri="imap/elwood.innosoft.com",response=d388dad90d4bbd760a152321f2143af7,qop=auth'
-    print m.SASL.SASLHandler(1,simplexml.XML2Node(xml))
+    print discoverItems(m,'woody8.penza-gsm.ru')
+    print discoverInfo(m,'woody8.penza-gsm.ru')
+print getPrivacyLists(m)
+print getPrivacyList(m,'a')

@@ -40,6 +40,8 @@ class Dispatcher:
         self._owner.RegisterHandlerOnce=self.RegisterHandlerOnce
         self._owner.UnregisterHandler=self.UnregisterHandler
         self._owner.RegisterProtocol=self.RegisterProtocol
+        self._owner.WaitForResponse=self.WaitForResponse
+        self._owner.SendAndWaitForResponse=self.SendAndWaitForResponse
         self._owner.lastErrNode=None
         self._owner.lastErr=None
         self._owner.lastErrCode=None
@@ -52,6 +54,8 @@ class Dispatcher:
         self._owner.DEBUG(DBG_DISPATCHER,"Plugging out.",'stop')
         del self._owner.disconnect
         self._owner.send=self._owner_send
+        del self._owner.SendAndWaitForResponse
+        del self._owner.WaitForResponse
         del self._owner.lastErrCode
         del self._owner.lastErr
         del self._owner.lastErrNode

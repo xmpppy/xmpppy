@@ -110,6 +110,17 @@ class Iq(Protocol):
         if payload: self.setQueryPayload(payload)
         if queryNS: self.setQueryNS(queryNS)
     def getQueryNS(self): return self.setTag('query').getNamespace()
-    def getQueryPayload(self,payload): self.setTag('query').getPayload()
+    def getQueryPayload(self): return self.setTag('query').getPayload()
     def setQueryNS(self,namespace): self.setTag('query').setNamespace(namespace)
     def setQueryPayload(self,payload): self.setTag('query').setPayload(payload)
+
+class DataForm(Node):
+    def getField(name): return getTagData('field',attrs={'var':name})
+    def setField(name, val): setTagData('field',val,attrs={'var':name})
+    def getFields():
+        ret={}
+        for i in self.getTags('field'):
+            ret[i.getAttr('var')]=i.getTagData('value')
+        return ret
+    def setFields(dict):
+        for i in dict.keys(): self.setField(i,dict[i])

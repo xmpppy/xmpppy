@@ -80,6 +80,7 @@ class Roster:
             for r in self._data[jid]['resources'].keys():
                 if int(self._data[jid]['resources'][r]['priority'])>lastpri: resource,lastpri=r,int(self._data[jid]['resources'][r]['priority'])
             return self._data[jid]['resources'][resource][dataname]
+    def delItem(self,jid): self._owner.send(protocol.Iq('set',NS_ROSTER,payload=[Node('item',{'jid':jid,'subscription':'remove'})]))
     def getAsk(self,jid): return self._getItemData(jid,'ask')
     def getGroups(self,jid): return self._getItemData(jid,'groups')
     def getName(self,jid): return self._getItemData(jid,'name')
@@ -90,3 +91,14 @@ class Roster:
     def getStatus(self, jid): return self._getResourceData(jid,'status')
     def getSubscription(self,jid): return self._getItemData(jid,'subscription')
     def getResources(self,jid): return self._data[jid[:(jid+'/').find('/')]]['resources'].keys()
+    def setItem(self,jid,name=None,groups=None):
+        iq=protocol.Iq('set',NS_ROSTER)
+        attrs={'jid':jid}
+        if name: attrs['name']=name
+        iq.setTag('item',attrs)
+        for group in groups: iq.addChild(node=Node('group',payload=[group]))
+        self._owner.send(iq)
+    def Subscribe(self,jid): self._owner.send(protocol.Presence(jid,'subscribe'))
+    def Unsubscribe(self,jid): self._owner.send(protocol.Presence(jid,'unsubscribe'))
+    def Authorize(self,jid): self._owner.send(protocol.Presence(jid,'subscribed'))
+    def Unauthorize(self,jid): self._owner.send(protocol.Presence(jid,'unsubscribed'))

@@ -128,9 +128,9 @@ class Node:
     def setTagAttr(self,tag,attr,val):
         try: self.getTag(tag).attrs[attr]=val
         except: self.addChild(tag,attrs={attr:val})
-    def setTagData(self,tag,val):
-        try: self.getTag(tag).setData(val)
-        except: self.addChild(tag,payload=[val])
+    def setTagData(self,tag,val,attrs={}):
+        try: self.getTag(tag,attrs).setData(val)
+        except: self.addChild(tag,attrs,payload=[val])
 
 DBG_NODEBUILDER = 'nodebuilder'
 class NodeBuilder:
