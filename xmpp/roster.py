@@ -14,10 +14,8 @@
 
 # $Id$
 
-import protocol
+from protocol import NS_ROSTER,Iq,Presence,JID,Node
 from client import PlugIn
-
-NS_ROSTER     = "jabber:iq:roster"
 
 class Roster(PlugIn):
     def __init__(self):
@@ -36,7 +34,7 @@ class Roster(PlugIn):
     def Request(self,force=0):
         if self.set is None: self.set=0
         elif not force: return
-        self._owner.send(protocol.Iq('get',NS_ROSTER))
+        self._owner.send(Iq('get',NS_ROSTER))
         self.DEBUG('Roster requested from server','start')
 
     def getRoster(self):
@@ -59,23 +57,23 @@ class Roster(PlugIn):
         self.set=1
 
     def PresenceHandler(self,dis,pres):
-        JID=protocol.JID(pres.getFrom())
-        if not self._data.has_key(JID.getStripped()): self._data[JID.getStripped()]={'name':None,'ask':None,'subscription':'none','groups':['Not in roster'],'resources':{}}
+        jid=JID(pres.getFrom())
+        if not self._data.has_key(jid.getStripped()): self._data[jid.getStripped()]={'name':None,'ask':None,'subscription':'none','groups':['Not in roster'],'resources':{}}
 
-        item=self._data[JID.getStripped()]
+        item=self._data[jid.getStripped()]
         typ=pres.getType()
 
         if not typ:
-            if not item['resources'].has_key(JID.getResource()): item['resources'][JID.getResource()]={'show':None,'status':None,'priority':'0','timestamp':None}
-            self.DEBUG('Setting roster item %s for resource %s...'%(JID.getStripped(),JID.getResource()),'ok')
-            res=item['resources'][JID.getResource()]
+            if not item['resources'].has_key(jid.getResource()): item['resources'][jid.getResource()]={'show':None,'status':None,'priority':'0','timestamp':None}
+            self.DEBUG('Setting roster item %s for resource %s...'%(jid.getStripped(),jid.getResource()),'ok')
+            res=item['resources'][jid.getResource()]
             if pres.getTag('show'): res['show']=pres.getShow()
             if pres.getTag('status'): res['status']=pres.getStatus()
             if pres.getTag('priority'): res['priority']=pres.getPriority()
             if not pres.getTimestamp(): pres.setTimestamp()
             res['timestamp']=pres.getTimestamp()
 
-        elif typ=='unavailable' and item['resources'].has_key(JID.getResource()): del item['resources'][JID.getResource()]
+        elif typ=='unavailable' and item['resources'].has_key(jid.getResource()): del item['resources'][jid.getResource()]
 # Надо ещё обработать type='error'
     def _getItemData(self,jid,dataname):
         jid=jid[:(jid+'/').find('/')]
@@ -89,7 +87,7 @@ class Roster(PlugIn):
             for r in self._data[jid]['resources'].keys():
                 if int(self._data[jid]['resources'][r]['priority'])>lastpri: resource,lastpri=r,int(self._data[jid]['resources'][r]['priority'])
             return self._data[jid]['resources'][resource][dataname]
-    def delItem(self,jid): self._owner.send(protocol.Iq('set',NS_ROSTER,payload=[Node('item',{'jid':jid,'subscription':'remove'})]))
+    def delItem(self,jid): self._owner.send(Iq('set',NS_ROSTER,payload=[Node('item',{'jid':jid,'subscription':'remove'})]))
     def getAsk(self,jid): return self._getItemData(jid,'ask')
     def getGroups(self,jid): return self._getItemData(jid,'groups')
     def getName(self,jid): return self._getItemData(jid,'name')
@@ -101,7 +99,7 @@ class Roster(PlugIn):
     def getSubscription(self,jid): return self._getItemData(jid,'subscription')
     def getResources(self,jid): return self._data[jid[:(jid+'/').find('/')]]['resources'].keys()
     def setItem(self,jid,name=None,groups=[]):
-        iq=protocol.Iq('set',NS_ROSTER)
+        iq=Iq('set',NS_ROSTER)
         query=iq.getTag('query')
         attrs={'jid':jid}
         if name: attrs['name']=name
@@ -113,7 +111,7 @@ class Roster(PlugIn):
     def __getitem__(self,item): return self._data[item]
     def getItem(self,item):
         if self._data.has_key(item): return self._data[item]
-    def Subscribe(self,jid): self._owner.send(protocol.Presence(jid,'subscribe'))
-    def Unsubscribe(self,jid): self._owner.send(protocol.Presence(jid,'unsubscribe'))
-    def Authorize(self,jid): self._owner.send(protocol.Presence(jid,'subscribed'))
-    def Unauthorize(self,jid): self._owner.send(protocol.Presence(jid,'unsubscribed'))
+    def Subscribe(self,jid): self._owner.send(Presence(jid,'subscribe'))
+    def Unsubscribe(self,jid): self._owner.send(Presence(jid,'unsubscribe'))
+    def Authorize(self,jid): self._owner.send(Presence(jid,'subscribed'))
+    def Unauthorize(self,jid): self._owner.send(Presence(jid,'unsubscribed'))
