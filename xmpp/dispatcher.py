@@ -15,13 +15,11 @@
 # $Id$
 
 import simplexml,time
-from protocol import Protocol,Iq,Presence,Message
+from protocol import *
 from client import PlugIn
 
 DefaultTimeout=25
 ID=0
-
-class NodeProcessed(Exception): pass
 
 class Dispatcher(PlugIn):
     def __init__(self):
@@ -51,6 +49,7 @@ class Dispatcher(PlugIn):
         self._owner.lastErr=None
         self._owner.lastErrCode=None
         self.StreamInit()
+#        self.RegisterDefaultHandler(self.returnStanzaHandler)   # Unrem in 0.2
 
     def StreamInit(self):
         self.Stream=simplexml.NodeBuilder()
@@ -88,12 +87,19 @@ class Dispatcher(PlugIn):
     def RegisterHandlerOnce(self,name,handler,typ='',ns='',chained=0, makefirst=0, system=0):
         self.RegisterHandler(name,handler,typ,ns,chained, makefirst, system)
 
-    def UnregisterHandler(self,name,handler=None,typ='',ns=''):
+    def UnregisterHandler(self,name,handler,typ='',ns=''):
         if not typ and not ns: typ='default'
-        self.handlers[name][typ+ns].remove({'chain':chained,'func':handler,'system':system})
+        for pack in self.handlers[name][typ+ns]:
+            if handler==pack['func']: break
+        else: pack=None
+        self.handlers[name][typ+ns].remove(pack)
 
     def RegisterDefaultHandler(self,handler): self._defaultHandler=handler
     def RegisterEventHandler(self,handler): self._eventHandler=handler
+
+    def returnStanzaHandler(self,conn,stanza):
+        if stanza.getName()<>'presence':
+            conn.send(Error(stanza,ERR_FEATURE_NOT_IMPLEMENTED))
 
     def RegisterCycleHandler(self,handler):
         if handler not in self._cycleHandlers: self._cycleHandlers.append(handler)
@@ -146,8 +152,10 @@ class Dispatcher(PlugIn):
                 try:
                     if handler['chain']: output=handler['func'](self,stanza,output)
                     else: handler['func'](self,stanza)
-                except NodeProcessed: user=0
-        if user and self._defaultHandler: self._defaultHandler(stanza)
+                except Exception, typ:
+                    if typ.__class__.__name__<>'NodeProcessed': raise
+                    user=0
+        if user and self._defaultHandler: self._defaultHandler(self,stanza)
 
     def WaitForResponse(self, ID, timeout=DefaultTimeout):
         self._expected[ID]=None

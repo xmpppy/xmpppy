@@ -109,6 +109,8 @@ del err,cond,code,typ,text
 def isResultNode(node): return node and node.getType()=='result'
 def isErrorNode(node): return node and node.getType()=='error'
 
+class NodeProcessed(Exception): pass
+
 class JID:
     def __init__(self, jid, node='', domain='', resource=''):
         if not jid: raise ValueError('JID must contain at least domain name')

@@ -15,7 +15,7 @@
 # $Id$
 
 from protocol import *
-from dispatcher import NodeProcessed,PlugIn
+from dispatcher import PlugIn
 import base64
 
 class IBB(PlugIn):
@@ -38,7 +38,7 @@ class IBB(PlugIn):
         elif typ=='result': self.StreamCommitHandler(conn,stanza)
         elif typ=='error': self.StreamOpenReplyHandler(conn,stanza)
         else: conn.send(Error(stanza,ERR_BAD_REQUEST))
-#        raise NodeProcessed
+        raise NodeProcessed
 
     def StreamOpenHandler(self,conn,stanza):
         """
