@@ -99,11 +99,25 @@ service-unavailable -- 503 -- cancel -- The server or recipient does not current
 subscription-required -- 407 -- auth -- The requesting entity is not authorized to access the requested service because a subscription is required.
 undefined-condition -- 500 --  -- 
 unexpected-request -- 400 -- wait -- The recipient or server understood the request but was not expecting it at this time (e.g., the request was out of order)."""
+sasl_error_conditions="""
+aborted --  --  -- The receiving entity acknowledges an <abort/> element sent by the initiating entity; sent in reply to the <abort/> element.
+incorrect-encoding --  --  -- The data provided by the initiating entity could not be processed because the [BASE64]Josefsson, S., The Base16, Base32, and Base64 Data Encodings, July 2003. encoding is incorrect (e.g., because the encoding does not adhere to the definition in Section 3 of [BASE64]Josefsson, S., The Base16, Base32, and Base64 Data Encodings, July 2003.); sent in reply to a <response/> element or an <auth/> element with initial response data.
+invalid-authzid --  --  -- The authzid provided by the initiating entity is invalid, either because it is incorrectly formatted or because the initiating entity does not have permissions to authorize that ID; sent in reply to a <response/> element or an <auth/> element with initial response data.
+invalid-mechanism --  --  -- The initiating entity did not provide a mechanism or requested a mechanism that is not supported by the receiving entity; sent in reply to an <auth/> element.
+mechanism-too-weak --  --  -- The mechanism requested by the initiating entity is weaker than server policy permits for that initiating entity; sent in reply to a <response/> element or an <auth/> element with initial response data.
+not-authorized --  --  -- The authentication failed because the initiating entity did not provide valid credentials (this includes but is not limited to the case of an unknown username); sent in reply to a <response/> element or an <auth/> element with initial response data.
+temporary-auth-failure --  --  -- The authentication failed because of a temporary error condition within the receiving entity; sent in reply to an <auth/> element or <response/> element."""
 
 ERRORS,_errorcodes={},{}
 for err in (xmpp_stream_error_conditions+xmpp_stanza_error_conditions)[1:].split('\n'):
     cond,code,typ,text=err.split(' -- ')
     name='ERR_'+cond.upper().replace('-','_')
+    locals()[name]=cond
+    ERRORS[cond]=[code,typ,text]
+    _errorcodes[code]=cond
+for err in (sasl_error_conditions)[1:].split('\n'):
+    cond,code,typ,text=err.split(' -- ')
+    name='SASL_'+cond.upper().replace('-','_')
     locals()[name]=cond
     ERRORS[cond]=[code,typ,text]
     _errorcodes[code]=cond
