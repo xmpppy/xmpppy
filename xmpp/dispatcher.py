@@ -27,6 +27,7 @@ class Dispatcher:
     def __init__(self):
         self.handlers={}
         self._expected={}
+        self._defaultHandler=None
 
     def dumpHandlers(self): return self.handlers
     def restoreHandlers(self,handlers): self.handlers=handlers
@@ -42,6 +43,7 @@ class Dispatcher:
         self._owner.Dispatcher=self
         self._owner.Process=self.Process
         self._owner.RegisterHandler=self.RegisterHandler
+        self._owner.RegisterDefaultHandler=self.RegisterDefaultHandler
         self._owner.RegisterHandlerOnce=self.RegisterHandlerOnce
         self._owner.UnregisterHandler=self.UnregisterHandler
         self._owner.RegisterProtocol=self.RegisterProtocol
@@ -82,6 +84,10 @@ class Dispatcher:
         self._owner.send("<?xml version='1.0'?><stream:stream version='1.0' xmlns:stream='http://etherx.jabber.org/streams' to='%s' xmlns='%s'>"%(self._owner.Server,self._owner.Namespace))
 
     def Process(self, timeout=0):
+        """Returns:
+            1) length of processed data if some data were processed;
+            2) '0' string if no data were processed but link is alive;
+            3) 0 (zero) if underlying connection is closed."""
         if self._owner.Connection.pending_data(timeout):
             data=self._owner.Connection.receive()
             self.Stream.Parse(data)
@@ -106,6 +112,8 @@ class Dispatcher:
     def UnregisterHandler(self,name,handler=None,type='',ns=''):
         if not type and not ns: type='default'
         self.handlers[name][type+ns].remove({'chain':chained,'func':handler,'system':system})
+
+    def RegisterDefaultHandler(self,handler): self._defaultHandler=handler
 
     def dispatch(self,stanza):
         name=stanza.getName()
@@ -149,6 +157,7 @@ class Dispatcher:
                     if handler['chain']: output=handler['func'](self,stanza,output)
                     else: handler['func'](self,stanza)
                 except NodeProcessed: user=0
+        if user and self._defaultHandler: self._defaultHandler(stanza)
 
     def WaitForResponse(self, ID, timeout=DefaultTimeout):
         self._expected[ID]=None
