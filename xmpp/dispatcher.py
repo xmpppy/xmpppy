@@ -105,6 +105,7 @@ class Dispatcher(PlugIn):
         if self._eventHandler: self._eventHandler(realm,event,data)
 
     def dispatch(self,stanza):
+        self.Stream._mini_dom=None
         name=stanza.getName()
 
         if name=='features': self.Stream.features=stanza
