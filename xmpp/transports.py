@@ -36,11 +36,12 @@ class TCPsocket:
         self._owner.debug_flags.append(DBG_SOCKET)
         self._owner.DEBUG(DBG_SOCKET,"Plugging into %s"%(owner),'start')
         if not self._server: self._server=(self._owner.Server,5222)
-        self.connect(self._server)
+        if not self.connect(self._server): return
         self._owner.Connection=self
         self._owner.send=self.send
         self._owner.disconnect=self.shutdown
         self._owner.RegisterDisconnectHandler(self.disconnected)
+        return 'ok'
 
     def getHost(self): return self._server[0]
     def getPort(self): return self._server[1]
@@ -52,7 +53,7 @@ class TCPsocket:
             self._recv=self._sock.recv
             self._owner.DEBUG(DBG_SOCKET,"Successfully connected to remote host %s"%`server`,'start')
             return 'ok'
-        except: self._owner.disconnected()
+        except: pass
 
     def PlugOut(self):
         self._owner.DEBUG(DBG_SOCKET,"Plugging out.",'stop')
@@ -113,7 +114,7 @@ class HTTPPROXYsocket(TCPsocket):
 
     def PlugIn(self, owner):
         owner.debug_flags.append(DBG_CONNECT_PROXY)
-        TCPsocket.PlugIn(self,owner)
+        return TCPsocket.PlugIn(self,owner)
 
     def connect(self,dupe):
         if not TCPsocket.connect(self,(self._proxy['host'],self._proxy['port'])): return
