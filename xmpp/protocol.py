@@ -137,9 +137,11 @@ class Protocol(Node):
     def setType(self,val): self.setAttr('type', val)
     def setID(self,val): self.setAttr('id', val)
     def getError(self):
-        for tag in self.getTag('error').getChildren():
-            if tag.getName()<>'text': return tag.getName()
-        return self.getTagData('error')
+        errtag=self.getTag('error')
+        if errtag:
+            for tag in errtag.getChildren():
+                if tag.getName()<>'text': return tag.getName()
+            return errtag.getData()
     def getErrorCode(self): return self.getTagAttr('error','code')
     def setError(self,error,code=None):
         if code:
