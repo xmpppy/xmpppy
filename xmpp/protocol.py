@@ -39,8 +39,10 @@ class JID:
     def getResource(self): return self.resource
     def setResource(self,resource): self.resource=resource
     def getStripped(self): return self.__str__(0)
-    def __eq__(self, other): return str(self) == str(other)
-    def bareMatch(self, other): return self.__str__(0) == JID(other).__str__(0)
+    def __eq__(self, other):
+        other=JID(other)
+        return self.resource==other.resource and self.__str__(0).lower() == other.__str__(0).lower()
+    def bareMatch(self, other): return self.__str__(0).lower() == JID(other).__str__(0).lower()
     def __str__(self,wresource=1):
         if self.node: jid=self.node+'@'+self.domain
         else: jid=self.domain
