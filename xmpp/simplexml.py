@@ -50,11 +50,18 @@ class Node:
         for i in payload:
             if type(i)==type(self): self.addChild(node=i)
             else: self.data.append(ustr(i))
-    def __str__(self,parent=None,fancy=0):
-        s = (fancy-1) * 2 * ' ' + "<" + self.name  
+        self.T=T(self)
+        self.NT=NT(self)
+
+    def __str__(self,parent=None,fancy=0,nsvoc={}):
+        name=self.name
+        s = (fancy-1) * 2 * ' ' + "<" + name
         if self.namespace:
             if parent and parent.namespace!=self.namespace:
-                s = s + ' xmlns="%s"'%self.namespace
+                if self.namespace not in nsvoc.keys(): s = s + ' xmlns="%s"'%self.namespace
+                else:
+                    name=nsvoc[self.namespace]+':'+name
+                    s=s[:-len(self.name)]+name
         for key in self.attrs.keys():
             val = self.attrs[key]
             s = s + ' %s="%s"' % ( key, XMLescape(val) )
@@ -65,8 +72,8 @@ class Node:
             for a in self.kids:
                 if not fancy and (len(self.data)-1)>=cnt: s=s+XMLescape(self.data[cnt])
                 elif (len(self.data)-1)>=cnt: s=s+XMLescape(self.data[cnt].strip())
-                if fancy: s = s + a.__str__(self,fancy=fancy+1)
-                else: s = s + a.__str__(self)
+                if fancy: s = s + a.__str__(self,fancy=fancy+1,nsvoc=nsvoc)
+                else: s = s + a.__str__(self,nsvoc=nsvoc)
                 cnt=cnt+1
         if not fancy and (len(self.data)-1) >= cnt: s = s + XMLescape(self.data[cnt])
         elif (len(self.data)-1) >= cnt: s = s + XMLescape(self.data[cnt].strip())
@@ -75,7 +82,7 @@ class Node:
             if fancy: s = s + "\n"
         else:
             if fancy and not self.data: s = s + (fancy-1) * 2 * ' '
-            s = s + "</" + self.name + ">"
+            s = s + "</" + name + ">"
             if fancy: s = s + "\n"
         return s
     def addChild(self, name=None, attrs={}, payload=[], namespace=None, node=None):
@@ -148,6 +155,23 @@ class Node:
         try: self.getTag(tag,attrs).setData(ustr(val))
         except: self.addChild(tag,attrs,payload=[ustr(val)])
     def has_attr(self,key): return self.attrs.has_key(key)
+    def __getitem__(self,item): return self.getAttr(item)
+    def __setitem__(self,item,val): return self.setAttr(item,val)
+    def __delitem__(self,item): return self.delAttr(item,val)
+
+class T:
+    def __init__(self,node): self.__dict__['node']=node
+    def __getattr__(self,attr): return self.node.setTag(attr)
+    def __setattr__(self,attr,val):
+        if isinstance(val,Node): Node.__init__(self.node.setTag(attr),node=val)
+        else: return self.node.setTagData(attr,val)
+    def __delattr__(self,attr): return self.node.delChild(attr)
+
+class NT(T):
+    def __getattr__(self,attr): return self.node.addChild(attr)
+    def __setattr__(self,attr,val):
+        if isinstance(val,Node): self.node.addChild(attr,node=val)
+        else: return self.node.addChild(attr,payload=[val])
 
 DBG_NODEBUILDER = 'nodebuilder'
 class NodeBuilder:
