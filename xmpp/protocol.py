@@ -239,34 +239,6 @@ class Iq(Protocol):
         if self.getTag('query'): iq.setQueryNS(self.getQueryNS())
         return iq
 
-class DataForm(Node):
-    def __init__(self,data=None,node=None):
-        Node.__init__(self,'x',node=node)
-        self.setNamespace(NS_DATA)
-        dict={}
-        if type(data) in [type(()),type([])]:
-            for i in data: dict[i]=''
-        elif data: dict=data
-        for key in dict.keys():
-            self.setField(key,dict[key])
-    def asDict(self):
-        ret={}
-        for i in self.getTags('field'):
-            key,val=i.getAttr('var'),i.getTagData('value')
-            if not ret.has_key(key) or val: ret[key]=val # Workaround for broken jabberd1.4 registration form reply
-        return ret
-    def getField(self,name):
-        tag=self.getTag('field',attrs={'var':name})
-        if tag: return tag.getTagData('value')
-    def __getitem__(self,name):
-        tag=self.getTag('field',attrs={'var':name})
-        if tag: return tag.getTagData('value')
-        else: raise IndexError('No such field')
-    def setField(self,name,val): self.setTag('field',attrs={'var':name}).setTagData('value',val)
-    __setitem__=setField
-    def setFromDict(self,dict):
-        for i in dict.keys(): self.setField(i,dict[i])
-
 class ErrorNode(Node):
     def __init__(self,name,code=None,typ=None,text=None):
         """ Mandatory parameter: name
@@ -288,22 +260,14 @@ class Error(Protocol):
         else: Protocol.__init__(self,node=node)
         self.setError(error)
 
-"""
-<title/>
-<instructions/>
-<field var='a' type='b' label='c' />
-    <desc/>
-    <required/>
-    <value/>
-    <option label='l'/>
-        <value/>
-"""
 class DataField(Node):
-    def __init__(self,name,value,typ='text-single',required=0,desc=None,options=[]):
-        Node.__init__(self,'field',{'var':name})
+    def __init__(self,name=None,value=None,typ=None,required=0,desc=None,options=[],node=None):
+        Node.__init__(self,'field',node=node)
+        if name: self.setVar(name)
         if type(value) in [list,tuple]: self.setValues(value)
-        else: self.setValue(value)
-        self.setType(typ)
+        elif value: self.setValue(value)
+        if typ: self.setType(typ)
+        elif not typ and not node: self.setType('text-single')
         if required: self.setRequired(required)
         if desc: self.setDesc(desc)
         if options: self.setOptions(options)
@@ -312,7 +276,7 @@ class DataField(Node):
         else:
             try: self.delChild('required')
             except ValueError: return
-    def getRequired(self): return self.getTag('required')
+    def isRequired(self): return self.getTag('required')
     def setDesc(self,desc): self.setTagData('desc',desc)
     def getDesc(self): return self.getTagData('desc')
     def setValue(self,val): self.setTagData('value',val)
@@ -340,33 +304,59 @@ class DataField(Node):
     def getVar(self): return self.getAttr('var')
     def setVar(self,val): return self.setAttr('var',val)
 
-"""
 class DataForm(Node):
-    def __init__(self,data=None,node=None):
+    """ X-Data relevant JEPs: 0004, 0068, 0122 """
+    def __init__(self, typ=None, data=[], title=None, node=None):
+        """
+            title and instructions: optional. SHOULD NOT contain newlines.
+            Several instructions MAY be present.
+            type={ form | submit | cancel | result } # iq: { result | set | set | result }
+            'cancel' form contains no fields. Other forms contains AT LEAST one field.
+            title MAY be included in forms of type "form|result"
+        """
         Node.__init__(self,'x',node=node)
+        if node:
+            newkids=[]
+            for n in self.getChildren():
+                if n.getName()=='field': newkids.append(DataField(node=n))
+                else: newkids.append(n)
+            self.kids=newkids
+        if typ: self.setType(typ)
         self.setNamespace(NS_DATA)
-        dict={}
-        if type(data) in [type(()),type([])]:
-            for i in data: dict[i]=''
-        elif data: dict=data
-        else: dict={}
-        for key in dict.keys():
-            self.setField(key,dict[key])
-    def getTitle(self): pass
-    def setTitle(self): pass
-    def getInstructions(self): pass
-    def setInstructions(self): pass
-    def getField(self,name): return self.getTag(attrs={'var':name})
+        if title: self.setTitle(title)
+        if type(data)==type({}):
+            newdata=[]
+            for name in data.keys(): newdata.append(DataField(name,data[name]))
+            data=newdata
+        for child in data:
+            if type(child) in [type(''),type(u'')]: self.addInstructions(child)
+            elif child.__class__.__name__=='DataField': self.kids.append(child)
+            else: self.kids.append(DataField(node=child))
+    def getType(self): return self.getAttr('type')
+    def setType(self,typ): self.setAttr('type',typ)
+    def getTitle(self): return self.getTagData('title')
+    def setTitle(self,text): self.setTagData('title',text)
+    def getInstructions(self): return self.getTagData('instructions')
+    def setInstructions(self,text): self.setTagData('instructions',text)
+    def addInstructions(self,text): self.addChild('instructions',{},[text])
+    def getField(self,name): return self.getTag('field',attrs={'var':name})
     def setField(self,name):
         f=self.getField(name)
         if f: return f
-        return self.setTag(attrs={'var':name})
-
-
+        return self.addChild(node=DataField(name))
     def asDict(self):
-    def getField(self,name):
+        ret={}
+        for field in self.getTags('field'):
+            name=field.getAttr('var')
+            typ=field.getType()
+            if type(typ) in [type(''),type(u'')] and typ[-6:]=='multi':
+                val=[]
+                for i in field.getTags('value'): val.append(i.getData())
+            else: val=field.getTagData('value')
+            ret[name]=val
+        return ret
     def __getitem__(self,name):
-    def setField(self,name,val): self.setTag('field',attrs={'var':name}).setTagData('value',val)
-    __setitem__=setField
-    def setFromDict(self,dict):
-"""
+        item=self.getField(name)
+        if item: return item.getValue()
+        raise IndexError('No such field')
+    def __setitem__(self,name,val): return self.setField(name).setValue(val)

@@ -67,10 +67,10 @@ def getRegInfo(disp,host,info={}):
     if not isResultNode(resp): return
     df=resp.getTag('query',namespace=NS_REGISTER).getTag('x',namespace=NS_DATA)
     if df: return DataForm(node=df)
-    df=DataForm({'type':'form'})
+    df=DataForm(typ='form')
     for i in resp.getQueryPayload():
-        if i.getName()=='instructions': df.addChild(node=i)
-        else: df.addChild(node=Node('field',{'var':i.getName(),'type':'text-single'},payload=[Node('value',payload=[i.getData()])]))
+        if i.getName()=='instructions': df.addInstructions(i.getData())
+        else: df.setField(i.getName()).setValue(i.getData())
     return df
 
 def register(disp,host,info):
