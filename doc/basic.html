@@ -16,35 +16,50 @@ writing a command-line script for sending a single message.</p>
 <h2>Writing a simple script</h2>
 <p>Imagine simple script that sends message to one recipient.
 Example:
-<br />
+<pre>
 xsend test@jabber.org Hello there!
-<br />
+</pre>
 So - let's start!
 <br />
 First - we declare ourself as a python script and importing needed modules:
-<br />
+<pre>
 #!/usr/bin/python
 import sys,os,xmpp
-<br />
+</pre>
 after it we have to check if we have enough arguments
-<br />
+<pre>
 if len(sys.argv)<2:
     print "Syntax: xsend JID text"
     sys.exit(0)
-<br />
+</pre>
 after it we must decode arguments. Omitting all checks to simplify our script
-<br />
+<pre>
 tojid=sys.argv[1]
 text=' '.join(sys.argv[2:])
-<br />
+</pre>
 One more non-jabber step: we have to to get our JabberID params. Presuming that all info
 stored in ~/.xsend file
-<br />
+<pre>
 jidparams={}
 for ln in open(os.environ['HOME']+'/.xsend').readlines():
     key,val=ln.strip().split(' ',1)
     jidparams[key.lower()]=val
-if not jidparams.has_key('jid') or not jidparams.has_key('password'):
-    open(os.environ['HOME']+'/.xsend.exmpl','w').write('#JID=romeo@montague.net\n#PASSWORD=juliet\n')
-    print 'Please create ~/xsend config file.\nUse ~/xsend.exmpl as reference.'
-    sys.exit(0)
+for mandatory in ['jid','password']:
+    if mandatory not in jidparams.keys():
+        open(os.environ['HOME']+'/.xsend.exmpl','w').write('#JID=romeo@montague.net\n#PASSWORD=juliet\n')
+        print 'Please create ~/xsend config file.\nUse ~/xsend.exmpl as reference.'
+        sys.exit(0)
+</pre>
+Thew! The most complex (non-jabber ;) ) part is finished. From now on we have to:
+<ul>
+<li>connect to jabber server</li>
+<li>authenticate ourself</li>
+<li>submit a message</li>
+</ul>
+Let's start:
+<br />
+0. Calculating our server name and creating Client class instance for it.
+<pre>
+jid=xmpp.JID(jidparams['jid'])
+cl=xmpp.Client(jid.getDomain())
+</pre>
