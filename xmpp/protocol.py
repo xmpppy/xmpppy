@@ -204,8 +204,8 @@ class DataForm(Node):
     def __init__(self,data=None,node=None):
         Node.__init__(self,'x',node=node)
         self.setNamespace(NS_DATA)
+        dict={}
         if type(data) in [type(()),type([])]:
-            dict={}
             for i in data: dict[i]=''
         elif data: dict=data
         for key in dict.keys():
