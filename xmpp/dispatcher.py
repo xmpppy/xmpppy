@@ -86,13 +86,14 @@ class Dispatcher(PlugIn):
         self.DEBUG('Registering namespace "%s"'%xmlns,order)
         self.handlers[xmlns]={}
         self.RegisterProtocol('unknown',Protocol,xmlns=xmlns)
+        self.RegisterProtocol('default',Protocol,xmlns=xmlns)
 
     def RegisterProtocol(self,tag_name,Proto,xmlns=NS_CLIENT,order='info'):
         self.DEBUG('Registering protocol "%s" as %s(%s)'%(tag_name,Proto,xmlns), order)
         self.handlers[xmlns][tag_name]={type:Proto, 'default':[]}
 
     def RegisterNamespaceHandler(self,xmlns,handler,typ='',ns='',chained=0, makefirst=0, system=0):
-        self.RegisterHandler('unknown', handler, typ, ns, xmlns, chained, makefirst, system)
+        self.RegisterHandler('default', handler, typ, ns, xmlns, chained, makefirst, system)
 
     def RegisterHandler(self,name,handler,typ='',ns='',xmlns=NS_CLIENT,chained=0, makefirst=0, system=0):
         self.DEBUG('Registering handler %s for "%s" type->%s ns->%s(%s)'%(handler,name,typ,ns,xmlns), 'info')
@@ -162,9 +163,9 @@ class Dispatcher(PlugIn):
             if self.handlers[xmlns][name].has_key(prop): list.append(prop)
             if typ and self.handlers[xmlns][name].has_key(typ+prop): list.append(typ+prop)  # ...to very particular
 
-        chain=[]
+        chain=self.handlers[xmlns]['default']['default']
         for key in list:
-            if key: chain += self.handlers[xmlns][name][key]
+            if key: chain = chain + self.handlers[xmlns][name][key]
 
         output=''
         if session._expected.has_key(ID):
