@@ -55,6 +55,12 @@ class Dispatcher(PlugIn):
         self._owner.lastErrCode=None
         self.StreamInit()
 
+    def plugout(self):
+        self.Stream.dispatch=None
+        self.Stream.DEBUG=None
+        self.Stream.features=None
+        self.Stream.destroy()
+
     def StreamInit(self):
         self.Stream=simplexml.NodeBuilder()
         self.Stream._dispatch_depth=2
@@ -85,6 +91,9 @@ class Dispatcher(PlugIn):
         self.DEBUG('Registering protocol "%s" as %s(%s)'%(tag_name,Proto,xmlns), order)
         self.handlers[xmlns][tag_name]={type:Proto, 'default':[]}
 
+    def RegisterNamespaceHandler(self,xmlns,handler,typ='',ns='',chained=0, makefirst=0, system=0):
+        self.RegisterHandler('unknown', handler, typ, ns, xmlns, chained, makefirst, system)
+
     def RegisterHandler(self,name,handler,typ='',ns='',xmlns=NS_CLIENT,chained=0, makefirst=0, system=0):
         self.DEBUG('Registering handler %s for "%s" type->%s ns->%s(%s)'%(handler,name,typ,ns,xmlns), 'info')
         if not typ and not ns: typ='default'
@@ -95,14 +104,15 @@ class Dispatcher(PlugIn):
         else: self.handlers[xmlns][name][typ+ns].append({'chain':chained,'func':handler,'system':system})
 
     def RegisterHandlerOnce(self,name,handler,typ='',ns='',xmlns=NS_CLIENT,chained=0, makefirst=0, system=0):
-        self.RegisterHandler(name,handler,typ,ns,xmlns,chained, makefirst, system)
+        self.RegisterHandler(name, handler, typ, ns, xmlns, chained, makefirst, system)
 
     def UnregisterHandler(self,name,handler,typ='',ns='',xmlns=NS_CLIENT):
         if not typ and not ns: typ='default'
         for pack in self.handlers[xmlns][name][typ+ns]:
             if handler==pack['func']: break
         else: pack=None
-        self.handlers[xmlns][name][typ+ns].remove(pack)
+        try: self.handlers[xmlns][name][typ+ns].remove(pack)
+        except ValueError: pass
 
     def RegisterDefaultHandler(self,handler): self._defaultHandler=handler
     def RegisterEventHandler(self,handler): self._eventHandler=handler
