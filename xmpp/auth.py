@@ -118,6 +118,7 @@ class SASL:
             self.startsasl='failure'
             self._owner.DEBUG(DBG_SASL,'I can only use PLAIN mecanism for now.','error')
             return
+        self.startsasl='in-process'
         self._owner.send(node.__str__())
 
     def SASLHandler(self,conn,challenge):
