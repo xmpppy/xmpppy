@@ -82,32 +82,41 @@ def discoverInfo(disp,jid,node=None):
     return identities , features
 
 ### Registration ### jabber:iq:register ### JEP-0077 ###########################
-def getRegInfo(disp,jid,info={}):
-    iq=Iq('get',NS_REGISTER,to=jid)
+def getRegInfo(disp,host,info={}):
+    """Gets registration blank from host.
+       disp must be connected dispatcher instance."""
+    iq=Iq('get',NS_REGISTER,to=host)
     for i in info.keys(): iq.setTagData(i,info[i])
     resp=disp.SendAndWaitForResponse(iq)
-    if not isResultNode(rep): return
+    if not isResultNode(resp): return
     df=resp.getTag('query',namespace=NS_REGISTER).getTag('x',namespace=NS_DATA)
     if df: return DataForm(node=df)
-    df=DataForm(NS_DATA+' x',{'type':'form'})
+    df=DataForm({'type':'form'})
     for i in resp.getQueryPayload():
         if i.getName()=='instructions': df.addChild(node=i)
         else: df.addChild(node=Node('field',{'var':i.getName(),'type':'text-single'},payload=[Node('value',payload=[i.getData()])]))
     return df
 
-def register(disp,jid,info):
-    iq=Iq('set',NS_REGISTER,to=jid)
+def register(disp,host,info):
+    """Registrates on host with provided info.
+       disp must be connected dispatcher instance."""
+    iq=Iq('set',NS_REGISTER,to=host)
     if type(info)<>type({}): info=info.asDict()
     for i in info.keys(): iq.setTag('query').setTagData(i,info[i])
     resp=disp.SendAndWaitForResponse(iq)
     if isResultNode(resp): return 1
 
-def unregister(disp,jid):
-    resp=disp.SendAndWaitForResponse(Iq('set',NS_REGISTER,to=jid,payload=[Node('remove')]))
+def unregister(disp,host):
+    """Unregisters with host.
+       disp must be connected and authorized dispatcher instance."""
+    resp=disp.SendAndWaitForResponse(Iq('set',NS_REGISTER,to=host,payload=[Node('remove')]))
     if isResultNode(resp): return 1
 
-def changePasswordTo(disp,newpassword):
-    resp=disp.SendAndWaitForResponse(Iq('set',NS_REGISTER,to=disp._owner.Server,payload=[Node('username',payload=[disp._owner.Server]),Node('password',payload=[newpassword])]))
+def changePasswordTo(disp,newpassword,host=None):
+    """Changes password on specified or current (if not specified) server.
+       disp must be connected and authorized dispatcher instance."""
+    if not host: host=disp._owner.Server
+    resp=disp.SendAndWaitForResponse(Iq('set',NS_REGISTER,to=host,payload=[Node('username',payload=[disp._owner.Server]),Node('password',payload=[newpassword])]))
     if isResultNode(resp): return 1
 
 ### Privacy ### jabber:iq:privacy ### draft-ietf-xmpp-im-19 ####################
