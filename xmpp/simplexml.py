@@ -165,7 +165,7 @@ class NodeBuilder:
         self._dispatch_depth = 1
         self._document_attrs = None
         self._mini_dom=initial_node
-        self.last_is_data = 0
+        self.last_is_data = 1
 
         if data: self._parser.Parse(data,1)
 
