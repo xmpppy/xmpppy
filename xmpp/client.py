@@ -76,11 +76,11 @@ class Client:
         if self.TLS.starttls<>'proceed': self.disconnected()
 
     def auth(self,user,password,resource):
-        return auth.NonSASL(user,password,resource).PlugIn(m)
+        auth.SASL(user,password).PlugIn(m)
         while self.Process() and not self.Dispatcher.Stream._document_attrs: pass
         if self.Dispatcher.Stream._document_attrs.has_key('version') and self.Dispatcher.Stream._document_attrs['version']=='1.0':
             while self.Process() and not self.SASL.startsasl: pass
-        if self.SASL.startsasl<>'ok': auth.NonSASL(user,password,resource).PlugIn(m)
+        if self.SASL.startsasl<>'success': auth.NonSASL(user,password,resource).PlugIn(m)
         else: pass # binding
 
     def sendInitPresence(self,requestRoster=1):
@@ -88,16 +88,37 @@ class Client:
         self.send('<presence/>')
         self.Process()
 
-proxy={}
-proxy['host']='localhost'
-proxy['port']=8080
-proxy['user']='3128'
-proxy['password']='3128'
-m=Client('woody8.penza-gsm.ru')
-m.connect()
-#raise
-m.auth('test','test','test')
-m.sendInitPresence()
-if 1:
-    m.Process(5)
-    print m.Roster._data
+test_client=1
+if test_client:
+    proxy={}
+    proxy['host']='localhost'
+    proxy['port']=8080
+    proxy['user']='3128'
+    proxy['password']='3128'
+    m=Client('woody8.penza-gsm.ru')
+    m.connect()
+    #raise
+    m.auth('test','test','test')
+    m.sendInitPresence()
+    if 1:
+        m.Process(5)
+        print m.Roster._data
+else:
+    """
+SASL test. Must be performed on offline machine to prevent real connection.
+See RFC2831 for more info
+"""
+    m=Client('elwood.innosoft.com')
+    m.connect()
+    m.Dispatcher.Stream._document_attrs={'version':'1.0'}
+    m.auth('chris','secret','test')
+    X=auth.Node('a')
+    import simplexml
+    xml="""<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+cmVhbG09ImVsd29vZC5pbm5vc29mdC5jb20iLG5vbmNlPSJPQTZNRzl0
+RVFHbTJoaCIscW9wPSJhdXRoIixhbGdvcml0aG09bWQ1LXNlc3MsY2hh
+cnNldD11dGYtOA==
+</challenge>"""
+    m.SASL.uri='imap'
+    print 'Must be : charset=utf-8,username="chris",realm="elwood.innosoft.com",nonce="OA6MG9tEQGm2hh",nc=00000001,cnonce="OA6MHXh6VqTrRk",digest-uri="imap/elwood.innosoft.com",response=d388dad90d4bbd760a152321f2143af7,qop=auth'
+    print m.SASL.SASLHandler(1,simplexml.XML2Node(xml))

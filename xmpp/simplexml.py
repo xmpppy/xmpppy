@@ -187,5 +187,6 @@ class NodeBuilder:
 
     def DEBUG(self, level, text, comment=None): pass
     def getDom(self): return self._mini_dom
+    def dispatch(self,stanza): pass
 
 def XML2Node(xml): return NodeBuilder(xml).getDom()
