@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # $Id$
-import sys,os,xmpp
+import sys,os,xmpp,time
 
 if len(sys.argv) < 2:
     print "Syntax: xsend JID text"
@@ -26,7 +26,9 @@ cl=xmpp.Client(jid.getDomain(),debug=[])
 cl.connect()
 cl.auth(jid.getNode(),jidparams['password'])
 
-#cl.SendInitPresence()
+#cl.SendInitPresence(requestRoster=0)   # you may need to uncomment this for old server
 cl.send(xmpp.protocol.Message(tojid,text))
+
+time.sleep(1)   # some older servers will not send the message if you disconnect immediately after sending
 
 #cl.disconnect()
