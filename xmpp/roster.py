@@ -24,6 +24,8 @@ class Roster(PlugIn):
         PlugIn.__init__(self)
         self.DBG_LINE='roster'
         self._data = {}
+        self.set=None
+        self._exported_methods=[self.getRoster]
 
     def plugin(self,owner,request=1):
         self._owner.RegisterHandler('iq',self.RosterIqHandler,'result',NS_ROSTER)
@@ -31,9 +33,16 @@ class Roster(PlugIn):
         self._owner.RegisterHandler('presence',self.PresenceHandler)
         if request: self.Request()
 
-    def Request(self):
+    def Request(self,force=0):
+        if self.set is None: self.set=0
+        elif not force: return
         self._owner.send(protocol.Iq('get',NS_ROSTER))
         self.DEBUG('Roster requested from server','start')
+
+    def getRoster(self):
+        if not self.set: self.Request()
+        while not self.set: self._owner.Process(10)
+        return self
 
     def RosterIqHandler(self,dis,stanza):
         for item in stanza.getTag('query').getTags('item'):
@@ -47,6 +56,7 @@ class Roster(PlugIn):
             if not self._data[jid].has_key('resources'): self._data[jid]['resources']={}
             for group in item.getTags('group'): self._data[jid]['groups'].append(group.getData())
         self._data[self._owner.User+'@'+self._owner.Server]={'resources':{},'name':None,'ask':None,'subscription':None,'groups':None,}
+        self.set=1
 
     def PresenceHandler(self,dis,pres):
         JID=protocol.JID(pres.getFrom())
@@ -101,6 +111,8 @@ class Roster(PlugIn):
     def getItems(self): return self._data.keys()
     def keys(self): return self._data.keys()
     def __getitem__(self,item): return self._data[item]
+    def getItem(self,item):
+        if self._data.has_key(item): return self._data[item]
     def Subscribe(self,jid): self._owner.send(protocol.Presence(jid,'subscribe'))
     def Unsubscribe(self,jid): self._owner.send(protocol.Presence(jid,'unsubscribe'))
     def Authorize(self,jid): self._owner.send(protocol.Presence(jid,'subscribed'))
