@@ -146,3 +146,8 @@ def setPrivacyList(disp,payload):
 def delPrivacyList(disp,listname):
     resp=disp.SendAndWaitForResponse(Iq('set',NS_PRIVACY,payload=[Node('list',{'name':listname})]))
     if isResultNode(resp): return 1
+
+### Return of rejected stanza ##################################################
+def returnStanzaHandler(conn,stanza):
+    Error(ERR_FEATURE_NOT_IMPLEMENTED,base_stanza=stanza)
+    conn.send(stanza)
