@@ -28,6 +28,8 @@ class Dispatcher:
         self.handlers={}
         self._expected={}
         self._defaultHandler=None
+        self._eventHandler=None
+        self._cycleHandlers=[]
 
     def dumpHandlers(self): return self.handlers
     def restoreHandlers(self,handlers): self.handlers=handlers
@@ -44,6 +46,9 @@ class Dispatcher:
         self._owner.Process=self.Process
         self._owner.RegisterHandler=self.RegisterHandler
         self._owner.RegisterDefaultHandler=self.RegisterDefaultHandler
+        self._owner.RegisterEventHandler=self.RegisterEventHandler
+        self._owner.UnregisterCycleHandler=self.UnregisterCycleHandler
+        self._owner.RegisterCycleHandler=self.RegisterCycleHandler
         self._owner.RegisterHandlerOnce=self.RegisterHandlerOnce
         self._owner.UnregisterHandler=self.UnregisterHandler
         self._owner.RegisterProtocol=self.RegisterProtocol
@@ -88,6 +93,7 @@ class Dispatcher:
             1) length of processed data if some data were processed;
             2) '0' string if no data were processed but link is alive;
             3) 0 (zero) if underlying connection is closed."""
+        for handler in self._cycleHandlers: handler(self)
         if self._owner.Connection.pending_data(timeout):
             data=self._owner.Connection.receive()
             self.Stream.Parse(data)
@@ -114,6 +120,16 @@ class Dispatcher:
         self.handlers[name][type+ns].remove({'chain':chained,'func':handler,'system':system})
 
     def RegisterDefaultHandler(self,handler): self._defaultHandler=handler
+    def RegisterEventHandler(self,handler): self._eventHandler=handler
+
+    def RegisterCycleHandler(self,handler):
+        if handler not in self._cycleHandlers: self._cycleHandlers.append(handler)
+
+    def UnregisterCycleHandler(self,handler):
+        if handler in self._cycleHandlers: self._cycleHandlers.remove(handler)
+
+    def Event(self,realm,event,data):
+        if self._eventHandler: self._eventHandler(realm,event,data)
 
     def dispatch(self,stanza):
         name=stanza.getName()
