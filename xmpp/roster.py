@@ -46,7 +46,7 @@ class Roster(PlugIn):
             self._data[jid]['groups']=[]
             if not self._data[jid].has_key('resources'): self._data[jid]['resources']={}
             for group in item.getTags('group'): self._data[jid]['groups'].append(group.getData())
-        self._data[self._owner.User+'@'+self._owner.Server]={'resources':{}}
+        self._data[self._owner.User+'@'+self._owner.Server]={'resources':{},'name':None,'ask':None,'subscription':None,'groups':None,}
 
     def PresenceHandler(self,dis,pres):
         JID=protocol.JID(pres.getFrom())
@@ -90,13 +90,17 @@ class Roster(PlugIn):
     def getStatus(self, jid): return self._getResourceData(jid,'status')
     def getSubscription(self,jid): return self._getItemData(jid,'subscription')
     def getResources(self,jid): return self._data[jid[:(jid+'/').find('/')]]['resources'].keys()
-    def setItem(self,jid,name=None,groups=None):
+    def setItem(self,jid,name=None,groups=[]):
         iq=protocol.Iq('set',NS_ROSTER)
+        query=iq.getTag('query')
         attrs={'jid':jid}
         if name: attrs['name']=name
-        iq.setTag('item',attrs)
-        for group in groups: iq.addChild(node=Node('group',payload=[group]))
+        item=query.setTag('item',attrs)
+        for group in groups: item.addChild(node=Node('group',payload=[group]))
         self._owner.send(iq)
+    def getItems(self): return self._data.keys()
+    def keys(self): return self._data.keys()
+    def __getitem__(self,item): return self._data[item]
     def Subscribe(self,jid): self._owner.send(protocol.Presence(jid,'subscribe'))
     def Unsubscribe(self,jid): self._owner.send(protocol.Presence(jid,'unsubscribe'))
     def Authorize(self,jid): self._owner.send(protocol.Presence(jid,'subscribed'))
