@@ -37,12 +37,18 @@ def ustr(what):
     except AttributeError: r=str(what)
     if type(r)<>type(u''): return unicode(r,ENCODING)
     return r
-    
+
 class Node:
+    FORCE_NODE_RECREATION=0
     def __init__(self, tag=None, attrs={}, payload=[], parent=None, node=None):
         if node:
-            if type(node)<>type(self): node=NodeBuilder(node).getDom()
-            self.name,self.namespace,self.attrs,self.data,self.kids,self.parent = node.name,node.namespace,node.attrs,node.data,node.kids,node.parent
+            if self.FORCE_NODE_RECREATION and type(node)==type(self): node=str(node)
+            if type(node)<>type(self): node=NodeBuilder(node,self)
+            else:
+                self.name,self.namespace,self.attrs,self.data,self.kids,self.parent = node.name,node.namespace,{},[],[],node.parent
+                for key  in node.attrs.keys(): self.attrs[key]=node.attrs[key]
+                for data in node.data: self.data.append(data)
+                for kid  in node.kids: self.kids.append(kid)
         else: self.name,self.namespace,self.attrs,self.data,self.kids,self.parent = 'tag','',{},[],[],None
 
         if tag: self.namespace, self.name = (['']+tag.split())[-2:]
@@ -146,7 +152,7 @@ DBG_NODEBUILDER = 'nodebuilder'
 class NodeBuilder:
     """builds a 'minidom' from data parsed to it. Primarily for insertXML
        method of Node"""
-    def __init__(self,data=None):
+    def __init__(self,data=None,initial_node=None):
         self.DEBUG(DBG_NODEBUILDER, "Preparing to handle incoming XML stream.", 'start')
         self._parser = xml.parsers.expat.ParserCreate(namespace_separator=' ')
         self._parser.StartElementHandler  = self.starttag
@@ -157,6 +163,7 @@ class NodeBuilder:
         self.__depth = 0
         self._dispatch_depth = 1
         self._document_attrs = None
+        self._mini_dom=initial_node
 
         if data: self._parser.Parse(data,1)
 
@@ -165,7 +172,8 @@ class NodeBuilder:
         self.__depth += 1
         self.DEBUG(DBG_NODEBUILDER, "DEPTH -> %i , tag -> %s, attrs -> %s" % (self.__depth, tag, `attrs`), 'down')
         if self.__depth == self._dispatch_depth:
-            self._mini_dom = Node(tag=tag, attrs=attrs)
+            if not self._mini_dom : self._mini_dom = Node(tag=tag, attrs=attrs)
+            else: self._mini_dom.__init__(tag=tag, attrs=attrs)
             self._ptr = self._mini_dom
         elif self.__depth > self._dispatch_depth:
             self._ptr.kids.append(Node(tag=tag,parent=self._ptr,attrs=attrs))
