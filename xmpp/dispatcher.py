@@ -74,6 +74,7 @@ class Dispatcher:
         self._owner.debug_flags.append(simplexml.DBG_NODEBUILDER)
         self.Stream.DEBUG=self._owner.DEBUG
         self.Stream.features=None
+        self._owner.send("<?xml version='1.0'?><stream:stream version='1.0' xmlns:stream='http://etherx.jabber.org/streams' to='%s' xmlns='%s'>"%(self._owner.Server,self._owner.Namespace))
 
     def Process(self, timeout=0):
         if self._owner.Connection.pending_data(timeout):

@@ -134,7 +134,6 @@ class SASL:
             self._owner.DEBUG(DBG_SASL,'Successfully authenticated with remote server.','ok')
             self._owner.Dispatcher.PlugOut()
             dispatcher.Dispatcher().PlugIn(self._owner)
-            self._owner.send_header()
             self._owner.User=self.username
             return
 ########################################3333

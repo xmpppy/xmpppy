@@ -84,7 +84,6 @@ class CommonClient:
         if not connected: return
         if self.Connection.getPort()==5223: transports.TLS().PlugIn(self,now=1)
         dispatcher.Dispatcher().PlugIn(self)
-        self.send("<?xml version='1.0'?><stream:stream version='1.0' xmlns:stream='http://etherx.jabber.org/streams' to='%s' xmlns='%s'>"%(self.Server,self.Namespace))
         while self.Dispatcher.Stream._document_attrs is None: self.Process(1)
         return 'ok'
 

@@ -182,4 +182,3 @@ class TLS:
         self._startSSL()
         self._owner.Dispatcher.PlugOut()
         dispatcher.Dispatcher().PlugIn(self._owner)
-        self._owner.send_header()
