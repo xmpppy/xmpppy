@@ -139,6 +139,7 @@ class Node:
     def setTagData(self,tag,val,attrs={}):
         try: self.getTag(tag,attrs).setData(ustr(val))
         except: self.addChild(tag,attrs,payload=[ustr(val)])
+    def has_attr(self,key): return self.attrs.has_key(key)
 
 DBG_NODEBUILDER = 'nodebuilder'
 class NodeBuilder:
