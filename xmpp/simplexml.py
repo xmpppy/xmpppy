@@ -90,7 +90,9 @@ class Node:
         return s
     def addChild(self, name=None, attrs={}, payload=[], namespace=None, node=None):
         if namespace: name=namespace+' '+name
-        if node: newnode=node
+        if node:
+            newnode=node
+            node.parent = self
         else: newnode=Node(tag=name, parent=self, attrs=attrs, payload=payload)
         self.kids.append(newnode)
         return newnode
