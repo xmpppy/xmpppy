@@ -69,12 +69,13 @@ subscription-required -- 407 -- auth -- The requesting entity is not authorized 
 undefined-condition -- 500 --  -- 
 unexpected-request -- 400 -- wait -- The recipient or server understood the request but was not expecting it at this time (e.g., the request was out of order)."""
 
-ERRORS={}
+ERRORS,_errorcodes={},{}
 for err in (xmpp_stream_error_conditions+xmpp_stanza_error_conditions)[1:].split('\n'):
     cond,code,typ,text=err.split(' -- ')
     name='ERR_'+cond.upper().replace('-','_')
     locals()[name]=cond
     ERRORS[cond]=[code,typ,text]
+    _errorcodes[code]=cond
 del err,cond,code,typ,text
 
 def isResultNode(node): return node and node.getType()=='result'
@@ -140,7 +141,9 @@ class Protocol(Node):
         return self.getTagData('error')
     def getErrorCode(self): return self.getTagAttr('error','code')
     def setError(self,code,comment=''):
-        if type(code) in [type(''),type(u'')]: error=Error(ERR_FEATURE_NOT_IMPLEMENTED,code=code,text=comment)
+        if type(code) in [type(''),type(u'')]:
+            if code in _errorcodes.keys(): error=Error(_errorcodes[code],code=code,text=comment)
+            else: error=Error(ERR_UNDEFINED_CONDITION,code=code,type='cancel',text=comment)
         else: error=code
         self.setType('error')
         self.addChild(node=error)
