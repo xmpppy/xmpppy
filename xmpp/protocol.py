@@ -101,6 +101,7 @@ class JID:
     def __eq__(self, other):
         other=JID(other)
         return self.resource==other.resource and self.__str__(0) == other.__str__(0)
+    def __ne__(self, other): return not self.__eq__(other)
     def bareMatch(self, other): return self.__str__(0) == JID(other).__str__(0)
     def __str__(self,wresource=1):
         if self.node: jid=self.node+'@'+self.domain
