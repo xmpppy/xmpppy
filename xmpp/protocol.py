@@ -285,3 +285,77 @@ class Error(Protocol):
         if reply: Protocol.__init__(self,to=node.getFrom(),frm=node.getTo(),node=node)
         else: Protocol.__init__(self,node=node)
         self.setError(error)
+
+"""
+<title/>
+<instructions/>
+<field var='a' type='b' label='c' />
+    <desc/>
+    <required/>
+    <value/>
+    <option label='l'/>
+        <value/>
+"""
+class DataField(Node):
+    def __init__(self,name,value,typ='text-single',required=0,desc=None,options=[]):
+        Node.__init__(self,'field',{'var':name},[Node('value',{},[value])])
+        self.setType(typ)
+        if required: self.setRequired(required)
+        if desc: self.setDesc(desc)
+        if options: self.setOptions(options)
+        if label: self.setLabel(label)
+    def setRequired(self,req=1):
+        if req: self.setTag('required')
+        else:
+            try: self.delChild('required')
+            except ValueError: return
+    def getRequired(self): return self.getTag('required')
+    def setDesc(self,desc): self.setTagData('desc',desc)
+    def getDesc(self): return self.getTagData('desc')
+    def setValue(self,val): self.setTagData('value',val)
+    def getValue(self): return self.getTagData('value')
+    def getOptions(self):
+        ret=[]
+        for tag in self.getTags('option'): ret.append([tag.getAttr('label'),tag.getTagData('value')])
+        return ret
+    def setOptions(self,lst):
+        while self.getTag('option'): self.delChild('option')
+        for opt in lst: self.addOption(opt)
+    def addOption(self,opt):
+        if type(opt) in [str,unicode]: self.addChild('option').setTagData('value',opt)
+        else: self.addChild('option',{'label':opt[0]}).setTagData('value',opt[1])
+    def getType(self): return self.getAttr('type')
+    def setType(self,val): return self.setAttr('type',val)
+    def getVar(self): return self.getAttr('var')
+    def setVar(self,val): return self.setAttr('var',val)
+
+"""
+class DataForm(Node):
+    def __init__(self,data=None,node=None):
+        Node.__init__(self,'x',node=node)
+        self.setNamespace(NS_DATA)
+        dict={}
+        if type(data) in [type(()),type([])]:
+            for i in data: dict[i]=''
+        elif data: dict=data
+        else: dict={}
+        for key in dict.keys():
+            self.setField(key,dict[key])
+    def getTitle(self): pass
+    def setTitle(self): pass
+    def getInstructions(self): pass
+    def setInstructions(self): pass
+    def getField(self,name): return self.getTag(attrs={'var':name})
+    def setField(self,name):
+        f=self.getField(name)
+        if f: return f
+        return self.setTag(attrs={'var':name})
+
+
+    def asDict(self):
+    def getField(self,name):
+    def __getitem__(self,name):
+    def setField(self,name,val): self.setTag('field',attrs={'var':name}).setTagData('value',val)
+    __setitem__=setField
+    def setFromDict(self,dict):
+"""
