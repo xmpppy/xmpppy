@@ -97,7 +97,7 @@ def getRegInfo(disp,jid,info={}):
 
 def register(disp,jid,info):
     iq=Iq('set',NS_REGISTER,to=jid)
-    if type(info)<>type({}): info=info.getFields()
+    if type(info)<>type({}): info=info.asDict()
     for i in info.keys(): iq.setTag('query').setTagData(i,info[i])
     resp=disp.SendAndWaitForResponse(iq)
     if resp and resp.getType()=='result': return 1

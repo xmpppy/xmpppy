@@ -115,12 +115,14 @@ class Iq(Protocol):
     def setQueryPayload(self,payload): self.setTag('query').setPayload(payload)
 
 class DataForm(Node):
-    def getField(name): return getTagData('field',attrs={'var':name})
-    def setField(name, val): setTagData('field',val,attrs={'var':name})
-    def getFields():
+    def asDict(self):
         ret={}
         for i in self.getTags('field'):
             ret[i.getAttr('var')]=i.getTagData('value')
         return ret
-    def setFields(dict):
+    def getField(self,name):
+        tag=self.getTag('field',attrs={'var':name})
+        if tag: return tag.getTagData('value')
+    def setField(self,name, val): self.setTag('field',attrs={'var':name}).setTagData('value',val)
+    def setFromDict(self,dict):
         for i in dict.keys(): self.setField(i,dict[i])
