@@ -102,7 +102,15 @@ class Node:
     def getName(self): return self.name
     def getNamespace(self): return self.namespace
     def getParent(self): return self.parent
-    def getPayload(self): return self.kids
+    def getPayload(self):
+        ret=[]
+        for i in range(len(self.kids)+len(self.data)+1):
+            try:
+                if self.data[i]: ret.append(self.data[i])
+            except IndexError: pass
+            try: ret.append(self.kids[i])
+            except IndexError: pass
+        return ret
     def getTag(self, name, attrs={}, namespace=None): return self.getTags(name, attrs, namespace, one=1)
     def getTagAttr(self,tag,attr):
         try: return self.getTag(tag).attrs[attr]
