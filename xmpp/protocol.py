@@ -45,6 +45,7 @@ NS_SEARCH       ='jabber:iq:search'
 NS_SERVER       ='jabber:server'
 NS_SESSION      ='urn:ietf:params:xml:ns:xmpp-session'
 NS_STANZAS      ='urn:ietf:params:xml:ns:xmpp-stanzas'
+NS_STREAMS      ='http://etherx.jabber.org/streams'
 NS_TIME         ='jabber:iq:time'
 NS_TLS          ='urn:ietf:params:xml:ns:xmpp-tls'
 NS_VACATION     ='http://jabber.org/protocol/vacation'
@@ -249,14 +250,15 @@ class ErrorNode(Node):
         """ Mandatory parameter: name
             Optional parameters: code, typ, text."""
         if ERRORS.has_key(name): cod,type,txt=ERRORS[name]
-        else: cod,type,txt='','cancel',''
+        else: cod,type,txt='500','cancel',''
         if typ: type=typ
         if code: cod=code
         if text: txt=text
         Node.__init__(self,'error',{'type':type},[Node(NS_STANZAS+' '+name)])
+        if not cod: self.setName('stream:error')
         if txt:
             self.addChild(node=Node(NS_STANZAS+' text',{},[txt]))
-            self.addData(txt)
+#            self.addData(txt)                   # Backward compartibility for old clients
         if cod: self.setAttr('code',cod)
 
 class Error(Protocol):
