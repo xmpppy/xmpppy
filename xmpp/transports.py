@@ -61,7 +61,7 @@ class TCPsocket(PlugIn):
         del self._owner.Connection
 
     def receive(self):
-        """Reads incoming data. Blocks until done. Calls self.disconnected(self) if appropriate."""
+        """Reads all pending incoming data. Calls owner's disconnected() method if appropriate."""
         try: received = self._recv(1024)
         except: received = ''
 
