@@ -92,20 +92,20 @@ class Dispatcher(PlugIn):
         self.DEBUG('Registering protocol "%s" as %s(%s)'%(tag_name,Proto,xmlns), order)
         self.handlers[xmlns][tag_name]={type:Proto, 'default':[]}
 
-    def RegisterNamespaceHandler(self,xmlns,handler,typ='',ns='',chained=0, makefirst=0, system=0):
-        self.RegisterHandler('default', handler, typ, ns, xmlns, chained, makefirst, system)
+    def RegisterNamespaceHandler(self,xmlns,handler,typ='',ns='', makefirst=0, system=0):
+        self.RegisterHandler('default', handler, typ, ns, xmlns, makefirst, system)
 
-    def RegisterHandler(self,name,handler,typ='',ns='',xmlns=NS_CLIENT,chained=0, makefirst=0, system=0):
+    def RegisterHandler(self,name,handler,typ='',ns='',xmlns=NS_CLIENT, makefirst=0, system=0):
         self.DEBUG('Registering handler %s for "%s" type->%s ns->%s(%s)'%(handler,name,typ,ns,xmlns), 'info')
         if not typ and not ns: typ='default'
         if not self.handlers.has_key(xmlns): self.RegisterNamespace(xmlns,'warn')
         if not self.handlers[xmlns].has_key(name): self.RegisterProtocol(name,Protocol,xmlns,'warn')
         if not self.handlers[xmlns][name].has_key(typ+ns): self.handlers[xmlns][name][typ+ns]=[]
-        if makefirst: self.handlers[xmlns][name][typ+ns].insert({'chain':chained,'func':handler,'system':system})
-        else: self.handlers[xmlns][name][typ+ns].append({'chain':chained,'func':handler,'system':system})
+        if makefirst: self.handlers[xmlns][name][typ+ns].insert({'func':handler,'system':system})
+        else: self.handlers[xmlns][name][typ+ns].append({'func':handler,'system':system})
 
-    def RegisterHandlerOnce(self,name,handler,typ='',ns='',xmlns=NS_CLIENT,chained=0, makefirst=0, system=0):
-        self.RegisterHandler(name, handler, typ, ns, xmlns, chained, makefirst, system)
+    def RegisterHandlerOnce(self,name,handler,typ='',ns='',xmlns=NS_CLIENT,makefirst=0, system=0):
+        self.RegisterHandler(name, handler, typ, ns, xmlns, makefirst, system)
 
     def UnregisterHandler(self,name,handler,typ='',ns='',xmlns=NS_CLIENT):
         if not typ and not ns: typ='default'
@@ -148,7 +148,7 @@ class Dispatcher(PlugIn):
         else:
             self.DEBUG("Got %s stanza"%name, 'ok')
 
-        stanza=self.handlers[xmlns][name][type](node=stanza)
+        if stanza.__class__.__name__=='Node': stanza=self.handlers[xmlns][name][type](node=stanza)
 
         typ=stanza.getType()
         if not typ: typ=''
@@ -176,8 +176,7 @@ class Dispatcher(PlugIn):
         for handler in chain:
             if user or handler['system']:
                 try:
-                    if handler['chain']: output=handler['func'](session,stanza,output)
-                    else: handler['func'](session,stanza)
+                    handler['func'](session,stanza)
                 except Exception, typ:
                     if typ.__class__.__name__<>'NodeProcessed': raise
                     user=0
