@@ -42,7 +42,7 @@ class Browser(PlugIn):
 
         cur=self._handlers
         if node is None: node=[None]
-        else: node=node.split('/')
+        else: node=node.replace('/',' /').split('/')
         for i in node:
             if i<>'' and cur.has_key(i): cur=cur[i]
             elif set and i<>'': cur[i]={dict:cur,str:i}; cur=cur[i]
