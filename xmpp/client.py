@@ -160,6 +160,10 @@ class Client(CommonClient):
                 self.connected+='+sasl'
                 return 'sasl'
 
+    def getRoster(self):
+        if not self.__dict__.has_key('Roster'): roster.Roster().PlugIn(self)
+        return self.Roster.getRoster()
+
     def sendInitPresence(self,requestRoster=1):
         self.sendPresence(requestRoster=requestRoster)
 
