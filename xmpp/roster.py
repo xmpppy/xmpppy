@@ -68,7 +68,6 @@ class Roster(PlugIn):
             jid=item.getAttr('jid')
             if item.getAttr('subscription')=='remove':
                 if self._data.has_key(jid): del self._data[jid]
-                raise NodeProcessed
             self.DEBUG('Setting roster item %s...'%jid,'ok')
             if not self._data.has_key(jid): self._data[jid]={}
             self._data[jid]['name']=item.getAttr('name')
@@ -79,7 +78,6 @@ class Roster(PlugIn):
             for group in item.getTags('group'): self._data[jid]['groups'].append(group.getData())
         self._data[self._owner.User+'@'+self._owner.Server]={'resources':{},'name':None,'ask':None,'subscription':None,'groups':None,}
         self.set=1
-        raise NodeProcessed
 
     def PresenceHandler(self,dis,pres):
         """ Presence tracker. Used internally for setting items' resources state in
