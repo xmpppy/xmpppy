@@ -3,12 +3,13 @@ Section: python
 Priority: optional
 Maintainer: Alexey Nezhdanov <snakeru@users.sourceforge.net>
 Build-Depends-Indep: debhelper (>> 3.0.0)
-Standards-Version: 3.6.1
+Standards-Version: 3.6.1.0
+Uploaders: Alexey Nezhdanov <snakeru@users.sourceforge.net>, Cosimo Alfarano <kalfa@debian.org>
 
 Package: python-xmpp
 Architecture: all
-Depends: python2.3-xmpp
-Description: Python library for communication with XMPP (Jabber) servers.
+Depends: python (>= 2.3), python (<< 2.4), python2.3-xmpp
+Description: Python library for communication with XMPP (Jabber) servers
  This is a set of modules providing functionality for writing
  xmpp-compliant client or component in python.
  .
@@ -18,12 +19,12 @@ Description: Python library for communication with XMPP (Jabber) servers.
  Unlike jabberpy it is distributed under the terms of GPL.
  .
  This package is a dependency package, which depends on Debian's default
- Python version and respective xmpppy package version (currently v2.3).
+ Python version (currently v2.3) and respective xmpppy package version.
 
 Package: python2.1-xmpp
 Architecture: all
 Depends: python2.1, python2.1-xmlbase
-Description: Python library for communication with XMPP (Jabber) servers.
+Description: Python library for communication with XMPP (Jabber) servers
  This is a set of modules providing functionality for writing
  xmpp-compliant client or component in python.
  .
@@ -37,7 +38,7 @@ Description: Python library for communication with XMPP (Jabber) servers.
 Package: python2.2-xmpp
 Architecture: all
 Depends: python2.2, python2.2-xmlbase
-Description: Python library for communication with XMPP (Jabber) servers.
+Description: Python library for communication with XMPP (Jabber) servers
  This is a set of modules providing functionality for writing
  xmpp-compliant client or component in python.
  .
@@ -51,7 +52,7 @@ Description: Python library for communication with XMPP (Jabber) servers.
 Package: python2.3-xmpp
 Architecture: all
 Depends: python2.3
-Description: Python library for communication with XMPP (Jabber) servers.
+Description: Python library for communication with XMPP (Jabber) servers
  This is a set of modules providing functionality for writing
  xmpp-compliant client or component in python.
  .
