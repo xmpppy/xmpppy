@@ -14,7 +14,7 @@
 
 # $Id$
 
-from protocol import NS_ROSTER,Iq,Presence,JID,Node
+from protocol import *
 from client import PlugIn
 
 class Roster(PlugIn):
@@ -55,6 +55,7 @@ class Roster(PlugIn):
             for group in item.getTags('group'): self._data[jid]['groups'].append(group.getData())
         self._data[self._owner.User+'@'+self._owner.Server]={'resources':{},'name':None,'ask':None,'subscription':None,'groups':None,}
         self.set=1
+        raise NodeProcessed
 
     def PresenceHandler(self,dis,pres):
         jid=JID(pres.getFrom())
@@ -72,9 +73,10 @@ class Roster(PlugIn):
             if pres.getTag('priority'): res['priority']=pres.getPriority()
             if not pres.getTimestamp(): pres.setTimestamp()
             res['timestamp']=pres.getTimestamp()
-
         elif typ=='unavailable' and item['resources'].has_key(jid.getResource()): del item['resources'][jid.getResource()]
+        raise NodeProcessed
 # Надо ещё обработать type='error'
+
     def _getItemData(self,jid,dataname):
         jid=jid[:(jid+'/').find('/')]
         return self._data[jid][dataname]
