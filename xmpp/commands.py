@@ -31,10 +31,8 @@ What it supplies:
     A means of handling requests, by redirection though the command manager.
 """
 
-from xmpp.client import PlugIn
-import xmpp
-from xmpp.simplexml import Node
 from xmpp.protocol import *
+from xmpp.client import PlugIn
 
 NS_COMMANDS='http://jabber.org/protocol/commands'
 
@@ -181,7 +179,7 @@ class Command_Handler_Prototype(PlugIn):
     """
     name = 'examplecommand'
     description = 'an example command'
-    discofeatures = [NS_COMMANDS,xmpp.NS_DATA]
+    discofeatures = [NS_COMMANDS,NS_DATA]
     # This is the command template
     def __init__(self):
         """Set up the class"""
