@@ -89,9 +89,9 @@ class IBB(PlugIn):
                     if stream['seq']==65536: stream['seq']=0
                     conn.send(Protocol('message',stream['direction'][1:],payload=[datanode,self._ampnode]))
                 else:
-                    """ нужно отправить пакет закрывающий поток на той стороне
-                        нужно сообщить локальному пользователю о том что данные успешно переданы
-                        нужно удалить локальный поток"""
+                    """ notify the other side about stream closing
+                        notify the local user about sucessfull send
+                        delete the local stream"""
                     conn.send(Protocol('iq',stream['direction'][1:],'set',payload=[Node(NS_IBB+' close',{'sid':sid})]))
                     conn.Event(self.DBG_LINE,'SUCCESSFULL SEND',stream)
                     del self._streams[sid]
