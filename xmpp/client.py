@@ -44,7 +44,7 @@ Debug.Debug.colors['got']=debug.color_bright_cyan
 DBG_CLIENT='client'
 DBG_COMPONENT='client'
 class Client:
-    def __init__(self,server,debug=['socket']):#['always', 'nodebuilder']):
+    def __init__(self,server,debug=['always', 'nodebuilder']):
         self.disconnect_handlers=[]
         self.Namespace='jabber:client'
         self.Server=server
@@ -70,25 +70,31 @@ class Client:
     def send_header(self):
         self.send("<?xml version='1.0'?><stream:stream version='1.0' xmlns:stream='http://etherx.jabber.org/streams' to='%s' xmlns='%s'>"%(self.Server,self.Namespace))
 
+    def event(self,eventName,args={}):
+        print "Event: ",(eventName,args)
+
     def connect(self,server=None,proxy=None):
         if proxy: transports.HTTPPROXYsocket(proxy,server).PlugIn(self)
         else: transports.TCPsocket(server).PlugIn(self)
         dispatcher.Dispatcher().PlugIn(self)
         self.send_header()
         transports.TLS().PlugIn(self)
-        while self.Process() and not self.Dispatcher.Stream._document_attrs: pass
-        if self.Dispatcher.Stream._document_attrs.has_key('version') and self.Dispatcher.Stream._document_attrs['version']=='1.0':
-            while self.Process() and not self.TLS.starttls: pass
-            if self.TLS.starttls<>'proceed': self.disconnected()
+        while not self.Dispatcher.Stream._document_attrs and self.Process(): pass
+        if not self.Dispatcher.Stream._document_attrs.has_key('version') or not self.Dispatcher.Stream._document_attrs['version']=='1.0': return
+        while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
+        if not self.Dispatcher.Stream.features.getTag('starttls'): return       # TLS not supported by server
+        while not self.TLS.starttls and self.Process(): pass
+        if self.TLS.starttls<>'proceed': self.event('tls_failed')
 
-    def auth(self,user,password,resource):
+    def auth(self,user,password,resource='xmpppy'):
         auth.SASL(user,password).PlugIn(self)
-        while self.Process() and not self.Dispatcher.Stream._document_attrs: pass
+        while not self.Dispatcher.Stream._document_attrs and self.Process(): pass
         if self.Dispatcher.Stream._document_attrs.has_key('version') and self.Dispatcher.Stream._document_attrs['version']=='1.0':
-            while self.Process() and not self.SASL.startsasl: pass
-        if self.SASL.startsasl<>'success': auth.NonSASL(user,password,resource).PlugIn(self)
+            while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
+        if self.SASL.startsasl=='failure': auth.NonSASL(user,password,resource).PlugIn(self)
         else:
             auth.Bind().PlugIn(self)
+            while self.Bind.bound is None: self.Process()
             self.Bind.Bind(resource)
 
     def sendInitPresence(self,requestRoster=1):
