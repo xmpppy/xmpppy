@@ -47,12 +47,12 @@ class Roster(PlugIn):
         self._owner.RegisterHandler('presence',self.PresenceHandler)
         if request: self.Request()
 
-    def Request(self,force=0):
+    def Request(self,session,force=0):
         """ Request roster from server if it were not yet requested 
             (or if the 'force' argument is set). """
         if self.set is None: self.set=0
         elif not force: return
-        self._owner.send(Iq('get',NS_ROSTER))
+        session.send(Iq('get',NS_ROSTER))
         self.DEBUG('Roster requested from server','start')
 
     def getRoster(self):
@@ -100,7 +100,6 @@ class Roster(PlugIn):
             if not pres.getTimestamp(): pres.setTimestamp()
             res['timestamp']=pres.getTimestamp()
         elif typ=='unavailable' and item['resources'].has_key(jid.getResource()): del item['resources'][jid.getResource()]
-        raise NodeProcessed
 # Need to handle type='error' also
 
     def _getItemData(self,jid,dataname):
