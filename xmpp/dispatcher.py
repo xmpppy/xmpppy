@@ -40,7 +40,7 @@ class Dispatcher(PlugIn):
 
     def _init(self):
         self.RegisterNamespace('unknown')
-        self.RegisterNamespace(NS_CLIENT)
+        self.RegisterNamespace(self._owner.Namespace)
         self.RegisterProtocol('iq',Iq)
         self.RegisterProtocol('presence',Presence)
         self.RegisterProtocol('message',Message)
