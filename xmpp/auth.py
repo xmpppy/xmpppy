@@ -154,8 +154,10 @@ class SASL(PlugIn):
         elif challenge.getName()=='success':
             self.startsasl='success'
             self.DEBUG('Successfully authenticated with remote server.','ok')
+            handlers=self._owner.Dispatcher.dumpHandlers()
             self._owner.Dispatcher.PlugOut()
             dispatcher.Dispatcher().PlugIn(self._owner)
+            self._owner.Dispatcher.restoreHandlers(handlers)
             self._owner.User=self.username
             raise NodeProcessed
 ########################################3333
