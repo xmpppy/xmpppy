@@ -58,6 +58,7 @@ class CommonClient:
         self._owner=self
         self._registered_name=None
         self.RegisterDisconnectHandler(self.DisconnectHandler)
+        self.connected=None
 
     def RegisterDisconnectHandler(self,handler):
         self.disconnect_handlers.append(handler)
@@ -66,6 +67,7 @@ class CommonClient:
         self.disconnect_handlers.remove(handler)
 
     def disconnected(self):
+        self.connected=None
         self.DEBUG(self.DBG,'Disconnect detected','stop')
         self.disconnect_handlers.reverse()
         for i in self.disconnect_handlers: i()
@@ -77,6 +79,8 @@ class CommonClient:
     def event(self,eventName,args={}):
         print "Event: ",(eventName,args)
 
+    def isConnected(self): return self.connected
+
     def connect(self,server=None,proxy=None):
         if not server: server=(self.Server,self.Port)
         if proxy: connected=transports.HTTPPROXYsocket(proxy,server).PlugIn(self)
@@ -85,6 +89,7 @@ class CommonClient:
         if self.Connection.getPort()==5223: transports.TLS().PlugIn(self,now=1)
         dispatcher.Dispatcher().PlugIn(self)
         while self.Dispatcher.Stream._document_attrs is None: self.Process(1)
+        self.connected='tcp'
         return 'ok'
 
 class Client(CommonClient):
@@ -105,11 +110,16 @@ class Client(CommonClient):
             while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
             while self.SASL.startsasl=='in-process' and self.Process(): pass
         else: self.SASL.startsasl='failure'
-        if self.SASL.startsasl=='failure': return auth.NonSASL(user,password,resource).PlugIn(self)
+        if self.SASL.startsasl=='failure':
+            if auth.NonSASL(user,password,resource).PlugIn(self):
+                self.connected='jabber'
+                return 'ok'
         else:
             auth.Bind().PlugIn(self)
             while self.Bind.bound is None: self.Process()
-            return self.Bind.Bind(resource)
+            if self.Bind.Bind(resource):
+                self.connected='xmpp'
+                return 'ok'
 
     def sendInitPresence(self,requestRoster=1):
         self.sendPresence(requestRoster=requestRoster)
