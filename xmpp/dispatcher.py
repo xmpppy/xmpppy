@@ -95,7 +95,8 @@ class Dispatcher(PlugIn):
     def RegisterNamespaceHandler(self,xmlns,handler,typ='',ns='', makefirst=0, system=0):
         self.RegisterHandler('default', handler, typ, ns, xmlns, makefirst, system)
 
-    def RegisterHandler(self,name,handler,typ='',ns='',xmlns=NS_CLIENT, makefirst=0, system=0):
+    def RegisterHandler(self,name,handler,typ='',ns='',xmlns=None, makefirst=0, system=0):
+        if not xmlns: xmlns=self._owner.Namespace
         self.DEBUG('Registering handler %s for "%s" type->%s ns->%s(%s)'%(handler,name,typ,ns,xmlns), 'info')
         if not typ and not ns: typ='default'
         if not self.handlers.has_key(xmlns): self.RegisterNamespace(xmlns,'warn')
