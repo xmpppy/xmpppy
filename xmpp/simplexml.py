@@ -50,6 +50,7 @@ class Node:
         if self.parent and not self.namespace: self.namespace=self.parent.namespace
         for attr in attrs.keys():
             self.attrs[attr]=attrs[attr]
+        if type(payload) in (type(''),type(u'')): payload=[payload]
         for i in payload:
             if type(i)==type(self): self.addChild(node=i)
             else: self.data.append(i)
@@ -76,7 +77,8 @@ class Node:
         return s
     def addChild(self, name=None, attrs={}, payload=[], namespace=None, node=None):
         if namespace: name=namespace+' '+name
-        newnode = Node(tag=name, parent=self, attrs=attrs, payload=payload, node=node)
+        if node: newnode=node
+        else: newnode=Node(tag=name, parent=self, attrs=attrs, payload=payload)
         self.kids.append(newnode)
         return newnode
     def addData(self, data): self.data.append(data)
@@ -119,6 +121,7 @@ class Node:
     def setNamespace(self, namespace): self.namespace=namespace
     def setParent(self, node): self.parent = node
     def setPayload(self,payload,add=0):
+        if type(payload) in (type(''),type(u'')): payload=[payload]
         if add: self.kids+=payload
         else: self.kids=payload
     def setTag(self, name, attrs={}, namespace=None):
