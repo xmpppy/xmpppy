@@ -21,6 +21,8 @@ DBG_DISPATCHER='dispatcher'
 DefaultTimeout=25
 ID=0
 
+class NodeProcessed(Exception): pass
+
 class Dispatcher:
     def __init__(self):
         self.handlers={}
@@ -143,8 +145,10 @@ class Dispatcher:
         else: user=1
         for handler in chain:
             if user or handler['system']:
-                if handler['chain']: output=handler['func'](self,stanza,output)
-                else: handler['func'](self,stanza)
+                try:
+                    if handler['chain']: output=handler['func'](self,stanza,output)
+                    else: handler['func'](self,stanza)
+                except NodeProcessed: user=0
 
     def WaitForResponse(self, ID, timeout=DefaultTimeout):
         self._expected[ID]=None
