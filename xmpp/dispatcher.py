@@ -152,14 +152,14 @@ class Dispatcher(PlugIn):
 
         typ=stanza.getType()
         if not typ: typ=''
-        props=stanza.getProperties()
+        stanza.props=stanza.getProperties()
         ID=stanza.getID()
 
-        session.DEBUG("Dispatching %s stanza with type->%s props->%s id->%s"%(name,typ,props,ID),'ok')
+        session.DEBUG("Dispatching %s stanza with type->%s props->%s id->%s"%(name,typ,stanza.props,ID),'ok')
 
         list=['default']                                                     # we will use all handlers:
         if self.handlers[xmlns][name].has_key(typ): list.append(typ)                # from very common...
-        for prop in props:
+        for prop in stanza.props:
             if self.handlers[xmlns][name].has_key(prop): list.append(prop)
             if typ and self.handlers[xmlns][name].has_key(typ+prop): list.append(typ+prop)  # ...to very particular
 
