@@ -147,9 +147,16 @@ class TLS(PlugIn):
         PlugIn.PlugIn(self,owner)
         DBG_LINE='TLS'
         if now: return self._startSSL()
-        if self._owner.Dispatcher.Stream.features: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
+        if self._owner.Dispatcher.Stream.features:
+            try: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
+            except NodeProcessed: pass
         else: self._owner.RegisterHandlerOnce('features',self.FeaturesHandler,xmlns=NS_STREAMS)
         self.starttls=None
+
+    def plugout(self,owner,now=0):
+        self._owner.UnregisterHandler('features',self.FeaturesHandler,xmlns=NS_STREAMS)
+        self._owner.UnregisterHandlerOnce('proceed',self.StartTLSHandler,xmlns=NS_TLS)
+        self._owner.UnregisterHandlerOnce('failure',self.StartTLSHandler,xmlns=NS_TLS)
 
     def FeaturesHandler(self, conn, feats):
         if not feats.getTag('starttls',namespace=NS_TLS):
@@ -159,6 +166,7 @@ class TLS(PlugIn):
         self._owner.RegisterHandlerOnce('proceed',self.StartTLSHandler,xmlns=NS_TLS)
         self._owner.RegisterHandlerOnce('failure',self.StartTLSHandler,xmlns=NS_TLS)
         self._owner.Connection.send('<starttls xmlns="%s"/>'%NS_TLS)
+        raise NodeProcessed
 
     def _startSSL(self):
         tcpsock=self._owner.Connection
