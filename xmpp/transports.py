@@ -42,6 +42,9 @@ class TCPsocket:
         self._owner.disconnect=self.shutdown
         self._owner.RegisterDisconnectHandler(self.disconnected)
 
+    def getHost(self): return self._server[0]
+    def getPort(self): return self._server[1]
+
     def connect(self,server):
         try:
             self._sock.connect(server)
@@ -140,11 +143,13 @@ class HTTPPROXYsocket(TCPsocket):
 DBG_TLS='TLS'
 NS_TLS='urn:ietf:params:xml:ns:xmpp-tls'
 class TLS:
-    def PlugIn(self,owner):
+    def PlugIn(self,owner,now=0):
+        if owner.__dict__.has_key('TLS'): return  # Already enabled.
         self._owner=owner
         self._owner.debug_flags.append(DBG_TLS)
         self._owner.DEBUG(DBG_TLS,"Plugging into %s"%`owner`,'start')
         self._owner.TLS=self
+        if now: return self._startSSL()
         if self._owner.Dispatcher.Stream.features: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
         else: self._owner.RegisterHandlerOnce('features',self.FeaturesHandler)
         self.starttls=None
@@ -158,6 +163,14 @@ class TLS:
         self._owner.RegisterHandlerOnce('failure',self.StartTLSHandler)
         self._owner.Connection.send('<starttls xmlns="%s"/>'%NS_TLS)
 
+    def _startSSL(self):
+        tcpsock=self._owner.Connection
+        tcpsock._sslObj    = socket.ssl(tcpsock._sock, None, None)
+        tcpsock._sslIssuer = tcpsock._sslObj.issuer()
+        tcpsock._sslServer = tcpsock._sslObj.server()
+        tcpsock._recv = tcpsock._sslObj.read
+        tcpsock._send = tcpsock._sslObj.write
+
     def StartTLSHandler(self, conn, starttls):
         if starttls.getNamespace()<>NS_TLS: return
         self.starttls=starttls.getName()
@@ -165,12 +178,7 @@ class TLS:
             self._owner.DEBUG(DBG_TLS,"Got starttls responce: "+self.starttls,'error')
             return
         self._owner.DEBUG(DBG_TLS,"Got starttls proceed responce. Switching to SSL...",'ok')
-        tcpsock=self._owner.Connection
-        tcpsock._sslObj    = socket.ssl(tcpsock._sock, None, None)
-        tcpsock._sslIssuer = tcpsock._sslObj.issuer()
-        tcpsock._sslServer = tcpsock._sslObj.server()
-        tcpsock._recv = tcpsock._sslObj.read
-        tcpsock._send = tcpsock._sslObj.write
+        self._startSSL()
         self._owner.Dispatcher.PlugOut()
         dispatcher.Dispatcher().PlugIn(self._owner)
         self._owner.send_header()
