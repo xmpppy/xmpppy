@@ -17,7 +17,6 @@
 # $Id$
 
 import transports,dispatcher,debug,auth,roster
-from features import *
 
 Debug=debug
 Debug.DEBUGGING_IS_ON=1
