@@ -45,7 +45,7 @@ class Node:
         if parent: self.parent = parent
         if self.parent and not self.namespace: self.namespace=self.parent.namespace
         for attr in attrs.keys():
-            self.attrs[attr]=ustr(attrs[attr])
+            self.attrs[attr]=attrs[attr]
         if type(payload) in (type(''),type(u'')): payload=[payload]
         for i in payload:
             if type(i)==type(self): self.addChild(node=i)
@@ -63,7 +63,7 @@ class Node:
                     name=nsvoc[self.namespace]+':'+name
                     s=s[:-len(self.name)]+name
         for key in self.attrs.keys():
-            val = self.attrs[key]
+            val = ustr(self.attrs[key])
             s = s + ' %s="%s"' % ( key, XMLescape(val) )
         s = s + ">"
         cnt = 0 
@@ -135,7 +135,7 @@ class Node:
                 else: nodes.append(node)
             if one and nodes: return nodes[0]
         if not one: return nodes
-    def setAttr(self, key, val): self.attrs[key]=ustr(val)
+    def setAttr(self, key, val): self.attrs[key]=val
     def setData(self, data): self.data=[ustr(data)]
     def setName(self,val): self.name = val
     def setNamespace(self, namespace): self.namespace=namespace
@@ -149,8 +149,8 @@ class Node:
         if node: return node
         else: return self.addChild(name, attrs, namespace=namespace)
     def setTagAttr(self,tag,attr,val):
-        try: self.getTag(tag).attrs[attr]=ustr(val)
-        except: self.addChild(tag,attrs={attr:ustr(val)})
+        try: self.getTag(tag).attrs[attr]=val
+        except: self.addChild(tag,attrs={attr:val})
     def setTagData(self,tag,val,attrs={}):
         try: self.getTag(tag,attrs).setData(ustr(val))
         except: self.addChild(tag,attrs,payload=[ustr(val)])
