@@ -242,7 +242,7 @@ class ErrorNode(Node):
         if cod: self.setAttr('code',cod)
 
 class Error(Protocol):
-    def __init__(self,error,node,reply=0):
+    def __init__(self,node,error,reply=1):
         if reply: Protocol.__init__(self,to=node.getFrom(),frm=node.getTo(),node=node)
         else: Protocol.__init__(self,node=node)
         self.setError(error)
