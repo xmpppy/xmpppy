@@ -38,18 +38,21 @@ class Dispatcher(PlugIn):
     def dumpHandlers(self): return self.handlers
     def restoreHandlers(self,handlers): self.handlers=handlers
 
-    def plugin(self, owner):
+    def _init(self):
         self.RegisterProtocol('unknown',Protocol)
         self.RegisterProtocol('iq',Iq)
         self.RegisterProtocol('presence',Presence)
         self.RegisterProtocol('message',Message)
+        self.RegisterDefaultHandler(self.returnStanzaHandler)
+
+    def plugin(self, owner):
+        self._init()
         for method in self._old_owners_methods:
             if method.__name__=='send': self._owner_send=method; break
         self._owner.lastErrNode=None
         self._owner.lastErr=None
         self._owner.lastErrCode=None
         self.StreamInit()
-#        self.RegisterDefaultHandler(self.returnStanzaHandler)   # Unrem in 0.2
 
     def StreamInit(self):
         self.Stream=simplexml.NodeBuilder()
@@ -110,11 +113,12 @@ class Dispatcher(PlugIn):
     def Event(self,realm,event,data):
         if self._eventHandler: self._eventHandler(realm,event,data)
 
-    def dispatch(self,stanza):
-        self.Stream._mini_dom=None
+    def dispatch(self,stanza,session=None):
+        if not session: session=self
+        session.Stream._mini_dom=None
         name=stanza.getName()
 
-        if name=='features': self.Stream.features=stanza
+        if name=='features': session.Stream.features=stanza
 
         if not self.handlers.has_key(name):
             self.DEBUG("Unknown stanza: " + name,'warn')
@@ -129,7 +133,7 @@ class Dispatcher(PlugIn):
         props=stanza.getProperties()
         ID=stanza.getID()
 
-        self.DEBUG("Dispatching %s stanza with type->%s props->%s id->%s"%(name,typ,props,ID),'ok')
+        session.DEBUG("Dispatching %s stanza with type->%s props->%s id->%s"%(name,typ,props,ID),'ok')
 
         list=['default']                                                     # we will use all handlers:
         if self.handlers[name].has_key(typ): list.append(typ)                # from very common...
@@ -142,20 +146,20 @@ class Dispatcher(PlugIn):
             if key: chain += self.handlers[name][key]
 
         output=''
-        if self._expected.has_key(ID):
-            self._expected[ID]=stanza
+        if session._expected.has_key(ID):
+            session._expected[ID]=stanza
             user=0
-            self.DEBUG("Expected stanza arrived!",'ok')
+            sesion.DEBUG("Expected stanza arrived!",'ok')
         else: user=1
         for handler in chain:
             if user or handler['system']:
                 try:
-                    if handler['chain']: output=handler['func'](self,stanza,output)
-                    else: handler['func'](self,stanza)
+                    if handler['chain']: output=handler['func'](session,stanza,output)
+                    else: handler['func'](session,stanza)
                 except Exception, typ:
                     if typ.__class__.__name__<>'NodeProcessed': raise
                     user=0
-        if user and self._defaultHandler: self._defaultHandler(self,stanza)
+        if user and self._defaultHandler: self._defaultHandler(session,stanza)
 
     def WaitForResponse(self, ID, timeout=DefaultTimeout):
         self._expected[ID]=None
