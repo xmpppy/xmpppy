@@ -156,7 +156,7 @@ class Dispatcher:
             self._owner.lastErrNode=response
             self._owner.lastErr=response.getError()
             self._owner.lastErrCode=response.getErrorCode()
-        else: return response
+        return response
 
     def SendAndWaitForResponse(self, stanza, timeout=DefaultTimeout):
         return self.WaitForResponse(self.send(stanza),timeout)
@@ -169,6 +169,7 @@ class Dispatcher:
             ID+=1
             _ID=`ID`
             stanza.setID(_ID)
+        if self._owner._registered_name and not stanza.getAttr('from'): stanza.setAttr('from',self._owner._registered_name)
         self._owner_send(stanza)
         return _ID
 
