@@ -23,8 +23,8 @@ def _discover(disp,ns,jid,node=None,fb2b=0,fb2a=1):
     iq=Iq(to=jid,typ='get',queryNS=ns)
     if node: iq.setAttr('node',node)
     rep=disp.SendAndWaitForResponse(iq)
-    if fb2b and isErrorNode(rep): rep=disp.SendAndWaitForResponse(Iq(to=jid,typ='get',queryNS=NS_BROWSE))   # Fallback to browse
-    if fb2a and isErrorNode(rep): rep=disp.SendAndWaitForResponse(Iq(to=jid,typ='get',queryNS=NS_AGENTS))   # Fallback to agents
+    if fb2b and not isResultNode(rep): rep=disp.SendAndWaitForResponse(Iq(to=jid,typ='get',queryNS=NS_BROWSE))   # Fallback to browse
+    if fb2a and not isResultNode(rep): rep=disp.SendAndWaitForResponse(Iq(to=jid,typ='get',queryNS=NS_AGENTS))   # Fallback to agents
     if isResultNode(rep): return rep.getQueryPayload()
     return []
 
