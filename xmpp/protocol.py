@@ -25,6 +25,7 @@ NS_BROWSE       ='jabber:iq:browse'
 NS_CLIENT       ='jabber:client'
 NS_DATA         ='jabber:x:data'                                # JEP-0004
 NS_DELAY        ='jabber:x:delay'
+NS_DIALBACK     ='jabber:server:dialback'
 NS_DISCO_INFO   ='http://jabber.org/protocol/disco#info'
 NS_DISCO_ITEMS  ='http://jabber.org/protocol/disco#items'
 NS_GROUPCHAT    ='gc-1.0'
@@ -138,9 +139,9 @@ class JID:
             if jid.find('/')+1: self.domain,self.resource=jid.split('/',1)
             else: self.domain,self.resource=jid,''
     def getNode(self): return self.node
-    def setNode(self,node): self.node=node
+    def setNode(self,node): self.node=node.lower()
     def getDomain(self): return self.domain
-    def setDomain(self,domain): self.domain=domain
+    def setDomain(self,domain): self.domain=domain.lower()
     def getResource(self): return self.resource
     def setResource(self,resource): self.resource=resource
     def getStripped(self): return self.__str__(0)
@@ -154,7 +155,7 @@ class JID:
         if self.node: jid=self.node+'@'+self.domain
         else: jid=self.domain
         if wresource and self.resource: return jid+'/'+self.resource
-        return jid.lower()
+        return jid
     def __hash__(self): return hash(self.__str__())
 
 class Protocol(Node):
@@ -275,7 +276,8 @@ class ErrorNode(Node):
         if typ: type=typ
         if code: cod=code
         if text: txt=text
-        Node.__init__(self,'error',{'type':type},[Node(name)])
+        Node.__init__(self,'error',{},[Node(name)])
+        if type: self.setAttr('type',type)
         if not cod: self.setName('stream:error')
         if txt: self.addChild(node=Node(ns+' text',{},[txt]))
         if cod: self.setAttr('code',cod)
@@ -285,6 +287,8 @@ class Error(Protocol):
         if reply: Protocol.__init__(self,to=node.getFrom(),frm=node.getTo(),node=node)
         else: Protocol.__init__(self,node=node)
         self.setError(error)
+        if node.getType()=='error': self.__str__=self.__dupstr__
+    def __dupstr__(self,dup1=None,dup2=None): return ''
 
 class DataField(Node):
     def __init__(self,name=None,value=None,typ=None,required=0,desc=None,options=[],node=None):
