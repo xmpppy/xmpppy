@@ -1,5 +1,3 @@
-#!/usr/bin/python
-##
 ##   client.py
 ##
 ##   Copyright (C) 2003-2004 Alexey "Snake" Nezhdanov
