@@ -88,7 +88,7 @@ class CommonClient:
     def RegisterDisconnectHandler(self,handler):
         self.disconnect_handlers.append(handler)
 
-    def DeregisterDisconnectHandler(self,handler):
+    def UnregisterDisconnectHandler(self,handler):
         self.disconnect_handlers.remove(handler)
 
     def disconnected(self):
