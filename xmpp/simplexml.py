@@ -53,15 +53,11 @@ class Node:
         self.T=T(self)
         self.NT=NT(self)
 
-    def __str__(self,parent=None,fancy=0,nsvoc={}):
-        name=self.name
-        s = (fancy-1) * 2 * ' ' + "<" + name
+    def __str__(self,parent=None,fancy=0):
+        s = (fancy-1) * 2 * ' ' + "<" + self.name
         if self.namespace:
             if parent and parent.namespace!=self.namespace:
-                if self.namespace not in nsvoc.keys(): s = s + ' xmlns="%s"'%self.namespace
-                else:
-                    name=nsvoc[self.namespace]+':'+name
-                    s=s[:-len(self.name)]+name
+                s = s + ' xmlns="%s"'%self.namespace
         for key in self.attrs.keys():
             val = ustr(self.attrs[key])
             s = s + ' %s="%s"' % ( key, XMLescape(val) )
@@ -72,8 +68,8 @@ class Node:
             for a in self.kids:
                 if not fancy and (len(self.data)-1)>=cnt: s=s+XMLescape(self.data[cnt])
                 elif (len(self.data)-1)>=cnt: s=s+XMLescape(self.data[cnt].strip())
-                if fancy: s = s + a.__str__(self,fancy=fancy+1,nsvoc=nsvoc)
-                else: s = s + a.__str__(self,nsvoc=nsvoc)
+                if fancy: s = s + a.__str__(self,fancy=fancy+1)
+                else: s = s + a.__str__(self)
                 cnt=cnt+1
         if not fancy and (len(self.data)-1) >= cnt: s = s + XMLescape(self.data[cnt])
         elif (len(self.data)-1) >= cnt: s = s + XMLescape(self.data[cnt].strip())
@@ -82,7 +78,7 @@ class Node:
             if fancy: s = s + "\n"
         else:
             if fancy and not self.data: s = s + (fancy-1) * 2 * ' '
-            s = s + "</" + name + ">"
+            s = s + "</" + self.name + ">"
             if fancy: s = s + "\n"
         return s
     def addChild(self, name=None, attrs={}, payload=[], namespace=None, node=None):
