@@ -14,7 +14,7 @@
 
 # $Id$
 
-from simplexml import Node
+from simplexml import Node,ustr
 import time
 
 NS_AGENTS       ='jabber:iq:agents'
@@ -129,7 +129,8 @@ class JID:
     def setResource(self,resource): self.resource=resource
     def getStripped(self): return self.__str__(0)
     def __eq__(self, other):
-        other=JID(other)
+        try: other=JID(other)
+        except ValueError: return 0
         return self.resource==other.resource and self.__str__(0) == other.__str__(0)
     def __ne__(self, other): return not self.__eq__(other)
     def bareMatch(self, other): return self.__str__(0) == JID(other).__str__(0)
@@ -138,6 +139,7 @@ class JID:
         else: jid=self.domain
         if wresource and self.resource: return jid+'/'+self.resource
         return jid.lower()
+    def __hash__(self): return hash(self.__str__())
 
 class Protocol(Node):
     def __init__(self, name=None, to=None, typ=None, frm=None, attrs={}, payload=[], timestamp=None, node=None):
