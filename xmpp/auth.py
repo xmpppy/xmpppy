@@ -23,8 +23,6 @@ def HH(some): return md5.new(some).hexdigest()
 def H(some): return md5.new(some).digest()
 def C(some): return ':'.join(some)
 
-NS_AUTH="jabber:iq:auth"
-
 class NonSASL(PlugIn):
     def __init__(self,user,password,resource):
         PlugIn.__init__(self)
@@ -81,7 +79,6 @@ class NonSASL(PlugIn):
         if stanza.getName()=='handshake': self.handshake=1
         else: self.handshake=-1
 
-NS_SASL='urn:ietf:params:xml:ns:xmpp-sasl'
 class SASL(PlugIn):
     def __init__(self,username,password):
         PlugIn.__init__(self)
@@ -171,8 +168,6 @@ class SASL(PlugIn):
             self.DEBUG('Failed SASL authentification: unknown challenge','error')
             return
 
-NS_BIND='urn:ietf:params:xml:ns:xmpp-bind'
-NS_SESSION='urn:ietf:params:xml:ns:xmpp-session'
 class Bind(PlugIn):
     def __init__(self):
         PlugIn.__init__(self)

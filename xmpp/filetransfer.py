@@ -18,9 +18,6 @@ from protocol import *
 from dispatcher import NodeProcessed,PlugIn
 import base64
 
-NS_IBB        = "http://jabber.org/protocol/ibb"
-NS_AMP        = "http://jabber.org/protocol/amp"
-
 class IBB(PlugIn):
     def __init__(self):
         PlugIn.__init__(self)

@@ -16,30 +16,6 @@
 
 from protocol import *
 
-############### Namespaces that jabberd2 reports ################
-NS_AGENTS='jabber:iq:agents'
-NS_DATA='jabber:x:data'
-NS_DISCO='http://jabber.org/protocol/disco'
-NS_INVISIBLE='presence-invisible'
-NS_IQ='iq'
-NS_LAST='jabber:iq:last'
-NS_MESSAGE='message'
-NS_PRESENCE='presence'
-NS_PRIVACY='jabber:iq:privacy'
-NS_PRIVATE='jabber:iq:private'
-NS_REGISTER='jabber:iq:register'
-NS_ROSTER='jabber:iq:roster'
-NS_TIME='jabber:iq:time'
-NS_VACATION='http://jabber.org/protocol/vacation'
-NS_VCARD='vcard-temp'
-NS_VERSION='jabber:iq:version'
-
-NS_BROWSE='jabber:iq:browse'
-NS_DISCO_ITEMS=NS_DISCO+'#items'
-NS_DISCO_INFO=NS_DISCO+'#info'
-NS_GROUPCHAT='gc-1.0'
-NS_SEARCH='jabber:iq:search'
-
 ### DISCO ### http://jabber.org/protocol/disco ### JEP-0030 ####################
 ### Browse ### jabber:iq:browse ### JEP-0030 ###################################
 ### Agents ### jabber:iq:agents ### JEP-0030 ###################################

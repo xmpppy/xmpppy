@@ -14,7 +14,8 @@
 
 # $Id$
 
-import protocol,simplexml,time
+import simplexml,time
+from protocol import Protocol,Iq,Presence,Message
 from client import PlugIn
 
 DefaultTimeout=25
@@ -40,10 +41,10 @@ class Dispatcher(PlugIn):
     def restoreHandlers(self,handlers): self.handlers=handlers
 
     def plugin(self, owner):
-        self.RegisterProtocol('unknown',protocol.Protocol)
-        self.RegisterProtocol('iq',protocol.Iq)
-        self.RegisterProtocol('presence',protocol.Presence)
-        self.RegisterProtocol('message',protocol.Message)
+        self.RegisterProtocol('unknown',Protocol)
+        self.RegisterProtocol('iq',Iq)
+        self.RegisterProtocol('presence',Presence)
+        self.RegisterProtocol('message',Message)
         for method in self._old_owners_methods:
             if method.__name__=='send': self._owner_send=method; break
         self._owner.lastErrNode=None
@@ -79,7 +80,7 @@ class Dispatcher(PlugIn):
     def RegisterHandler(self,name,handler,typ='',ns='',chained=0, makefirst=0, system=0):
         self.DEBUG('Registering handler %s for "%s" type->%s ns->%s'%(handler,name,typ,ns), 'info')
         if not typ and not ns: typ='default'
-        if not self.handlers.has_key(name): self.RegisterProtocol(name,protocol.Protocol,'warn')
+        if not self.handlers.has_key(name): self.RegisterProtocol(name,Protocol,'warn')
         if not self.handlers[name].has_key(typ+ns): self.handlers[name][typ+ns]=[]
         if makefirst: self.handlers[name][typ+ns].insert({'chain':chained,'func':handler,'system':system})
         else: self.handlers[name][typ+ns].append({'chain':chained,'func':handler,'system':system})

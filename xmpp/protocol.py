@@ -17,9 +17,37 @@
 from simplexml import Node
 import time
 
-NS_DELAY   = 'jabber:x:delay'
-NS_DATA    = 'jabber:x:data'
-NS_STANZAS = 'urn:ietf:params:xml:ns:xmpp-stanzas'
+NS_AGENTS       ='jabber:iq:agents'
+NS_AMP          ='http://jabber.org/protocol/amp'
+NS_AUTH         ='jabber:iq:auth'
+NS_BIND         ='urn:ietf:params:xml:ns:xmpp-bind'
+NS_BROWSE       ='jabber:iq:browse'
+NS_DATA         ='jabber:x:data'                                # JEP-0004
+NS_DELAY        ='jabber:x:delay'
+NS_DISCO_INFO   ='http://jabber.org/protocol/disco#info'
+NS_DISCO_ITEMS  ='http://jabber.org/protocol/disco#items'
+NS_GROUPCHAT    ='gc-1.0'
+NS_IBB          ='http://jabber.org/protocol/ibb'
+NS_INVISIBLE    ='presence-invisible'                           # jabberd2
+NS_IQ           ='iq'                                           # jabberd2
+NS_LAST         ='jabber:iq:last'
+NS_MESSAGE      ='message'                                      # jabberd2
+NS_OFFLINE      ='http://www.jabber.org/jeps/jep-0030.html'     # JEP-0013   
+NS_PRESENCE     ='presence'                                     # jabberd2
+NS_PRIVACY      ='jabber:iq:privacy'
+NS_PRIVATE      ='jabber:iq:private'
+NS_REGISTER     ='jabber:iq:register'
+NS_ROSTER       ='jabber:iq:roster'
+NS_RPC          ='jabber:iq:rpc'                                # JEP-0009
+NS_SASL         ='urn:ietf:params:xml:ns:xmpp-sasl'
+NS_SEARCH       ='jabber:iq:search'
+NS_SESSION      ='urn:ietf:params:xml:ns:xmpp-session'
+NS_STANZAS      ='urn:ietf:params:xml:ns:xmpp-stanzas'
+NS_TIME         ='jabber:iq:time'
+NS_TLS          ='urn:ietf:params:xml:ns:xmpp-tls'
+NS_VACATION     ='http://jabber.org/protocol/vacation'
+NS_VCARD        ='vcard-temp'
+NS_VERSION      ='jabber:iq:version'
 
 xmpp_stream_error_conditions="""
 bad-format --  --  -- The entity has sent XML that cannot be processed.

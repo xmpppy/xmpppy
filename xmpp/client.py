@@ -169,7 +169,7 @@ class Client(CommonClient):
 
     def sendPresence(self,jid=None,typ=None,requestRoster=0):
         if requestRoster: roster.Roster().PlugIn(self)
-        self.send(dispatcher.protocol.Presence(to=jid, typ=typ))
+        self.send(dispatcher.Presence(to=jid, typ=typ))
 
 class Component(CommonClient):
     def auth(self,name,password,dup=None):

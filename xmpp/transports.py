@@ -17,6 +17,7 @@
 import socket,select,base64,dispatcher
 from simplexml import ustr
 from client import PlugIn
+from protocol import NS_TLS
 
 class error:
     def __init__(self,comment):
@@ -140,7 +141,6 @@ class HTTPPROXYsocket(TCPsocket):
     def DEBUG(self,text,severity):
         return self._owner.DEBUG(DBG_CONNECT_PROXY,text,severity)
 
-NS_TLS='urn:ietf:params:xml:ns:xmpp-tls'
 class TLS(PlugIn):
     def PlugIn(self,owner,now=0):
         if owner.__dict__.has_key('TLS'): return  # Already enabled.
