@@ -195,11 +195,13 @@ class Iq(Protocol):
     def getQueryNS(self):
         tag=self.getTag('query')
         if tag: return tag.getNamespace()
+    def getQuerynode(self): return self.getTagAttr('query','node')
     def getQueryPayload(self):
         tag=self.getTag('query')
         if tag: return tag.getPayload()
     def setQueryNS(self,namespace): self.setTag('query').setNamespace(namespace)
     def setQueryPayload(self,payload): self.setTag('query').setPayload(payload)
+    def setQuerynode(self,node): self.setTagAttr('query','node',node)
     def buildReply(self,typ): return Iq(typ,to=self.getFrom(),frm=self.getTo(),attrs={'id':self.getID()})
 
 class DataForm(Node):
