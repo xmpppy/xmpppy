@@ -135,7 +135,7 @@ class Dispatcher(PlugIn):
         if self.handlers[name].has_key(typ): list.append(typ)                # from very common...
         for prop in props:
             if self.handlers[name].has_key(prop): list.append(prop)
-            if self.handlers[name].has_key(typ+prop): list.append(typ+prop)  # ...to very particular
+            if typ and self.handlers[name].has_key(typ+prop): list.append(typ+prop)  # ...to very particular
 
         chain=[]
         for key in list:
