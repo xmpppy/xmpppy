@@ -76,6 +76,7 @@ class Client:
     def connect(self,server=None,proxy=None):
         if proxy: transports.HTTPPROXYsocket(proxy,server).PlugIn(self)
         else: transports.TCPsocket(server).PlugIn(self)
+        if self.Connection.getPort()==5223: transports.TLS().PlugIn(self,now=1)
         dispatcher.Dispatcher().PlugIn(self)
         self.send_header()
         transports.TLS().PlugIn(self)
@@ -91,6 +92,7 @@ class Client:
         while not self.Dispatcher.Stream._document_attrs and self.Process(): pass
         if self.Dispatcher.Stream._document_attrs.has_key('version') and self.Dispatcher.Stream._document_attrs['version']=='1.0':
             while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
+            while self.SASL.startsasl=='in-process' and self.Process(): pass
         if self.SASL.startsasl=='failure': auth.NonSASL(user,password,resource).PlugIn(self)
         else:
             auth.Bind().PlugIn(self)
