@@ -7,3 +7,4 @@ for m in ['simplexml','protocol','debug','auth','transports','roster','dispatche
         if var[:3]=='NS_': locals()[var]=md[var]
 
 from client import *
+from protocol import *
