@@ -67,16 +67,18 @@ class Node:
         if self.kids:
             if fancy: s = s + "\n"
             for a in self.kids:
-                if (len(self.data)-1) >= cnt: s = s + XMLescape(self.data[cnt])
+                if not fancy and (len(self.data)-1)>=cnt: s=s+XMLescape(self.data[cnt])
+                elif (len(self.data)-1)>=cnt: s=s+XMLescape(self.data[cnt].strip())
                 if fancy: s = s + a.__str__(self,fancy=fancy+1)
                 else: s = s + a.__str__(self)
                 cnt=cnt+1
-        if (len(self.data)-1) >= cnt: s = s + XMLescape(self.data[cnt])
+        if not fancy and (len(self.data)-1) >= cnt: s = s + XMLescape(self.data[cnt])
+        elif (len(self.data)-1) >= cnt: s = s + XMLescape(self.data[cnt].strip())
         if not self.kids and s[-1:]=='>':
             s=s[:-1]+' />'
             if fancy: s = s + "\n"
         else:
-            if not self.data: s = s + (fancy-1) * 2 * ' '
+            if fancy or not self.data: s = s + (fancy-1) * 2 * ' '
             s = s + "</" + self.name + ">"
             if fancy: s = s + "\n"
         return s
