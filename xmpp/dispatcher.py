@@ -98,7 +98,7 @@ class Dispatcher(PlugIn):
     def RegisterEventHandler(self,handler): self._eventHandler=handler
 
     def returnStanzaHandler(self,conn,stanza):
-        if stanza.getName()<>'presence':
+        if stanza.getName()<>'presence' and stanza.getType()<>'error':
             conn.send(Error(stanza,ERR_FEATURE_NOT_IMPLEMENTED))
 
     def RegisterCycleHandler(self,handler):
