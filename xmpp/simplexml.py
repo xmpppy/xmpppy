@@ -18,17 +18,7 @@ import xml.parsers.expat
 
 def XMLescape(txt):
     "Escape XML entities"
-    txt = txt.replace("&", "&amp;")
-    txt = txt.replace("<", "&lt;")
-    txt = txt.replace(">", "&gt;")
-    return txt
-
-def XMLunescape(txt):
-    "Unescape XML entities"
-    txt = txt.replace("&gt;", ">")
-    txt = txt.replace("&lt;", "<")
-    txt = txt.replace("&amp;", "&")
-    return txt
+    return txt.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
 ENCODING='utf-8'
 def ustr(what):
@@ -64,10 +54,10 @@ class Node:
         s = (fancy-1) * 2 * ' ' + "<" + self.name  
         if self.namespace:
             if parent and parent.namespace!=self.namespace:
-                s = s + " xmlns='%s'"%self.namespace
+                s = s + ' xmlns="%s"'%self.namespace
         for key in self.attrs.keys():
             val = self.attrs[key]
-            s = s + " %s='%s'" % ( key, XMLescape(val) )
+            s = s + ' %s="%s"' % ( key, XMLescape(val) )
         s = s + ">"
         cnt = 0 
         if self.kids:
