@@ -49,18 +49,18 @@ class Node:
         if parent: self.parent = parent
         if self.parent and not self.namespace: self.namespace=self.parent.namespace
         for attr in attrs.keys():
-            self.attrs[attr]=attrs[attr]
+            self.attrs[attr]=ustr(attrs[attr])
         if type(payload) in (type(''),type(u'')): payload=[payload]
         for i in payload:
             if type(i)==type(self): self.addChild(node=i)
-            else: self.data.append(i)
+            else: self.data.append(ustr(i))
     def __str__(self,parent=None,fancy=0):
         s = (fancy-1) * 2 * ' ' + "<" + self.name  
         if self.namespace:
             if parent and parent.namespace!=self.namespace:
                 s = s + " xmlns='%s'"%self.namespace
         for key in self.attrs.keys():
-            val = ustr(self.attrs[key])
+            val = self.attrs[key]
             s = s + " %s='%s'" % ( key, XMLescape(val) )
         s = s + ">"
         cnt = 0 
@@ -78,7 +78,7 @@ class Node:
             s=s[:-1]+' />'
             if fancy: s = s + "\n"
         else:
-            if fancy or not self.data: s = s + (fancy-1) * 2 * ' '
+            if fancy and not self.data: s = s + (fancy-1) * 2 * ' '
             s = s + "</" + self.name + ">"
             if fancy: s = s + "\n"
         return s
@@ -88,7 +88,7 @@ class Node:
         else: newnode=Node(tag=name, parent=self, attrs=attrs, payload=payload)
         self.kids.append(newnode)
         return newnode
-    def addData(self, data): self.data.append(data)
+    def addData(self, data): self.data.append(ustr(data))
     def clearData(self): self.data=[]
     def delAttr(self, key): del self.attrs[key]
     def delChild(self, node, attrs={}):
@@ -122,8 +122,8 @@ class Node:
                 else: nodes.append(node)
             if one and nodes: return nodes[0]
         if not one: return nodes
-    def setAttr(self, key, val): self.attrs[key]=val
-    def setData(self, data): self.data=[data]
+    def setAttr(self, key, val): self.attrs[key]=ustr(val)
+    def setData(self, data): self.data=[ustr(data)]
     def setName(self,val): self.name = val
     def setNamespace(self, namespace): self.namespace=namespace
     def setParent(self, node): self.parent = node
@@ -136,11 +136,11 @@ class Node:
         if node: return node
         else: return self.addChild(name, attrs, namespace=namespace)
     def setTagAttr(self,tag,attr,val):
-        try: self.getTag(tag).attrs[attr]=val
-        except: self.addChild(tag,attrs={attr:val})
+        try: self.getTag(tag).attrs[attr]=ustr(val)
+        except: self.addChild(tag,attrs={attr:ustr(val)})
     def setTagData(self,tag,val,attrs={}):
-        try: self.getTag(tag,attrs).setData(val)
-        except: self.addChild(tag,attrs,payload=[val])
+        try: self.getTag(tag,attrs).setData(ustr(val))
+        except: self.addChild(tag,attrs,payload=[ustr(val)])
 
 DBG_NODEBUILDER = 'nodebuilder'
 class NodeBuilder:
@@ -157,7 +157,7 @@ class NodeBuilder:
         self.__depth = 0
         self._dispatch_depth = 1
         self._document_attrs = None
-        
+
         if data: self._parser.Parse(data,1)
 
     def starttag(self, tag, attrs):
