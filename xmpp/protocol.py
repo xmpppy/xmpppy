@@ -300,12 +300,13 @@ class Error(Protocol):
 """
 class DataField(Node):
     def __init__(self,name,value,typ='text-single',required=0,desc=None,options=[]):
-        Node.__init__(self,'field',{'var':name},[Node('value',{},[value])])
+        Node.__init__(self,'field',{'var':name})
+        if type(value) in [list,tuple]: self.setValues(value)
+        else: self.setValue(value)
         self.setType(typ)
         if required: self.setRequired(required)
         if desc: self.setDesc(desc)
         if options: self.setOptions(options)
-        if label: self.setLabel(label)
     def setRequired(self,req=1):
         if req: self.setTag('required')
         else:
@@ -316,6 +317,14 @@ class DataField(Node):
     def getDesc(self): return self.getTagData('desc')
     def setValue(self,val): self.setTagData('value',val)
     def getValue(self): return self.getTagData('value')
+    def setValues(self,lst):
+        while self.getTag('value'): self.delChild('value')
+        for val in lst: self.addValue(val)
+    def addValue(self,val): self.addChild('value',{},[val])
+    def getValues(self):
+        ret=[]
+        for tag in self.getTags('value'): ret.append(tag.getData())
+        return ret
     def getOptions(self):
         ret=[]
         for tag in self.getTags('option'): ret.append([tag.getAttr('label'),tag.getTagData('value')])
