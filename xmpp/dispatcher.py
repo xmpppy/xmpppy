@@ -73,6 +73,7 @@ class Dispatcher:
         self.Stream.dispatch=self.dispatch
         self._owner.debug_flags.append(simplexml.DBG_NODEBUILDER)
         self.Stream.DEBUG=self._owner.DEBUG
+        self.Stream.features=None
 
     def Process(self, timeout=0):
         if self._owner.Connection.pending_data(timeout):
@@ -102,6 +103,9 @@ class Dispatcher:
 
     def dispatch(self,stanza):
         name=stanza.getName()
+
+        if name=='features': self.Stream.features=stanza
+
         if not self.handlers.has_key(name):
             self._owner.DEBUG(DBG_DISPATCHER, "Unknown stanza: " + name,'warn')
             name='unknown'

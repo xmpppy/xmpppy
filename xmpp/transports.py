@@ -145,7 +145,8 @@ class TLS:
         self._owner.debug_flags.append(DBG_TLS)
         self._owner.DEBUG(DBG_TLS,"Plugging into %s"%`owner`,'start')
         self._owner.TLS=self
-        self._owner.RegisterHandlerOnce('features',self.FeaturesHandler)
+        if self._owner.Dispatcher.Stream.features: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
+        else: self._owner.RegisterHandlerOnce('features',self.FeaturesHandler)
         self.starttls=None
 
     def FeaturesHandler(self, conn, feats):
