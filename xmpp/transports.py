@@ -17,7 +17,7 @@
 import socket,select,base64,dispatcher
 from simplexml import ustr
 from client import PlugIn
-from protocol import NS_TLS
+from protocol import *
 
 class error:
     def __init__(self,comment):
@@ -148,7 +148,7 @@ class TLS(PlugIn):
         DBG_LINE='TLS'
         if now: return self._startSSL()
         if self._owner.Dispatcher.Stream.features: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
-        else: self._owner.RegisterHandlerOnce('features',self.FeaturesHandler)
+        else: self._owner.RegisterHandlerOnce('features',self.FeaturesHandler,xmlns=NS_STREAMS)
         self.starttls=None
 
     def FeaturesHandler(self, conn, feats):
@@ -156,8 +156,8 @@ class TLS(PlugIn):
             self.DEBUG("TLS unsupported by remote server.",'warn')
             return
         self.DEBUG("TLS supported by remote server. Requesting TLS start.",'ok')
-        self._owner.RegisterHandlerOnce('proceed',self.StartTLSHandler)
-        self._owner.RegisterHandlerOnce('failure',self.StartTLSHandler)
+        self._owner.RegisterHandlerOnce('proceed',self.StartTLSHandler,xmlns=NS_TLS)
+        self._owner.RegisterHandlerOnce('failure',self.StartTLSHandler,xmlns=NS_TLS)
         self._owner.Connection.send('<starttls xmlns="%s"/>'%NS_TLS)
 
     def _startSSL(self):

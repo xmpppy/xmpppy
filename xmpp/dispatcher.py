@@ -39,7 +39,8 @@ class Dispatcher(PlugIn):
     def restoreHandlers(self,handlers): self.handlers=handlers
 
     def _init(self):
-        self.RegisterProtocol('unknown',Protocol)
+        self.RegisterNamespace('unknown')
+        self.RegisterNamespace(NS_CLIENT)
         self.RegisterProtocol('iq',Iq)
         self.RegisterProtocol('presence',Presence)
         self.RegisterProtocol('message',Message)
@@ -75,33 +76,39 @@ class Dispatcher(PlugIn):
             return len(data)
         return '0'	# It means that nothing is received but link is alive.
         
-    def RegisterProtocol(self,tag_name,Proto,order='info'):
-        self.DEBUG('Registering protocol "%s" as %s'%(tag_name,Proto), order)
-        self.handlers[tag_name]={type:Proto, 'default':[]}
+    def RegisterNamespace(self,xmlns,order='info'):
+        self.DEBUG('Registering namespace "%s"'%xmlns,order)
+        self.handlers[xmlns]={}
+        self.RegisterProtocol('unknown',Protocol,xmlns=xmlns)
 
-    def RegisterHandler(self,name,handler,typ='',ns='',chained=0, makefirst=0, system=0):
-        self.DEBUG('Registering handler %s for "%s" type->%s ns->%s'%(handler,name,typ,ns), 'info')
+    def RegisterProtocol(self,tag_name,Proto,xmlns=NS_CLIENT,order='info'):
+        self.DEBUG('Registering protocol "%s" as %s(%s)'%(tag_name,Proto,xmlns), order)
+        self.handlers[xmlns][tag_name]={type:Proto, 'default':[]}
+
+    def RegisterHandler(self,name,handler,typ='',ns='',xmlns=NS_CLIENT,chained=0, makefirst=0, system=0):
+        self.DEBUG('Registering handler %s for "%s" type->%s ns->%s(%s)'%(handler,name,typ,ns,xmlns), 'info')
         if not typ and not ns: typ='default'
-        if not self.handlers.has_key(name): self.RegisterProtocol(name,Protocol,'warn')
-        if not self.handlers[name].has_key(typ+ns): self.handlers[name][typ+ns]=[]
-        if makefirst: self.handlers[name][typ+ns].insert({'chain':chained,'func':handler,'system':system})
-        else: self.handlers[name][typ+ns].append({'chain':chained,'func':handler,'system':system})
+        if not self.handlers.has_key(xmlns): self.RegisterNamespace(xmlns,'warn')
+        if not self.handlers[xmlns].has_key(name): self.RegisterProtocol(name,Protocol,xmlns,'warn')
+        if not self.handlers[xmlns][name].has_key(typ+ns): self.handlers[xmlns][name][typ+ns]=[]
+        if makefirst: self.handlers[xmlns][name][typ+ns].insert({'chain':chained,'func':handler,'system':system})
+        else: self.handlers[xmlns][name][typ+ns].append({'chain':chained,'func':handler,'system':system})
 
-    def RegisterHandlerOnce(self,name,handler,typ='',ns='',chained=0, makefirst=0, system=0):
-        self.RegisterHandler(name,handler,typ,ns,chained, makefirst, system)
+    def RegisterHandlerOnce(self,name,handler,typ='',ns='',xmlns=NS_CLIENT,chained=0, makefirst=0, system=0):
+        self.RegisterHandler(name,handler,typ,ns,xmlns,chained, makefirst, system)
 
-    def UnregisterHandler(self,name,handler,typ='',ns=''):
+    def UnregisterHandler(self,name,handler,typ='',ns='',xmlns=NS_CLIENT):
         if not typ and not ns: typ='default'
-        for pack in self.handlers[name][typ+ns]:
+        for pack in self.handlers[xmlns][name][typ+ns]:
             if handler==pack['func']: break
         else: pack=None
-        self.handlers[name][typ+ns].remove(pack)
+        self.handlers[xmlns][name][typ+ns].remove(pack)
 
     def RegisterDefaultHandler(self,handler): self._defaultHandler=handler
     def RegisterEventHandler(self,handler): self._eventHandler=handler
 
     def returnStanzaHandler(self,conn,stanza):
-        if stanza.getName()<>'presence' and stanza.getType()<>'error':
+        if stanza.getType() in ['get','set']:
             conn.send(Error(stanza,ERR_FEATURE_NOT_IMPLEMENTED))
 
     def RegisterCycleHandler(self,handler):
@@ -120,13 +127,17 @@ class Dispatcher(PlugIn):
 
         if name=='features': session.Stream.features=stanza
 
-        if not self.handlers.has_key(name):
+        xmlns=stanza.getNamespace()
+        if not self.handlers.has_key(xmlns):
+            self.DEBUG("Unknown namespace: " + xmlns,'warn')
+            xmlns='unknown'
+        if not self.handlers[xmlns].has_key(name):
             self.DEBUG("Unknown stanza: " + name,'warn')
             name='unknown'
         else:
             self.DEBUG("Got %s stanza"%name, 'ok')
 
-        stanza=self.handlers[name][type](node=stanza)
+        stanza=self.handlers[xmlns][name][type](node=stanza)
 
         typ=stanza.getType()
         if not typ: typ=''
@@ -136,20 +147,20 @@ class Dispatcher(PlugIn):
         session.DEBUG("Dispatching %s stanza with type->%s props->%s id->%s"%(name,typ,props,ID),'ok')
 
         list=['default']                                                     # we will use all handlers:
-        if self.handlers[name].has_key(typ): list.append(typ)                # from very common...
+        if self.handlers[xmlns][name].has_key(typ): list.append(typ)                # from very common...
         for prop in props:
-            if self.handlers[name].has_key(prop): list.append(prop)
-            if typ and self.handlers[name].has_key(typ+prop): list.append(typ+prop)  # ...to very particular
+            if self.handlers[xmlns][name].has_key(prop): list.append(prop)
+            if typ and self.handlers[xmlns][name].has_key(typ+prop): list.append(typ+prop)  # ...to very particular
 
         chain=[]
         for key in list:
-            if key: chain += self.handlers[name][key]
+            if key: chain += self.handlers[xmlns][name][key]
 
         output=''
         if session._expected.has_key(ID):
             session._expected[ID]=stanza
             user=0
-            sesion.DEBUG("Expected stanza arrived!",'ok')
+            session.DEBUG("Expected stanza arrived!",'ok')
         else: user=1
         for handler in chain:
             if user or handler['system']:

@@ -89,7 +89,7 @@ class SASL(PlugIn):
 
     def plugin(self,owner):
         if self._owner.Dispatcher.Stream.features: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
-        else: self._owner.RegisterHandler('features',self.FeaturesHandler)
+        else: self._owner.RegisterHandler('features',self.FeaturesHandler,xmlns=NS_STREAMS)
 
     def FeaturesHandler(self,conn,feats):
         if not feats.getTag('mechanisms',namespace=NS_SASL):
@@ -99,9 +99,9 @@ class SASL(PlugIn):
         mecs=[]
         for mec in feats.getTag('mechanisms',namespace=NS_SASL).getTags('mechanism'):
             mecs.append(mec.getData())
-        self._owner.RegisterHandler('challenge',self.SASLHandler)
-        self._owner.RegisterHandler('failure',self.SASLHandler)
-        self._owner.RegisterHandler('success',self.SASLHandler)
+        self._owner.RegisterHandler('challenge',self.SASLHandler,xmlns=NS_SASL)
+        self._owner.RegisterHandler('failure',self.SASLHandler,xmlns=NS_SASL)
+        self._owner.RegisterHandler('success',self.SASLHandler,xmlns=NS_SASL)
         if "DIGEST-MD5" in mecs:
             node=Node('auth',attrs={'xmlns':NS_SASL,'mechanism':'DIGEST-MD5'})
         elif "PLAIN" in mecs:
@@ -176,7 +176,7 @@ class Bind(PlugIn):
 
     def plugin(self,owner):
         if self._owner.Dispatcher.Stream.features: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
-        else: self._owner.RegisterHandler('features',self.FeaturesHandler)
+        else: self._owner.RegisterHandler('features',self.FeaturesHandler,xmlns=NS_STREAMS)
 
     def FeaturesHandler(self,conn,feats):
         if not feats.getTag('bind',namespace=NS_BIND):
