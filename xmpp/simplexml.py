@@ -54,8 +54,8 @@ class Node:
         for i in payload:
             if type(i)==type(self): self.addChild(node=i)
             else: self.data.append(i)
-    def __str__(self,parent=None):
-        s = "<" + self.name  
+    def __str__(self,parent=None,fancy=0):
+        s = (fancy-1) * 2 * ' ' + "<" + self.name  
         if self.namespace:
             if parent and parent.namespace!=self.namespace:
                 s = s + " xmlns='%s'"%self.namespace
@@ -64,16 +64,21 @@ class Node:
             s = s + " %s='%s'" % ( key, XMLescape(val) )
         s = s + ">"
         cnt = 0 
-        if self.kids != None:
+        if self.kids:
+            if fancy: s = s + "\n"
             for a in self.kids:
                 if (len(self.data)-1) >= cnt: s = s + XMLescape(self.data[cnt])
-                s = s + a.__str__(self)
+                if fancy: s = s + a.__str__(self,fancy=fancy+1)
+                else: s = s + a.__str__(self)
                 cnt=cnt+1
         if (len(self.data)-1) >= cnt: s = s + XMLescape(self.data[cnt])
         if not self.kids and s[-1:]=='>':
             s=s[:-1]+' />'
+            if fancy: s = s + "\n"
         else:
+            if not self.data: s = s + (fancy-1) * 2 * ' '
             s = s + "</" + self.name + ">"
+            if fancy: s = s + "\n"
         return s
     def addChild(self, name=None, attrs={}, payload=[], namespace=None, node=None):
         if namespace: name=namespace+' '+name
