@@ -108,6 +108,7 @@ class JID:
         if wresource and self.resource: return jid+'/'+self.resource
         return jid.lower()
 
+gen_type=type
 class Protocol(Node):
     def __init__(self, name=None, to=None, type=None, frm=None, attrs={}, payload=[], timestamp=None, node=None):
         if not attrs: attrs={}
@@ -115,7 +116,7 @@ class Protocol(Node):
         if frm: attrs['from']=frm
         if type: attrs['type']=type
         Node.__init__(self, tag=name, attrs=attrs, payload=payload, node=node)
-        if node and self.__class__==node.__class__ and self.attrs.has_key('id'): del self.attrs['id']
+        if node and gen_type(self)==gen_type(node) and self.__class__==node.__class__ and self.attrs.has_key('id'): del self.attrs['id']
         self.timestamp=None
         for x in self.getTags('x',namespace=NS_DELAY):
             try:
@@ -154,7 +155,8 @@ class Protocol(Node):
     def getProperties(self):
         props=[]
         for child in self.getChildren():
-            if child.getNamespace()<>self.getNamespace(): props.append(child.getNamespace())
+            prop=child.getNamespace()
+            if prop not in props: props.append(prop)
         return props
 
 class Message(Protocol):
