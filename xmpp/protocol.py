@@ -1,6 +1,6 @@
 ##   protocol.py 
 ##
-##   Copyright (C) 2003-2004 Alexey "Snake" Nezhdanov
+##   Copyright (C) 2003-2005 Alexey "Snake" Nezhdanov
 ##
 ##   This program is free software; you can redistribute it and/or modify
 ##   it under the terms of the GNU General Public License as published by
@@ -40,6 +40,7 @@ NS_INVISIBLE    ='presence-invisible'                           # jabberd2
 NS_IQ           ='iq'                                           # jabberd2
 NS_LAST         ='jabber:iq:last'
 NS_MESSAGE      ='message'                                      # jabberd2
+NS_MUC          ='http://jabber.org/protocol/muc'
 NS_OFFLINE      ='http://www.jabber.org/jeps/jep-0030.html'     # JEP-0013   
 NS_PRESENCE     ='presence'                                     # jabberd2
 NS_PRIVACY      ='jabber:iq:privacy'
@@ -198,7 +199,7 @@ class JID:
 
 class Protocol(Node):
     """ A "stanza" object class. Contains methods that are common for presences, iqs and messages. """
-    def __init__(self, name=None, to=None, typ=None, frm=None, attrs={}, payload=[], timestamp=None, xmlns=NS_CLIENT, node=None):
+    def __init__(self, name=None, to=None, typ=None, frm=None, attrs={}, payload=[], timestamp=None, xmlns=None, node=None):
         """ Constructor, name is the name of the stanza i.e. 'message' or 'presence' or 'iq'.
             to is the value of 'to' attribure, 'typ' - 'type' attribute
             frn - from attribure, attrs - other attributes mapping, payload - same meaning as for simplexml payload definition
@@ -211,7 +212,7 @@ class Protocol(Node):
         if frm: attrs['from']=frm
         if typ: attrs['type']=typ
         Node.__init__(self, tag=name, attrs=attrs, payload=payload, node=node)
-        if not node: self.setNamespace(xmlns)
+        if not node and xmlns: self.setNamespace(xmlns)
         if self['to']: self.setTo(self['to'])
         if self['from']: self.setFrom(self['from'])
         if node and type(self)==type(node) and self.__class__==node.__class__ and self.attrs.has_key('id'): del self.attrs['id']

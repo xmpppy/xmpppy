@@ -1,6 +1,6 @@
 ##   transports.py
 ##
-##   Copyright (C) 2003-2004 Alexey "Snake" Nezhdanov
+##   Copyright (C) 2003-2005 Alexey "Snake" Nezhdanov
 ##
 ##   This program is free software; you can redistribute it and/or modify
 ##   it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ class Dispatcher(PlugIn):
     def _init(self):
         self.RegisterNamespace('unknown')
         self.RegisterNamespace(NS_STREAMS)
-        self.RegisterNamespace(self._owner.Namespace)
+        self.RegisterNamespace(self._owner.defaultNamespace)
         self.RegisterProtocol('iq',Iq)
         self.RegisterProtocol('presence',Presence)
         self.RegisterProtocol('message',Message)
@@ -86,7 +86,12 @@ class Dispatcher(PlugIn):
         self._owner.debug_flags.append(simplexml.DBG_NODEBUILDER)
         self.Stream.DEBUG=self._owner.DEBUG
         self.Stream.features=None
-        self._owner.send("<?xml version='1.0'?><stream:stream version='1.0' xmlns:stream='http://etherx.jabber.org/streams' to='%s' xmlns='%s'>"%(self._owner.Server,self._owner.Namespace))
+        self._metastream=Node('stream:stream')
+        self._metastream.setNamespace(self._owner.Namespace)
+        self._metastream.setAttr('version','1.0')
+        self._metastream.setAttr('xmlns:stream',NS_STREAMS)
+        self._metastream.setAttr('to',self._owner.Server)
+        self._owner.send("<?xml version='1.0'?>%s>"%str(self._metastream)[:-2])
 
     def Process(self, timeout=0):
         """ Check incoming stream for data waiting. If "timeout" is positive - block for as max. this time.
@@ -114,7 +119,7 @@ class Dispatcher(PlugIn):
         """ Used to declare some top-level stanza name to dispatcher.
            Needed to start registering handlers for such stanzas.
            Iq, message and presence protocols are registered by default. """
-        if not xmlns: xmlns=self._owner.Namespace
+        if not xmlns: xmlns=self._owner.defaultNamespace
         self.DEBUG('Registering protocol "%s" as %s(%s)'%(tag_name,Proto,xmlns), order)
         self.handlers[xmlns][tag_name]={type:Proto, 'default':[]}
 
@@ -140,7 +145,7 @@ class Dispatcher(PlugIn):
                 will be called first nevertheless.
               "system" - call handler even if NodeProcessed Exception were raised already.
             """
-        if not xmlns: xmlns=self._owner.Namespace
+        if not xmlns: xmlns=self._owner.defaultNamespace
         self.DEBUG('Registering handler %s for "%s" type->%s ns->%s(%s)'%(handler,name,typ,ns,xmlns), 'info')
         if not typ and not ns: typ='default'
         if not self.handlers.has_key(xmlns): self.RegisterNamespace(xmlns,'warn')
@@ -151,12 +156,12 @@ class Dispatcher(PlugIn):
 
     def RegisterHandlerOnce(self,name,handler,typ='',ns='',xmlns=None,makefirst=0, system=0):
         """ Unregister handler after first call (not implemented yet). """
-        if not xmlns: xmlns=self._owner.Namespace
+        if not xmlns: xmlns=self._owner.defaultNamespace
         self.RegisterHandler(name, handler, typ, ns, xmlns, makefirst, system)
 
     def UnregisterHandler(self,name,handler,typ='',ns='',xmlns=None):
         """ Unregister handler. "typ" and "ns" must be specified exactly the same as with registering."""
-        if not xmlns: xmlns=self._owner.Namespace
+        if not xmlns: xmlns=self._owner.defaultNamespace
         if not typ and not ns: typ='default'
         for pack in self.handlers[xmlns][name][typ+ns]:
             if handler==pack['func']: break
@@ -278,13 +283,15 @@ class Dispatcher(PlugIn):
         """ Serialise stanza and put it on the wire. Assign an unique ID to it before send.
             Returns assigned ID."""
         if type(stanza) in [type(''), type(u'')]: return self._owner_send(stanza)
-        _ID=stanza.getID()
-        if not _ID:
+        if not isinstance(stanza,Protocol): _ID=None
+        elif not stanza.getID():
             global ID
             ID+=1
             _ID=`ID`
             stanza.setID(_ID)
+        else: _ID=stanza.getID()
         if self._owner._registered_name and not stanza.getAttr('from'): stanza.setAttr('from',self._owner._registered_name)
+        stanza.setParent(self._metastream)
         self._owner_send(stanza)
         return _ID
 

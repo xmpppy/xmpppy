@@ -1,6 +1,6 @@
 ##   client.py
 ##
-##   Copyright (C) 2003-2004 Alexey "Snake" Nezhdanov
+##   Copyright (C) 2003-2005 Alexey "Snake" Nezhdanov
 ##
 ##   This program is free software; you can redistribute it and/or modify
 ##   it under the terms of the GNU General Public License as published by
@@ -94,6 +94,7 @@ class CommonClient:
              'CONNECTproxy', 'TLS', 'roster', 'browser', 'ibb'] . """
         if self.__class__.__name__=='Client': self.Namespace,self.DBG='jabber:client',DBG_CLIENT
         elif self.__class__.__name__=='Component': self.Namespace,self.DBG=dispatcher.NS_COMPONENT_ACCEPT,DBG_COMPONENT
+        self.defaultNamespace=self.Namespace
         self.disconnect_handlers=[]
         self.Server=server
         self.Port=port
@@ -221,6 +222,14 @@ class Client(CommonClient):
 
 class Component(CommonClient):
     """ Component class. The only difference from CommonClient is ability to perform component authentication. """
+    def __init__(self,server,port=5222,typ='jabberd14',debug=['always', 'nodebuilder']):
+        """ Init function for Components. 
+            As components use a different auth mechanism which includes the namespace of the component.
+            Jabberd1.4 and Ejabberd use the default namespace then for all client messages.
+            Jabberd2 uses jabber:client."""
+        CommonClient.__init__(self,server,port=port,debug=debug)
+        if typ == 'jabberd2': self.defaultNamespace=auth.NS_CLIENT
+    
     def auth(self,name,password,dup=None):
         """ Authenticate component "name" with password "password"."""
         self._User,self._Password,self._Resource=name,password,''

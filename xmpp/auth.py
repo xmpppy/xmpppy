@@ -1,6 +1,6 @@
 ##   auth.py
 ##
-##   Copyright (C) 2003-2004 Alexey "Snake" Nezhdanov
+##   Copyright (C) 2003-2005 Alexey "Snake" Nezhdanov
 ##
 ##   This program is free software; you can redistribute it and/or modify
 ##   it under the terms of the GNU General Public License as published by
@@ -81,7 +81,7 @@ class NonSASL(PlugIn):
     def authComponent(self,owner):
         """ Authenticate component. Send handshake stanza and wait for result. Returns "ok" on success. """
         self.handshake=0
-        owner.send(Protocol('handshake',payload=[sha.new(owner.Dispatcher.Stream._document_attrs['id']+self.password).hexdigest()]))
+        owner.send(Node(NS_COMPONENT_ACCEPT+' handshake',payload=[sha.new(owner.Dispatcher.Stream._document_attrs['id']+self.password).hexdigest()]))
         owner.RegisterHandler('handshake',self.handshakeHandler,xmlns=NS_COMPONENT_ACCEPT)
         while not self.handshake:
             self.DEBUG("waiting on handshake",'notify')
