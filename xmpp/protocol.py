@@ -141,11 +141,11 @@ class Protocol(Node):
             if tag.getName()<>'text': return tag.getName()
         return self.getTagData('error')
     def getErrorCode(self): return self.getTagAttr('error','code')
-    def setError(self,code,comment=''):
-        if type(code) in [type(''),type(u'')]:
-            if code in _errorcodes.keys(): error=Error(_errorcodes[code],code=code,text=comment)
-            else: error=Error(ERR_UNDEFINED_CONDITION,code=code,type='cancel',text=comment)
-        else: error=code
+    def setError(self,error,code=None):
+        if code:
+            if str(code) in _errorcodes.keys(): error=ErrorNode(_errorcodes[str(code)],text=error)
+            else: error=ErrorNode(ERR_UNDEFINED_CONDITION,code=code,type='cancel',text=error)
+        elif type(error) in [type(''),type(u'')]: error=ErrorNode(error)
         self.setType('error')
         self.addChild(node=error)
     def setTimestamp(self,val=None):
@@ -228,22 +228,21 @@ class DataForm(Node):
     def setFromDict(self,dict):
         for i in dict.keys(): self.setField(i,dict[i])
 
-class Error(Node):
-    def __init__(self,name,**argv):
+class ErrorNode(Node):
+    def __init__(self,name,code=None,typ=None,text=None):
         """ Mandatory parameter: name
-            Optional parameters: code, type, text, baze_stanza.
-            baze_stanza is a node that will got error tag incorporated"""
-        if ERRORS.has_key(name): code,type,text=ERRORS[name]
-        else: code,type,text='','cancel',''
-        if argv.has_key('type'): type=argv['type']
-        if argv.has_key('code'): code=argv['code']
-        if argv.has_key('text'): text=argv['text']
+            Optional parameters: code, typ, text."""
+        if ERRORS.has_key(name): cod,type,txt=ERRORS[name]
+        else: cod,type,txt='','cancel',''
+        if typ: type=typ
+        if code: cod=code
+        if text: txt=text
         Node.__init__(self,'error',{'type':type},[Node(NS_STANZAS+' '+name)])
-        if text: self.addChild(node=Node(NS_STANZAS+' text',{},[text]))
-        if code: self.setAttr('code',code)
-        if argv.has_key('base_stanza'):
-            base=argv['base_stanza']
-            frm,to=base.getAttr('from'),base.getAttr('to')
-            if frm: base.setTo(frm)
-            if to: base.setFrom(to)
-            base.setError(self)
+        if txt: self.addChild(node=Node(NS_STANZAS+' text',{},[txt]))
+        if cod: self.setAttr('code',cod)
+
+class Error(Protocol):
+    def __init__(self,error,node,reply=0):
+        if reply: Protocol.__init__(self,to=node.getFrom(),frm=node.getTo(),node=node)
+        else: Protocol.__init__(self,node=node)
+        self.setError(error)

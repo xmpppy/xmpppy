@@ -158,5 +158,4 @@ def delPrivacyList(disp,listname):
 
 ### Return of rejected stanza ##################################################
 def returnStanzaHandler(conn,stanza):
-    Error(ERR_FEATURE_NOT_IMPLEMENTED,base_stanza=stanza)
-    conn.send(stanza)
+    conn.send(Error(ERR_FEATURE_NOT_IMPLEMENTED,stanza,reply=1))
