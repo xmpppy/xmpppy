@@ -38,7 +38,7 @@ class NonSASL:
         if not self.resource: return self.authComponent(owner)
         owner.DEBUG(DBG_AUTH,'Querying server about possible auth methods','start')
         resp=owner.Dispatcher.SendAndWaitForResponse(Iq('get',NS_AUTH,payload=[Node('username',payload=[self.user])]))
-        if not resultNode(resp):
+        if not isResultNode(resp):
             owner.DEBUG(DBG_AUTH,'No result node arrived! Aborting...','error')
             return
         iq=Iq(type='set',node=resp)
@@ -60,7 +60,7 @@ class NonSASL:
             owner.DEBUG(DBG_AUTH,"Sequre methods unsupported, performing plain text authentication",'warn')
             query.setTagData('password',self.password)
         resp=owner.Dispatcher.SendAndWaitForResponse(iq)
-        if resultNode(resp):
+        if isResultNode(resp):
             owner.DEBUG(DBG_AUTH,'Sucessfully authenticated with remove host.','ok')
             owner.User=self.user
             owner.Resource=self.resource
@@ -204,11 +204,11 @@ class Bind:
         if resource: resource=[Node('resource',payload=[resource])]
         else: resource=[]
         resp=self._owner.SendAndWaitForResponse(Protocol('iq',type='set',payload=[Node('bind',attrs={'xmlns':NS_BIND},payload=resource)]))
-        if resultNode(resp):
+        if isResultNode(resp):
             self.bound.append(resp.getTag('bind').getTagData('jid'))
             self._owner.DEBUG(DBG_BIND,'Successfully bound %s.'%self.bound[-1],'ok')
             resp=self._owner.SendAndWaitForResponse(Protocol('iq',type='set',payload=[Node('session',attrs={'xmlns':NS_SESSION})]))
-            if resultNode(resp):
+            if isResultNode(resp):
                 self._owner.DEBUG(DBG_BIND,'Successfully opened session.','ok')
                 return 'ok'
             else:

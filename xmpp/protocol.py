@@ -20,8 +20,8 @@ import time
 NS_DELAY='jabber:x:delay'
 NS_DATA ='jabber:x:data'
 
-def resultNode(node): return node and node.getType()=='result'
-def errorNode(node): return node and node.getType()=='error'
+def isResultNode(node): return node and node.getType()=='result'
+def isErrorNode(node): return node and node.getType()=='error'
 
 class JID:
     def __init__(self, jid, node='', domain='', resource=''):

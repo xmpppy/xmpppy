@@ -47,9 +47,9 @@ def _discover(disp,ns,jid,node=None,fb2b=0,fb2a=1):
     iq=Iq(to=jid,type='get',queryNS=ns)
     if node: iq.setAttr('node',node)
     rep=disp.SendAndWaitForResponse(iq)
-    if fb2b and errorNode(rep): rep=disp.SendAndWaitForResponse(Iq(to=jid,type='get',queryNS=NS_BROWSE))   # Fallback to browse
-    if fb2a and errorNode(rep): rep=disp.SendAndWaitForResponse(Iq(to=jid,type='get',queryNS=NS_AGENTS))   # Fallback to agents
-    if resultNode(rep): return rep.getQueryPayload()
+    if fb2b and isErrorNode(rep): rep=disp.SendAndWaitForResponse(Iq(to=jid,type='get',queryNS=NS_BROWSE))   # Fallback to browse
+    if fb2a and isErrorNode(rep): rep=disp.SendAndWaitForResponse(Iq(to=jid,type='get',queryNS=NS_AGENTS))   # Fallback to agents
+    if isResultNode(rep): return rep.getQueryPayload()
     return []
 
 def discoverItems(disp,jid,node=None):
@@ -86,7 +86,7 @@ def getRegInfo(disp,jid,info={}):
     iq=Iq('get',NS_REGISTER,to=jid)
     for i in info.keys(): iq.setTagData(i,info[i])
     resp=disp.SendAndWaitForResponse(iq)
-    if not resultNode(rep): return
+    if not isResultNode(rep): return
     df=resp.getTag('query',namespace=NS_REGISTER).getTag('x',namespace=NS_DATA)
     if df: return DataForm(node=df)
     df=DataForm(NS_DATA+' x',{'type':'form'})
@@ -100,15 +100,15 @@ def register(disp,jid,info):
     if type(info)<>type({}): info=info.asDict()
     for i in info.keys(): iq.setTag('query').setTagData(i,info[i])
     resp=disp.SendAndWaitForResponse(iq)
-    if resultNode(resp): return 1
+    if isResultNode(resp): return 1
 
 def unregister(disp,jid):
     resp=disp.SendAndWaitForResponse(Iq('set',NS_REGISTER,to=jid,payload=[Node('remove')]))
-    if resultNode(resp): return 1
+    if isResultNode(resp): return 1
 
 def changePasswordTo(disp,newpassword):
     resp=disp.SendAndWaitForResponse(Iq('set',NS_REGISTER,to=disp._owner.Server,payload=[Node('username',payload=[disp._owner.Server]),Node('password',payload=[newpassword])]))
-    if resultNode(resp): return 1
+    if isResultNode(resp): return 1
 
 ### Privacy ### jabber:iq:privacy ### draft-ietf-xmpp-im-19 ####################
 #type=[jid|group|subscription]
@@ -118,7 +118,7 @@ def getPrivacyLists(disp):
     try:
         dict={'lists':[]}
         resp=disp.SendAndWaitForResponse(Iq('get',NS_PRIVACY))
-        if not resultNode(resp): return
+        if not isResultNode(resp): return
         for list in resp.getQueryPayload():
             if list.getName()=='list': dict['lists'].append(list.getAttr('name'))
             else: dict[list.getName()]=list.getAttr('name')
@@ -128,21 +128,21 @@ def getPrivacyLists(disp):
 def getPrivacyList(disp,listname):
     try:
         resp=disp.SendAndWaitForResponse(Iq('get',NS_PRIVACY,payload=[Node('list',{'name':listname})]))
-        if resultNode(resp): return resp.getQueryPayload()[0]
+        if isResultNode(resp): return resp.getQueryPayload()[0]
     except: pass
 
 def setActivePrivacyList(disp,listname=None,type='active'):
     if listname: attrs={'name':listname}
     else: attrs={}
     resp=disp.SendAndWaitForResponse(Iq('set',NS_PRIVACY,payload=[Node(type,attrs)]))
-    if resultNode(resp): return 1
+    if isResultNode(resp): return 1
 
 def setDefaultPrivacyList(disp,listname=None): return setActivePrivacyList(disp,listname,'default')
 
 def setPrivacyList(disp,payload):
     resp=disp.SendAndWaitForResponse(Iq('set',NS_PRIVACY,payload=[payload]))
-    if resultNode(resp): return 1
+    if isResultNode(resp): return 1
 
 def delPrivacyList(disp,listname):
     resp=disp.SendAndWaitForResponse(Iq('set',NS_PRIVACY,payload=[Node('list',{'name':listname})]))
-    if resultNode(resp): return 1
+    if isResultNode(resp): return 1
