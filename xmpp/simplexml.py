@@ -1,6 +1,6 @@
 ##   simplexml.py based on Mattew Allum's xmlstream.py
 ##
-##   Copyright (C) 2003-2004 Alexey "Snake" Nezhdanov
+##   Copyright (C) 2003-2005 Alexey "Snake" Nezhdanov
 ##
 ##   This program is free software; you can redistribute it and/or modify
 ##   it under the terms of the GNU General Public License as published by
@@ -78,13 +78,12 @@ class Node:
         self.T=T(self)
         self.NT=NT(self)
 
-    def __str__(self,parent=None,fancy=0):
+    def __str__(self,fancy=0):
         s = (fancy-1) * 2 * ' ' + "<" + self.name
-        """ Method used to dump node into textual representation. "parent" argument used internally
-            to track namespaces within a tree. "fancy" argument, if set to True value forces
-            indentation usage for readability."""
+        """ Method used to dump node into textual representation.
+            if "fancy" argument is set to True produces indented output for readability."""
         if self.namespace:
-            if parent and parent.namespace!=self.namespace:
+            if not self.parent or self.parent.namespace!=self.namespace:
                 s = s + ' xmlns="%s"'%self.namespace
         for key in self.attrs.keys():
             val = ustr(self.attrs[key])
@@ -96,8 +95,7 @@ class Node:
             for a in self.kids:
                 if not fancy and (len(self.data)-1)>=cnt: s=s+XMLescape(self.data[cnt])
                 elif (len(self.data)-1)>=cnt: s=s+XMLescape(self.data[cnt].strip())
-                if fancy: s = s + a.__str__(self,fancy=fancy+1)
-                else: s = s + a.__str__(self)
+                s = s + a.__str__(fancy and fancy+1)
                 cnt=cnt+1
         if not fancy and (len(self.data)-1) >= cnt: s = s + XMLescape(self.data[cnt])
         elif (len(self.data)-1) >= cnt: s = s + XMLescape(self.data[cnt].strip())
