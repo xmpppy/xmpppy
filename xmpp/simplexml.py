@@ -51,7 +51,7 @@ class Node:
                 for kid  in node.kids: self.kids.append(kid)
         else: self.name,self.namespace,self.attrs,self.data,self.kids,self.parent = 'tag','',{},[],[],None
 
-        if tag: self.namespace, self.name = (['']+tag.split())[-2:]
+        if tag: self.namespace, self.name = ([self.namespace]+tag.split())[-2:]
         if parent: self.parent = parent
         if self.parent and not self.namespace: self.namespace=self.parent.namespace
         for attr in attrs.keys():
@@ -173,7 +173,7 @@ class NodeBuilder:
         self.DEBUG(DBG_NODEBUILDER, "DEPTH -> %i , tag -> %s, attrs -> %s" % (self.__depth, tag, `attrs`), 'down')
         if self.__depth == self._dispatch_depth:
             if not self._mini_dom : self._mini_dom = Node(tag=tag, attrs=attrs)
-            else: self._mini_dom.__init__(tag=tag, attrs=attrs)
+            else: Node.__init__(self._mini_dom,tag=tag, attrs=attrs)
             self._ptr = self._mini_dom
         elif self.__depth > self._dispatch_depth:
             self._ptr.kids.append(Node(tag=tag,parent=self._ptr,attrs=attrs))
