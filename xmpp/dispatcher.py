@@ -25,7 +25,10 @@ class Dispatcher:
     def __init__(self):
         self.handlers={}
         self._expected={}
-        
+
+    def dumpHandlers(self): return self.handlers
+    def restoreHandlers(self,handlers): self.handlers=handlers
+
     def PlugIn(self, owner):
         self._owner=owner
         self._owner.debug_flags.append(DBG_DISPATCHER)

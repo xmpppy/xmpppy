@@ -28,7 +28,6 @@ DBG_SOCKET='socket'
 class TCPsocket:
     """Must be plugged into some object to work properly"""
     def __init__(self, server=None):
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server = server
 
     def PlugIn(self, owner):
@@ -46,8 +45,10 @@ class TCPsocket:
     def getHost(self): return self._server[0]
     def getPort(self): return self._server[1]
 
-    def connect(self,server):
+    def connect(self,server=None):
         try:
+            if not server: server=self._server
+            self._sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._sock.connect(server)
             self._send=self._sock.sendall
             self._recv=self._sock.recv
@@ -116,7 +117,7 @@ class HTTPPROXYsocket(TCPsocket):
         owner.debug_flags.append(DBG_CONNECT_PROXY)
         return TCPsocket.PlugIn(self,owner)
 
-    def connect(self,dupe):
+    def connect(self,dupe=None):
         if not TCPsocket.connect(self,(self._proxy['host'],self._proxy['port'])): return
         self._owner.DEBUG(DBG_CONNECT_PROXY,"Proxy server contacted, performing authentification",'start')
         connector = ['CONNECT %s:%s HTTP/1.0'%self._server,
