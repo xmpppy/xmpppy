@@ -107,7 +107,7 @@ class Client:
         self.send(dispatcher.protocol.Presence(to=jid, type=type))
 
 class Component:
-    def __init__(self,server,port,debug=['always', 'nodebuilder']):
+    def __init__(self,server,port=5222,debug=['always', 'nodebuilder']):
         self.disconnect_handlers=[]
         self.Namespace='jabber:component:accept'
         self.Server=server
@@ -138,3 +138,9 @@ class Component:
 
     def auth(self,name,password):
         auth.NonSASL(name,password,'').PlugIn(self)
+
+    def disconnected(self):
+        self.DEBUG(DBG_COMPONENT,'Disconnect detected','stop')
+        self.disconnect_handlers.reverse()
+        for i in self.disconnect_handlers: i()
+        self.disconnect_handlers.reverse()
