@@ -65,7 +65,7 @@ class NonSASL:
             owner.User=self.user
             owner.Resource=self.resource
             owner._registered_name=owner.User+'@'+owner.Server+'/'+owner.Resource
-            return 1
+            return 'ok'
         owner.DEBUG(DBG_AUTH,'Authentication failed!','error')
 
     def authComponent(self,owner):
@@ -76,7 +76,7 @@ class NonSASL:
             owner.DEBUG(DBG_AUTH,"waiting on handshake",'notify')
             owner.Process(1)
         owner._registered_name=self.user
-        return self.handshake+1
+        if self.handshake+1: return 'ok'
 
     def handshakeHandler(self,disp,stanza):
         if stanza.getName()=='handshake': self.handshake=1
@@ -209,9 +209,13 @@ class Bind:
             self.bound.append(resp.getTag('bind').getTagData('jid'))
             self._owner.DEBUG(DBG_BIND,'Successfully bound %s.'%self.bound[-1],'ok')
             resp=self._owner.SendAndWaitForResponse(Protocol('iq',type='set',payload=[Node('session',attrs={'xmlns':NS_SESSION})]))
-            if resultNode(resp): self._owner.DEBUG(DBG_BIND,'Successfully opened session.','ok')
+            if resultNode(resp):
+                self._owner.DEBUG(DBG_BIND,'Successfully opened session.','ok')
+                return 'ok'
             else:
                 self._owner.DEBUG(DBG_BIND,'Session open failed.','error')
                 self.session=0
         elif resp: self._owner.DEBUG(DBG_BIND,'Binding failed: %s.'%resp.getTag('error'),'error')
-        else: self._owner.DEBUG(DBG_BIND,'Binding failed: timeout expired.','error')
+        else:
+            self._owner.DEBUG(DBG_BIND,'Binding failed: timeout expired.','error')
+            return ''

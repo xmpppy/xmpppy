@@ -74,8 +74,9 @@ class Client:
         print "Event: ",(eventName,args)
 
     def connect(self,server=None,proxy=None):
-        if proxy: transports.HTTPPROXYsocket(proxy,server).PlugIn(self)
-        else: transports.TCPsocket(server).PlugIn(self)
+        if proxy: connected=transports.HTTPPROXYsocket(proxy,server).PlugIn(self)
+        else: connected=transports.TCPsocket(server).PlugIn(self)
+        if not connected: return
         if self.Connection.getPort()==5223: transports.TLS().PlugIn(self,now=1)
         dispatcher.Dispatcher().PlugIn(self)
         self.send_header()
@@ -85,7 +86,8 @@ class Client:
         while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
         if not self.Dispatcher.Stream.features.getTag('starttls'): return       # TLS not supported by server
         while not self.TLS.starttls and self.Process(): pass
-        if self.TLS.starttls<>'proceed': self.event('tls_failed')
+        if self.TLS.starttls<>'proceed': self.event('tls_failed'); return 'tls failed'
+        return 'ok'
 
     def auth(self,user,password,resource='xmpppy'):
         auth.SASL(user,password).PlugIn(self)
@@ -94,11 +96,11 @@ class Client:
             while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
             while self.SASL.startsasl=='in-process' and self.Process(): pass
         else: self.SASL.startsasl='failure'
-        if self.SASL.startsasl=='failure': auth.NonSASL(user,password,resource).PlugIn(self)
+        if self.SASL.startsasl=='failure': return auth.NonSASL(user,password,resource).PlugIn(self)
         else:
             auth.Bind().PlugIn(self)
             while self.Bind.bound is None: self.Process()
-            self.Bind.Bind(resource)
+            return self.Bind.Bind(resource)
 
     def sendInitPresence(self,requestRoster=1):
         self.sendPresence(requestRoster=requestRoster)
@@ -131,14 +133,16 @@ class Component:
 
     def connect(self,server=None,proxy=None):
         if not server: server=(self.Server,self.Port)
-        if proxy: transports.HTTPPROXYsocket(proxy,server).PlugIn(self)
-        else: transports.TCPsocket(server).PlugIn(self)
+        if proxy: connected=transports.HTTPPROXYsocket(proxy,server).PlugIn(self)
+        else: connected=transports.TCPsocket(server).PlugIn(self)
+        if not connected: return
         dispatcher.Dispatcher().PlugIn(self)
         self.send_header()
         while self.Dispatcher.Stream._document_attrs is None: self.Process(1)
+        return 'ok'
 
     def auth(self,name,password):
-        auth.NonSASL(name,password,'').PlugIn(self)
+        return auth.NonSASL(name,password,'').PlugIn(self)
 
     def disconnected(self):
         self.DEBUG(DBG_COMPONENT,'Disconnect detected','stop')
