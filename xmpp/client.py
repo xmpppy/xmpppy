@@ -42,18 +42,22 @@ Debug.Debug.colors['sent']=debug.color_blue
 Debug.Debug.colors['got']=debug.color_bright_cyan
 
 DBG_CLIENT='client'
-DBG_COMPONENT='client'
-class Client:
-    def __init__(self,server,debug=['always', 'nodebuilder']):
+DBG_COMPONENT='component'
+
+class CommonClient:
+    def __init__(self,server,port=5222,debug=['always', 'nodebuilder']):
+        if self.__class__.__name__=='Client': self.Namespace,self.DBG='jabber:client',DBG_CLIENT
+        elif self.__class__.__name__=='Component': self.Namespace,self.DBG='jabber:component:accept',DBG_COMPONENT
         self.disconnect_handlers=[]
-        self.Namespace='jabber:client'
         self.Server=server
+        self.Port=port
         self._DEBUG=Debug.Debug(debug)
         self.DEBUG=self._DEBUG.Show
         self.debug_flags=Debug.debug_flags
-        self.debug_flags.append(DBG_CLIENT)
+        self.debug_flags.append(self.DBG)
         self._owner=self
         self._registered_name=None
+        self.RegisterDisconnectHandler(self.DisconnectHandler)
 
     def RegisterDisconnectHandler(self,handler):
         self.disconnect_handlers.append(handler)
@@ -62,26 +66,32 @@ class Client:
         self.disconnect_handlers.remove(handler)
 
     def disconnected(self):
-        self.DEBUG(DBG_CLIENT,'Disconnect detected','stop')
+        self.DEBUG(self.DBG,'Disconnect detected','stop')
         self.disconnect_handlers.reverse()
         for i in self.disconnect_handlers: i()
         self.disconnect_handlers.reverse()
 
-    def send_header(self):
-        self.send("<?xml version='1.0'?><stream:stream version='1.0' xmlns:stream='http://etherx.jabber.org/streams' to='%s' xmlns='%s'>"%(self.Server,self.Namespace))
+    def DisconnectHandler(self):        # default stuff. To be overriden or unregistered.
+        raise IOError('Disconnected from server.')
 
     def event(self,eventName,args={}):
         print "Event: ",(eventName,args)
 
     def connect(self,server=None,proxy=None):
+        if not server: server=(self.Server,self.Port)
         if proxy: connected=transports.HTTPPROXYsocket(proxy,server).PlugIn(self)
         else: connected=transports.TCPsocket(server).PlugIn(self)
         if not connected: return
         if self.Connection.getPort()==5223: transports.TLS().PlugIn(self,now=1)
         dispatcher.Dispatcher().PlugIn(self)
-        self.send_header()
+        self.send("<?xml version='1.0'?><stream:stream version='1.0' xmlns:stream='http://etherx.jabber.org/streams' to='%s' xmlns='%s'>"%(self.Server,self.Namespace))
+        while self.Dispatcher.Stream._document_attrs is None: self.Process(1)
+        return 'ok'
+
+class Client(CommonClient):
+    def connect(self,server=None,proxy=None):
+        if not CommonClient.connect(self,server,proxy): return
         transports.TLS().PlugIn(self)
-        while not self.Dispatcher.Stream._document_attrs and self.Process(): pass
         if not self.Dispatcher.Stream._document_attrs.has_key('version') or not self.Dispatcher.Stream._document_attrs['version']=='1.0': return
         while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
         if not self.Dispatcher.Stream.features.getTag('starttls'): return       # TLS not supported by server
@@ -109,43 +119,6 @@ class Client:
         if requestRoster: roster.Roster().PlugIn(self)
         self.send(dispatcher.protocol.Presence(to=jid, type=type))
 
-class Component:
-    def __init__(self,server,port=5222,debug=['always', 'nodebuilder']):
-        self.disconnect_handlers=[]
-        self.Namespace='jabber:component:accept'
-        self.Server=server
-        self.Port=port
-        self._DEBUG=Debug.Debug(debug)
-        self.DEBUG=self._DEBUG.Show
-        self.debug_flags=Debug.debug_flags
-        self.debug_flags.append(DBG_COMPONENT)
-        self._owner=self
-        self._registered_name=None
-
-    def RegisterDisconnectHandler(self,handler):
-        self.disconnect_handlers.append(handler)
-
-    def DeregisterDisconnectHandler(self,handler):
-        self.disconnect_handlers.remove(handler)
-
-    def send_header(self):
-        self.send("<?xml version='1.0'?><stream:stream version='1.0' xmlns:stream='http://etherx.jabber.org/streams' to='%s' xmlns='%s'>"%(self.Server,self.Namespace))
-
-    def connect(self,server=None,proxy=None):
-        if not server: server=(self.Server,self.Port)
-        if proxy: connected=transports.HTTPPROXYsocket(proxy,server).PlugIn(self)
-        else: connected=transports.TCPsocket(server).PlugIn(self)
-        if not connected: return
-        dispatcher.Dispatcher().PlugIn(self)
-        self.send_header()
-        while self.Dispatcher.Stream._document_attrs is None: self.Process(1)
-        return 'ok'
-
+class Component(CommonClient):
     def auth(self,name,password):
         return auth.NonSASL(name,password,'').PlugIn(self)
-
-    def disconnected(self):
-        self.DEBUG(DBG_COMPONENT,'Disconnect detected','stop')
-        self.disconnect_handlers.reverse()
-        for i in self.disconnect_handlers: i()
-        self.disconnect_handlers.reverse()
