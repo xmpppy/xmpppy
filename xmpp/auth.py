@@ -41,7 +41,7 @@ class NonSASL(PlugIn):
         if not isResultNode(resp):
             self.DEBUG('No result node arrived! Aborting...','error')
             return
-        iq=Iq(type='set',node=resp)
+        iq=Iq(typ='set',node=resp)
         query=iq.getTag('query')
         query.setTagData('username',self.user)
         query.setTagData('resource',self.resource)
@@ -197,11 +197,11 @@ class Bind(PlugIn):
         while self.bound is None and self._owner.Process(1): pass
         if resource: resource=[Node('resource',payload=[resource])]
         else: resource=[]
-        resp=self._owner.SendAndWaitForResponse(Protocol('iq',type='set',payload=[Node('bind',attrs={'xmlns':NS_BIND},payload=resource)]))
+        resp=self._owner.SendAndWaitForResponse(Protocol('iq',typ='set',payload=[Node('bind',attrs={'xmlns':NS_BIND},payload=resource)]))
         if isResultNode(resp):
             self.bound.append(resp.getTag('bind').getTagData('jid'))
             self.DEBUG('Successfully bound %s.'%self.bound[-1],'ok')
-            resp=self._owner.SendAndWaitForResponse(Protocol('iq',type='set',payload=[Node('session',attrs={'xmlns':NS_SESSION})]))
+            resp=self._owner.SendAndWaitForResponse(Protocol('iq',typ='set',payload=[Node('session',attrs={'xmlns':NS_SESSION})]))
             if isResultNode(resp):
                 self.DEBUG('Successfully opened session.','ok')
                 return 'ok'

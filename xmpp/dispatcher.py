@@ -76,20 +76,20 @@ class Dispatcher(PlugIn):
         self.DEBUG('Registering protocol "%s" as %s'%(tag_name,Proto), order)
         self.handlers[tag_name]={type:Proto, 'default':[]}
 
-    def RegisterHandler(self,name,handler,type='',ns='',chained=0, makefirst=0, system=0):
-        self.DEBUG('Registering handler %s for "%s" type->%s ns->%s'%(handler,name,type,ns), 'info')
-        if not type and not ns: type='default'
+    def RegisterHandler(self,name,handler,typ='',ns='',chained=0, makefirst=0, system=0):
+        self.DEBUG('Registering handler %s for "%s" type->%s ns->%s'%(handler,name,typ,ns), 'info')
+        if not typ and not ns: typ='default'
         if not self.handlers.has_key(name): self.RegisterProtocol(name,protocol.Protocol,'warn')
-        if not self.handlers[name].has_key(type+ns): self.handlers[name][type+ns]=[]
-        if makefirst: self.handlers[name][type+ns].insert({'chain':chained,'func':handler,'system':system})
-        else: self.handlers[name][type+ns].append({'chain':chained,'func':handler,'system':system})
+        if not self.handlers[name].has_key(typ+ns): self.handlers[name][typ+ns]=[]
+        if makefirst: self.handlers[name][typ+ns].insert({'chain':chained,'func':handler,'system':system})
+        else: self.handlers[name][typ+ns].append({'chain':chained,'func':handler,'system':system})
 
-    def RegisterHandlerOnce(self,name,handler,type='',ns='',chained=0, makefirst=0, system=0):
-        self.RegisterHandler(name,handler,type,ns,chained, makefirst, system)
+    def RegisterHandlerOnce(self,name,handler,typ='',ns='',chained=0, makefirst=0, system=0):
+        self.RegisterHandler(name,handler,typ,ns,chained, makefirst, system)
 
-    def UnregisterHandler(self,name,handler=None,type='',ns=''):
-        if not type and not ns: type='default'
-        self.handlers[name][type+ns].remove({'chain':chained,'func':handler,'system':system})
+    def UnregisterHandler(self,name,handler=None,typ='',ns=''):
+        if not typ and not ns: typ='default'
+        self.handlers[name][typ+ns].remove({'chain':chained,'func':handler,'system':system})
 
     def RegisterDefaultHandler(self,handler): self._defaultHandler=handler
     def RegisterEventHandler(self,handler): self._eventHandler=handler

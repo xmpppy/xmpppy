@@ -108,15 +108,14 @@ class JID:
         if wresource and self.resource: return jid+'/'+self.resource
         return jid.lower()
 
-gen_type=type
 class Protocol(Node):
-    def __init__(self, name=None, to=None, type=None, frm=None, attrs={}, payload=[], timestamp=None, node=None):
+    def __init__(self, name=None, to=None, typ=None, frm=None, attrs={}, payload=[], timestamp=None, node=None):
         if not attrs: attrs={}
         if to: attrs['to']=to
         if frm: attrs['from']=frm
-        if type: attrs['type']=type
+        if typ: attrs['type']=typ
         Node.__init__(self, tag=name, attrs=attrs, payload=payload, node=node)
-        if node and gen_type(self)==gen_type(node) and self.__class__==node.__class__ and self.attrs.has_key('id'): del self.attrs['id']
+        if node and type(self)==type(node) and self.__class__==node.__class__ and self.attrs.has_key('id'): del self.attrs['id']
         self.timestamp=None
         for x in self.getTags('x',namespace=NS_DELAY):
             try:
@@ -144,7 +143,7 @@ class Protocol(Node):
     def setError(self,error,code=None):
         if code:
             if str(code) in _errorcodes.keys(): error=ErrorNode(_errorcodes[str(code)],text=error)
-            else: error=ErrorNode(ERR_UNDEFINED_CONDITION,code=code,type='cancel',text=error)
+            else: error=ErrorNode(ERR_UNDEFINED_CONDITION,code=code,typ='cancel',text=error)
         elif type(error) in [type(''),type(u'')]: error=ErrorNode(error)
         self.setType('error')
         self.addChild(node=error)
@@ -160,8 +159,8 @@ class Protocol(Node):
         return props
 
 class Message(Protocol):
-    def __init__(self, to=None, body=None, type=None, subject=None, attrs={}, frm=None, payload=[], timestamp=None, node=None):
-        Protocol.__init__(self, 'message', to=to, type=type, attrs=attrs, frm=frm, payload=payload, timestamp=timestamp, node=node)
+    def __init__(self, to=None, body=None, typ=None, subject=None, attrs={}, frm=None, payload=[], timestamp=None, node=None):
+        Protocol.__init__(self, 'message', to=to, typ=typ, attrs=attrs, frm=frm, payload=payload, timestamp=timestamp, node=node)
         if body: self.setBody(body)
         if subject: self.setSubject(subject)
     def getBody(self): return self.getTagData('body')
@@ -173,8 +172,8 @@ class Message(Protocol):
     def buildReply(self,text=None): return Message(to=self.getFrom(),frm=self.getTo(),body=text,node=self)
 
 class Presence(Protocol):
-    def __init__(self, to=None, type=None, priority=None, show=None, status=None, attrs={}, frm=None, timestamp=None, payload=[], node=None):
-        Protocol.__init__(self, 'presence', to=to, type=type, attrs=attrs, frm=frm, payload=payload, timestamp=timestamp, node=node)
+    def __init__(self, to=None, typ=None, priority=None, show=None, status=None, attrs={}, frm=None, timestamp=None, payload=[], node=None):
+        Protocol.__init__(self, 'presence', to=to, typ=typ, attrs=attrs, frm=frm, payload=payload, timestamp=timestamp, node=node)
         if priority: self.setPriority(priority)
         if show: self.setShow(show)
         if status: self.setStatus(status)
@@ -186,8 +185,8 @@ class Presence(Protocol):
     def setStatus(self,val): self.setTagData('status',val)
 
 class Iq(Protocol): 
-    def __init__(self, type=None, queryNS=None, attrs={}, to=None, frm=None, payload=[], node=None):
-        Protocol.__init__(self, 'iq', to=to, type=type, attrs=attrs, frm=frm, node=node)
+    def __init__(self, typ=None, queryNS=None, attrs={}, to=None, frm=None, payload=[], node=None):
+        Protocol.__init__(self, 'iq', to=to, typ=typ, attrs=attrs, frm=frm, node=node)
         if payload: self.setQueryPayload(payload)
         if queryNS: self.setQueryNS(queryNS)
     def getQueryNS(self):
@@ -198,7 +197,7 @@ class Iq(Protocol):
         if tag: return tag.getPayload()
     def setQueryNS(self,namespace): self.setTag('query').setNamespace(namespace)
     def setQueryPayload(self,payload): self.setTag('query').setPayload(payload)
-    def buildReply(self,type): return Iq(type,to=self.getFrom(),frm=self.getTo(),attrs={'id':self.getID()})
+    def buildReply(self,typ): return Iq(typ,to=self.getFrom(),frm=self.getTo(),attrs={'id':self.getID()})
 
 class DataForm(Node):
     def __init__(self,data=None,node=None):

@@ -44,11 +44,11 @@ NS_SEARCH='jabber:iq:search'
 ### Browse ### jabber:iq:browse ### JEP-0030 ###################################
 ### Agents ### jabber:iq:agents ### JEP-0030 ###################################
 def _discover(disp,ns,jid,node=None,fb2b=0,fb2a=1):
-    iq=Iq(to=jid,type='get',queryNS=ns)
+    iq=Iq(to=jid,typ='get',queryNS=ns)
     if node: iq.setAttr('node',node)
     rep=disp.SendAndWaitForResponse(iq)
-    if fb2b and isErrorNode(rep): rep=disp.SendAndWaitForResponse(Iq(to=jid,type='get',queryNS=NS_BROWSE))   # Fallback to browse
-    if fb2a and isErrorNode(rep): rep=disp.SendAndWaitForResponse(Iq(to=jid,type='get',queryNS=NS_AGENTS))   # Fallback to agents
+    if fb2b and isErrorNode(rep): rep=disp.SendAndWaitForResponse(Iq(to=jid,typ='get',queryNS=NS_BROWSE))   # Fallback to browse
+    if fb2a and isErrorNode(rep): rep=disp.SendAndWaitForResponse(Iq(to=jid,typ='get',queryNS=NS_AGENTS))   # Fallback to agents
     if isResultNode(rep): return rep.getQueryPayload()
     return []
 
@@ -140,10 +140,10 @@ def getPrivacyList(disp,listname):
         if isResultNode(resp): return resp.getQueryPayload()[0]
     except: pass
 
-def setActivePrivacyList(disp,listname=None,type='active'):
+def setActivePrivacyList(disp,listname=None,typ='active'):
     if listname: attrs={'name':listname}
     else: attrs={}
-    resp=disp.SendAndWaitForResponse(Iq('set',NS_PRIVACY,payload=[Node(type,attrs)]))
+    resp=disp.SendAndWaitForResponse(Iq('set',NS_PRIVACY,payload=[Node(typ,attrs)]))
     if isResultNode(resp): return 1
 
 def setDefaultPrivacyList(disp,listname=None): return setActivePrivacyList(disp,listname,'default')
