@@ -1,6 +1,6 @@
 ##   roster.py
 ##
-##   Copyright (C) 2003 Alexey "Snake" Nezhdanov
+##   Copyright (C) 2003-2004 Alexey "Snake" Nezhdanov
 ##
 ##   This program is free software; you can redistribute it and/or modify
 ##   it under the terms of the GNU General Public License as published by
@@ -15,18 +15,17 @@
 # $Id$
 
 import protocol
+from client import PlugIn
 
 NS_ROSTER     = "jabber:iq:roster"
 
-DBG_ROSTER='roster'
-class Roster:
+class Roster(PlugIn):
     def __init__(self):
+        PlugIn.__init__(self)
+        self.DBG_LINE='roster'
         self._data = {}
 
-    def PlugIn(self,owner,request=1):
-        self._owner=owner
-        self._owner.Roster=self
-        self._owner.debug_flags.append(DBG_ROSTER)
+    def plugin(self,owner,request=1):
         self._owner.RegisterHandler('iq',self.RosterIqHandler,'result',NS_ROSTER)
         self._owner.RegisterHandler('iq',self.RosterIqHandler,'set',NS_ROSTER)
         self._owner.RegisterHandler('presence',self.PresenceHandler)
@@ -34,12 +33,12 @@ class Roster:
 
     def Request(self):
         self._owner.send(protocol.Iq('get',NS_ROSTER))
-        self._owner.DEBUG(DBG_ROSTER,'Roster requested from server','start')
+        self.DEBUG('Roster requested from server','start')
 
     def RosterIqHandler(self,dis,stanza):
         for item in stanza.getTag('query').getTags('item'):
             jid=item.getAttr('jid')
-            self._owner.DEBUG(DBG_ROSTER,'Setting roster item %s...'%jid,'ok')
+            self.DEBUG('Setting roster item %s...'%jid,'ok')
             if not self._data.has_key(jid): self._data[jid]={}
             self._data[jid]['name']=item.getAttr('name')
             self._data[jid]['ask']=item.getAttr('ask')
@@ -58,7 +57,7 @@ class Roster:
 
         if not typ:
             if not item['resources'].has_key(JID.getResource()): item['resources'][JID.getResource()]={'show':None,'status':None,'priority':'0','timestamp':None}
-            self._owner.DEBUG(DBG_ROSTER,'Setting roster item %s for resource %s...'%(JID.getStripped(),JID.getResource()),'ok')
+            self.DEBUG('Setting roster item %s for resource %s...'%(JID.getStripped(),JID.getResource()),'ok')
             res=item['resources'][JID.getResource()]
             if pres.getTag('show'): res['show']=pres.getShow()
             if pres.getTag('status'): res['status']=pres.getStatus()

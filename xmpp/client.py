@@ -16,8 +16,7 @@
 
 # $Id$
 
-import transports,dispatcher,debug,auth,roster
-
+import debug
 Debug=debug
 Debug.DEBUGGING_IS_ON=1
 Debug.Debug.colors['socket']=debug.color_dark_gray
@@ -43,6 +42,35 @@ Debug.Debug.colors['got']=debug.color_bright_cyan
 DBG_CLIENT='client'
 DBG_COMPONENT='component'
 
+class PlugIn:
+    def __init__(self):
+        self._exported_methods=[]
+        self.DBG_LINE=self.__class__.__name__.lower()
+
+    def PlugIn(self,owner):
+        owner.debug_flags.append(self.DBG_LINE)
+        self._owner=owner
+        self.DEBUG('Plugging %s into %s'%(self,self._owner),'start')
+        self._old_owners_methods=[]
+        for method in self._exported_methods:
+            if owner.__dict__.has_key(method.__name__):
+                self._old_owners_methods.append(owner.__dict__[method.__name__])
+            owner.__dict__[method.__name__]=method
+        owner.__dict__[self.__class__.__name__]=self
+        if self.__class__.__dict__.has_key('plugin'): return self.plugin(owner)
+ 
+    def PlugOut(self):
+        self.DEBUG('Plugging %s out of %s.'%(self,self._owner),'stop')
+        self._owner.debug_flags.remove(self.DBG_LINE)
+        for method in self._exported_methods: del self._owner.__dict__[method.__name__]
+        for method in self._old_owners_methods: self._owner.__dict__[method.__name__]=method
+        del self._owner.__dict__[self.__class__.__name__]
+        if self.__class__.__dict__.has_key('plugout'): return self.plugout()
+
+    def DEBUG(self,text,severity='info'):
+        self._owner.DEBUG(self.DBG_LINE,text,severity)
+
+import transports,dispatcher,auth,roster
 class CommonClient:
     def __init__(self,server,port=5222,debug=['always', 'nodebuilder']):
         if self.__class__.__name__=='Client': self.Namespace,self.DBG='jabber:client',DBG_CLIENT

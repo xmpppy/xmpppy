@@ -16,6 +16,7 @@
 # $Id$
 
 from protocol import *
+from client import PlugIn
 import sha,base64,random,dispatcher
 
 import md5
@@ -25,21 +26,20 @@ def C(some): return ':'.join(some)
 
 NS_AUTH="jabber:iq:auth"
 
-DBG_AUTH='gen_auth'
-class NonSASL:
+class NonSASL(PlugIn):
     def __init__(self,user,password,resource):
+        PlugIn.__init__(self)
+        self.DBG_LINE='gen_auth'
         self.user=user
         self.password=password
         self.resource=resource
 
-    def PlugOut(self): pass
-    def PlugIn(self,owner):
-        owner.debug_flags.append(DBG_AUTH)
+    def plugin(self,owner):
         if not self.resource: return self.authComponent(owner)
-        owner.DEBUG(DBG_AUTH,'Querying server about possible auth methods','start')
+        self.DEBUG('Querying server about possible auth methods','start')
         resp=owner.Dispatcher.SendAndWaitForResponse(Iq('get',NS_AUTH,payload=[Node('username',payload=[self.user])]))
         if not isResultNode(resp):
-            owner.DEBUG(DBG_AUTH,'No result node arrived! Aborting...','error')
+            self.DEBUG('No result node arrived! Aborting...','error')
             return
         iq=Iq(type='set',node=resp)
         query=iq.getTag('query')
@@ -49,31 +49,31 @@ class NonSASL:
         if query.getTag('token'):
             token=query.getTagData('token')
             seq=query.getTagData('sequence')
-            owner.DEBUG(DBG_AUTH,"Performing zero-k authentication",'ok')
+            self.DEBUG("Performing zero-k authentication",'ok')
             hash = sha.new(sha.new(self.password).hexdigest()+token).hexdigest()
             for foo in xrange(int(seq)): hash = sha.new(hash).hexdigest()
             query.setTagData('hash',hash)
         elif query.getTag('digest'):
-            owner.DEBUG(DBG_AUTH,"Performing digest authentication",'ok')
+            self.DEBUG("Performing digest authentication",'ok')
             query.setTagData('digest',sha.new(owner.Dispatcher.Stream._document_attrs['id']+self.password).hexdigest())
         else:
-            owner.DEBUG(DBG_AUTH,"Sequre methods unsupported, performing plain text authentication",'warn')
+            self.DEBUG("Sequre methods unsupported, performing plain text authentication",'warn')
             query.setTagData('password',self.password)
         resp=owner.Dispatcher.SendAndWaitForResponse(iq)
         if isResultNode(resp):
-            owner.DEBUG(DBG_AUTH,'Sucessfully authenticated with remove host.','ok')
+            self.DEBUG('Sucessfully authenticated with remove host.','ok')
             owner.User=self.user
             owner.Resource=self.resource
             owner._registered_name=owner.User+'@'+owner.Server+'/'+owner.Resource
             return 'ok'
-        owner.DEBUG(DBG_AUTH,'Authentication failed!','error')
+        self.DEBUG('Authentication failed!','error')
 
     def authComponent(self,owner):
         self.handshake=0
         owner.send(Protocol('handshake',payload=[sha.new(owner.Dispatcher.Stream._document_attrs['id']+self.password).hexdigest()]))
         owner.RegisterHandler('handshake',self.handshakeHandler)
         while not self.handshake:
-            owner.DEBUG(DBG_AUTH,"waiting on handshake",'notify')
+            self.DEBUG("waiting on handshake",'notify')
             owner.Process(1)
         owner._registered_name=self.user
         if self.handshake+1: return 'ok'
@@ -82,26 +82,23 @@ class NonSASL:
         if stanza.getName()=='handshake': self.handshake=1
         else: self.handshake=-1
 
-DBG_SASL='SASL_auth'
 NS_SASL='urn:ietf:params:xml:ns:xmpp-sasl'
-class SASL:
+class SASL(PlugIn):
     def __init__(self,username,password):
+        PlugIn.__init__(self)
+        self.DBG_LINE='SASL_auth'
         self.username=username
         self.password=password
         self.startsasl=None
 
-    def PlugIn(self,owner):
-        self._owner=owner
-        owner.debug_flags.append(DBG_SASL)
-        owner.DEBUG(DBG_SASL,'Plugging into %s'%owner,'start')
-        self._owner.SASL=self
+    def plugin(self,owner):
         if self._owner.Dispatcher.Stream.features: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
         else: self._owner.RegisterHandler('features',self.FeaturesHandler)
 
     def FeaturesHandler(self,conn,feats):
         if not feats.getTag('mechanisms',namespace=NS_SASL):
             self.startsasl='failure'
-            self._owner.DEBUG(DBG_SASL,'SASL not supported by server','error')
+            self.DEBUG('SASL not supported by server','error')
             return
         mecs=[]
         for mec in feats.getTag('mechanisms',namespace=NS_SASL).getTags('mechanism'):
@@ -116,7 +113,7 @@ class SASL:
             node=Node('auth',attrs={'xmlns':NS_SASL,'mechanism':'PLAIN'},payload=[base64.encodestring(sasl_data)])
         else:
             self.startsasl='failure'
-            self._owner.DEBUG(DBG_SASL,'I can only use DIGEST-MD5 and PLAIN mecanisms.','error')
+            self.DEBUG('I can only use DIGEST-MD5 and PLAIN mecanisms.','error')
             return
         self.startsasl='in-process'
         self._owner.send(node.__str__())
@@ -127,11 +124,11 @@ class SASL:
             self.startsasl='failure'
             try: reason=challenge.getChildren()[0]
             except: reason=challenge
-            self._owner.DEBUG(DBG_SASL,'Failed SASL authentification: %s'%reason,'error')
+            self.DEBUG('Failed SASL authentification: %s'%reason,'error')
             return
         elif challenge.getName()=='success':
             self.startsasl='success'
-            self._owner.DEBUG(DBG_SASL,'Successfully authenticated with remote server.','ok')
+            self.DEBUG('Successfully authenticated with remote server.','ok')
             self._owner.Dispatcher.PlugOut()
             dispatcher.Dispatcher().PlugIn(self._owner)
             self._owner.User=self.username
@@ -140,7 +137,7 @@ class SASL:
         incoming_data=challenge.getData()
         chal={}
         data=base64.decodestring(incoming_data)
-        self._owner.DEBUG(DBG_SASL,'Got challenge:'+data,'ok')
+        self.DEBUG('Got challenge:'+data,'ok')
         for pair in data.split(','):
             key,value=pair.split('=')
             if value[:1]=='"' and value[-1:]=='"': value=value[1:-1]
@@ -172,28 +169,25 @@ class SASL:
         elif chal.has_key('rspauth'): self._owner.send(Node('response',attrs={'xmlns':NS_SASL}).__str__())
         else: 
             self.startsasl='failure'
-            self._owner.DEBUG(DBG_SASL,'Failed SASL authentification: unknown challenge','error')
+            self.DEBUG('Failed SASL authentification: unknown challenge','error')
             return
 
-DBG_BIND='bind'
 NS_BIND='urn:ietf:params:xml:ns:xmpp-bind'
 NS_SESSION='urn:ietf:params:xml:ns:xmpp-session'
-class Bind:
+class Bind(PlugIn):
     def __init__(self):
+        PlugIn.__init__(self)
+        self.DBG_LINE='bind'
         self.bound=None
 
-    def PlugIn(self,owner):
-        self._owner=owner
-        owner.debug_flags.append(DBG_BIND)
-        owner.DEBUG(DBG_BIND,'Plugging into %s'%owner,'start')
-        self._owner.Bind=self
+    def plugin(self,owner):
         if self._owner.Dispatcher.Stream.features: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
         else: self._owner.RegisterHandler('features',self.FeaturesHandler)
 
     def FeaturesHandler(self,conn,feats):
         if not feats.getTag('bind',namespace=NS_BIND):
             self.bound='failure'
-            self._owner.DEBUG(DBG_BIND,'Server does not requested binding.','error')
+            self.DEBUG('Server does not requested binding.','error')
             return
         if feats.getTag('session',namespace=NS_SESSION): self.session=1
         else: self.session=-1
@@ -206,15 +200,15 @@ class Bind:
         resp=self._owner.SendAndWaitForResponse(Protocol('iq',type='set',payload=[Node('bind',attrs={'xmlns':NS_BIND},payload=resource)]))
         if isResultNode(resp):
             self.bound.append(resp.getTag('bind').getTagData('jid'))
-            self._owner.DEBUG(DBG_BIND,'Successfully bound %s.'%self.bound[-1],'ok')
+            self.DEBUG('Successfully bound %s.'%self.bound[-1],'ok')
             resp=self._owner.SendAndWaitForResponse(Protocol('iq',type='set',payload=[Node('session',attrs={'xmlns':NS_SESSION})]))
             if isResultNode(resp):
-                self._owner.DEBUG(DBG_BIND,'Successfully opened session.','ok')
+                self.DEBUG('Successfully opened session.','ok')
                 return 'ok'
             else:
-                self._owner.DEBUG(DBG_BIND,'Session open failed.','error')
+                self.DEBUG('Session open failed.','error')
                 self.session=0
-        elif resp: self._owner.DEBUG(DBG_BIND,'Binding failed: %s.'%resp.getTag('error'),'error')
+        elif resp: self.DEBUG('Binding failed: %s.'%resp.getTag('error'),'error')
         else:
-            self._owner.DEBUG(DBG_BIND,'Binding failed: timeout expired.','error')
+            self.DEBUG('Binding failed: timeout expired.','error')
             return ''

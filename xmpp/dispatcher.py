@@ -15,69 +15,41 @@
 # $Id$
 
 import protocol,simplexml,time
-
-DBG_DISPATCHER='dispatcher'
+from client import PlugIn
 
 DefaultTimeout=25
 ID=0
 
 class NodeProcessed(Exception): pass
 
-class Dispatcher:
+class Dispatcher(PlugIn):
     def __init__(self):
+        PlugIn.__init__(self)
+        DBG_LINE='dispatcher'
         self.handlers={}
         self._expected={}
         self._defaultHandler=None
         self._eventHandler=None
         self._cycleHandlers=[]
+        self._exported_methods=[self.Process,self.RegisterHandler,self.RegisterDefaultHandler,\
+        self.RegisterEventHandler,self.UnregisterCycleHandler,self.RegisterCycleHandler,\
+        self.RegisterHandlerOnce,self.UnregisterHandler,self.RegisterProtocol,\
+        self.WaitForResponse,self.SendAndWaitForResponse,self.send,self.disconnect]
 
     def dumpHandlers(self): return self.handlers
     def restoreHandlers(self,handlers): self.handlers=handlers
 
-    def PlugIn(self, owner):
-        self._owner=owner
-        self._owner.debug_flags.append(DBG_DISPATCHER)
-        self._owner.DEBUG(DBG_DISPATCHER,"Plugging into %s"%(owner),'start')
+    def plugin(self, owner):
         self.RegisterProtocol('unknown',protocol.Protocol)
         self.RegisterProtocol('iq',protocol.Iq)
         self.RegisterProtocol('presence',protocol.Presence)
         self.RegisterProtocol('message',protocol.Message)
-        self._owner.Dispatcher=self
-        self._owner.Process=self.Process
-        self._owner.RegisterHandler=self.RegisterHandler
-        self._owner.RegisterDefaultHandler=self.RegisterDefaultHandler
-        self._owner.RegisterEventHandler=self.RegisterEventHandler
-        self._owner.UnregisterCycleHandler=self.UnregisterCycleHandler
-        self._owner.RegisterCycleHandler=self.RegisterCycleHandler
-        self._owner.RegisterHandlerOnce=self.RegisterHandlerOnce
-        self._owner.UnregisterHandler=self.UnregisterHandler
-        self._owner.RegisterProtocol=self.RegisterProtocol
-        self._owner.WaitForResponse=self.WaitForResponse
-        self._owner.SendAndWaitForResponse=self.SendAndWaitForResponse
+        for method in self._old_owners_methods:
+            if method.__name__=='send': self._owner_send=method; break
         self._owner.lastErrNode=None
         self._owner.lastErr=None
         self._owner.lastErrCode=None
-        self._owner_send=self._owner.send
-        self._owner.send=self.send
-        self._owner.disconnect=self.disconnect
         self.StreamInit()
-
-    def PlugOut(self):
-        self._owner.DEBUG(DBG_DISPATCHER,"Plugging out.",'stop')
-        del self._owner.disconnect
-        self._owner.send=self._owner_send
-        del self._owner.SendAndWaitForResponse
-        del self._owner.WaitForResponse
-        del self._owner.lastErrCode
-        del self._owner.lastErr
-        del self._owner.lastErrNode
-        del self._owner.RegisterProtocol
-        del self._owner.UnregisterHandler
-        del self._owner.RegisterHandlerOnce
-        del self._owner.RegisterHandler
-        del self._owner.Process
-        del self._owner.Dispatcher
-        self._owner.debug_flags.remove(DBG_DISPATCHER)
 
     def StreamInit(self):
         self.Stream=simplexml.NodeBuilder()
@@ -101,11 +73,11 @@ class Dispatcher:
         return '0'	# It means that nothing is received but link is alive.
         
     def RegisterProtocol(self,tag_name,Proto,order='info'):
-        self._owner.DEBUG(DBG_DISPATCHER,'Registering protocol "%s" as %s'%(tag_name,Proto), order)
+        self.DEBUG('Registering protocol "%s" as %s'%(tag_name,Proto), order)
         self.handlers[tag_name]={type:Proto, 'default':[]}
 
     def RegisterHandler(self,name,handler,type='',ns='',chained=0, makefirst=0, system=0):
-        self._owner.DEBUG(DBG_DISPATCHER,'Registering handler %s for "%s" type->%s ns->%s'%(handler,name,type,ns), 'info')
+        self.DEBUG('Registering handler %s for "%s" type->%s ns->%s'%(handler,name,type,ns), 'info')
         if not type and not ns: type='default'
         if not self.handlers.has_key(name): self.RegisterProtocol(name,protocol.Protocol,'warn')
         if not self.handlers[name].has_key(type+ns): self.handlers[name][type+ns]=[]
@@ -137,10 +109,10 @@ class Dispatcher:
         if name=='features': self.Stream.features=stanza
 
         if not self.handlers.has_key(name):
-            self._owner.DEBUG(DBG_DISPATCHER, "Unknown stanza: " + name,'warn')
+            self.DEBUG("Unknown stanza: " + name,'warn')
             name='unknown'
         else:
-            self._owner.DEBUG(DBG_DISPATCHER,"Got %s stanza"%name, 'ok')
+            self.DEBUG("Got %s stanza"%name, 'ok')
 
         stanza=self.handlers[name][type](node=stanza)
 
@@ -149,7 +121,7 @@ class Dispatcher:
         props=stanza.getProperties()
         ID=stanza.getID()
 
-        self._owner.DEBUG(DBG_DISPATCHER,"Dispatching %s stanza with type->%s props->%s id->%s"%(name,typ,props,ID),'ok')
+        self.DEBUG("Dispatching %s stanza with type->%s props->%s id->%s"%(name,typ,props,ID),'ok')
 
         list=['default']                                                     # we will use all handlers:
         if self.handlers[name].has_key(typ): list.append(typ)                # from very common...
@@ -165,7 +137,7 @@ class Dispatcher:
         if self._expected.has_key(ID):
             self._expected[ID]=stanza
             user=0
-            self._owner.DEBUG(DBG_DISPATCHER,"Expected stanza arrived!",'ok')
+            self.DEBUG("Expected stanza arrived!",'ok')
         else: user=1
         for handler in chain:
             if user or handler['system']:
@@ -179,7 +151,7 @@ class Dispatcher:
         self._expected[ID]=None
         has_timed_out=0
         abort_time=time.time() + timeout
-        self._owner.DEBUG(DBG_DISPATCHER,"Waiting for ID:%s with timeout %s..." % (ID,timeout),'wait')
+        self.DEBUG("Waiting for ID:%s with timeout %s..." % (ID,timeout),'wait')
         while not self._expected[ID]:
             if not self.Process(0.04):
                 self._owner.lastErr="Disconnect"
