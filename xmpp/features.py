@@ -14,12 +14,26 @@
 
 # $Id$
 
+"""
+This module contains variable stuff that is not worth splitting into separate modules.
+Here is:
+    DISCO client and agents-to-DISCO and browse-to-DISCO emulators.
+    IBR and password manager.
+    jabber:iq:privacy methods
+All these methods takes 'disp' first argument that should be already connected
+(and in most cases already authorised) dispatcher instance.
+"""
+
 from protocol import *
 
 ### DISCO ### http://jabber.org/protocol/disco ### JEP-0030 ####################
 ### Browse ### jabber:iq:browse ### JEP-0030 ###################################
 ### Agents ### jabber:iq:agents ### JEP-0030 ###################################
 def _discover(disp,ns,jid,node=None,fb2b=0,fb2a=1):
+    """ Try to obtain info from the remote object.
+        If remote object doesn't support disco fall back to browse (if fb2b is true)
+        and if it doesnt support browse (or fb2b is not true) fall back to agents protocol
+        (if gb2a is true). Returns obtained info. Used internally. """
     iq=Iq(to=jid,typ='get',queryNS=ns)
     if node: iq.setAttr('node',node)
     rep=disp.SendAndWaitForResponse(iq)
@@ -29,6 +43,7 @@ def _discover(disp,ns,jid,node=None,fb2b=0,fb2a=1):
     return []
 
 def discoverItems(disp,jid,node=None):
+    """ Query remote object about any items that it contains. Return items list. """
     """ According to JEP-0030:
         query MAY have node attribute
         item: MUST HAVE jid attribute and MAY HAVE name, node, action attributes.
@@ -40,6 +55,7 @@ def discoverItems(disp,jid,node=None):
     return ret
 
 def discoverInfo(disp,jid,node=None):
+    """ Query remote object about info that it publishes. Returns identities and features lists."""
     """ According to JEP-0030:
         query MAY have node attribute
         identity: MUST HAVE category and name attributes and MAY HAVE type attribute.
@@ -59,8 +75,11 @@ def discoverInfo(disp,jid,node=None):
 
 ### Registration ### jabber:iq:register ### JEP-0077 ###########################
 def getRegInfo(disp,host,info={}):
-    """Gets registration blank from host.
-       disp must be connected dispatcher instance."""
+    """ Gets registration form from remote host.
+        You can pre-fill the info dictionary.
+        F.e. if you are requesting info on registering user joey than specify 
+        info as {'username':'joey'}. See JEP-0077 for details.
+        'disp' must be connected dispatcher instance."""
     iq=Iq('get',NS_REGISTER,to=host)
     for i in info.keys(): iq.setTagData(i,info[i])
     resp=disp.SendAndWaitForResponse(iq)
@@ -74,8 +93,12 @@ def getRegInfo(disp,host,info={}):
     return df
 
 def register(disp,host,info):
-    """Registrates on host with provided info.
-       disp must be connected dispatcher instance."""
+    """ Perform registration on remote server with provided info.
+        disp must be connected dispatcher instance.
+        Returns true or false depending on registration result.
+        If registration fails you can get additional info from the dispatcher's owner
+        attributes lastErrNode, lastErr and lastErrCode.
+    """
     iq=Iq('set',NS_REGISTER,to=host)
     if type(info)<>type({}): info=info.asDict()
     for i in info.keys(): iq.setTag('query').setTagData(i,info[i])
@@ -83,14 +106,16 @@ def register(disp,host,info):
     if isResultNode(resp): return 1
 
 def unregister(disp,host):
-    """Unregisters with host.
-       disp must be connected and authorized dispatcher instance."""
+    """ Unregisters with host (permanently removes account).
+        disp must be connected and authorized dispatcher instance.
+        Returns true on success."""
     resp=disp.SendAndWaitForResponse(Iq('set',NS_REGISTER,to=host,payload=[Node('remove')]))
     if isResultNode(resp): return 1
 
 def changePasswordTo(disp,newpassword,host=None):
-    """Changes password on specified or current (if not specified) server.
-       disp must be connected and authorized dispatcher instance."""
+    """ Changes password on specified or current (if not specified) server.
+        disp must be connected and authorized dispatcher instance.
+        Returns true on success."""
     if not host: host=disp._owner.Server
     resp=disp.SendAndWaitForResponse(Iq('set',NS_REGISTER,to=host,payload=[Node('username',payload=[disp._owner.Server]),Node('password',payload=[newpassword])]))
     if isResultNode(resp): return 1
@@ -100,6 +125,8 @@ def changePasswordTo(disp,newpassword,host=None):
 #action=[allow|deny]
 
 def getPrivacyLists(disp):
+    """ Requests privacy lists from connected server.
+        Returns dictionary of existing lists on success."""
     try:
         dict={'lists':[]}
         resp=disp.SendAndWaitForResponse(Iq('get',NS_PRIVACY))
@@ -111,23 +138,33 @@ def getPrivacyLists(disp):
     except: pass
 
 def getPrivacyList(disp,listname):
+    """ Requests specific privacy list listname. Returns list of XML nodes (rules)
+        taken from the server responce."""
     try:
         resp=disp.SendAndWaitForResponse(Iq('get',NS_PRIVACY,payload=[Node('list',{'name':listname})]))
         if isResultNode(resp): return resp.getQueryPayload()[0]
     except: pass
 
 def setActivePrivacyList(disp,listname=None,typ='active'):
+    """ Switches privacy list 'listname' to specified type.
+        By default the type is 'active'. Returns true on success."""
     if listname: attrs={'name':listname}
     else: attrs={}
     resp=disp.SendAndWaitForResponse(Iq('set',NS_PRIVACY,payload=[Node(typ,attrs)]))
     if isResultNode(resp): return 1
 
-def setDefaultPrivacyList(disp,listname=None): return setActivePrivacyList(disp,listname,'default')
+def setDefaultPrivacyList(disp,listname=None):
+    """ Sets the default privacy list as 'listname'. Returns true on success."""
+    return setActivePrivacyList(disp,listname,'default')
 
-def setPrivacyList(disp,payload):
+def setPrivacyList(disp,list):
+    """ Set the ruleset. 'list' should be the simpleXML node formatted
+        according to RFC 3921 (XMPP-IM) (I.e. Node('list',{'name':listname},payload=[...]) )
+        Returns true on success."""
     resp=disp.SendAndWaitForResponse(Iq('set',NS_PRIVACY,payload=[payload]))
     if isResultNode(resp): return 1
 
 def delPrivacyList(disp,listname):
+    """ Deletes privacy list 'listname'. Returns true on success."""
     resp=disp.SendAndWaitForResponse(Iq('set',NS_PRIVACY,payload=[Node('list',{'name':listname})]))
     if isResultNode(resp): return 1

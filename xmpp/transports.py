@@ -14,37 +14,63 @@
 
 # $Id$
 
+"""
+This module contains the low-level implementations of xmpppy connect methods or
+(in other words) transports for xmpp-stanzas.
+Currently here is three transports:
+direct TCP connect - TCPsocket class
+proxied TCP connect - HTTPPROXYsocket class (CONNECT proxies)
+TLS connection - TLS class. Can be used for SSL connections also.
+
+Transports are stackable so you - f.e. TLS use HTPPROXYsocket or TCPsocket as more low-level transport.
+
+Also exception 'error' is defined to allow capture of this module specific exceptions.
+"""
+
 import socket,select,base64,dispatcher
 from simplexml import ustr
 from client import PlugIn
 from protocol import *
 
 class error:
+    """An exception to be raised in case of low-level errors in methods of 'transports' module."""
     def __init__(self,comment):
+        """Cache the descriptive string"""
         self._comment=comment
 
     def __str__(self):
+        """Serialise exception into pre-cached descriptive string."""
         return self._comment
 
 class TCPsocket(PlugIn):
-    """Must be plugged into some object to work properly"""
+    """ This class defines direct TCP connection method. """
     def __init__(self, server=None):
+        """ Cache connection point 'server'. 'server' is the tuple of (host, port)
+            absolutely the same as standart tcp socket uses. """
         PlugIn.__init__(self)
         self.DBG_LINE='socket'
         self._exported_methods=[self.send,self.disconnect]
         self._server = server
 
     def plugin(self, owner):
+        """ Fire up connection. Return non-empty string on success.
+            Also registers self.disconnected method in the owner's dispatcher.
+            Called internally. """
         if not self._server: self._server=(self._owner.Server,5222)
         if not self.connect(self._server): return
         self._owner.Connection=self
         self._owner.RegisterDisconnectHandler(self.disconnected)
         return 'ok'
 
-    def getHost(self): return self._server[0]
-    def getPort(self): return self._server[1]
+    def getHost(self):
+        """ Return the 'host' value that is connection is [will be] made to."""
+        return self._server[0]
+    def getPort(self):
+        """ Return the 'port' value that is connection is [will be] made to."""
+        return self._server[1]
 
     def connect(self,server=None):
+        """ Try to connect. Returns non-empty string on success. """
         try:
             if not server: server=self._server
             self._sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -56,12 +82,14 @@ class TCPsocket(PlugIn):
         except: pass
 
     def plugout(self):
+        """ Disconnect from the remote server and unregister self.disconnected method from
+            the owner's dispatcher. """
         self._owner.DeregisterDisconnectHandler(self.disconnected)
         self.shutdown()
         del self._owner.Connection
 
     def receive(self):
-        """Reads all pending incoming data. Calls owner's disconnected() method if appropriate."""
+        """ Reads all pending incoming data. Calls owner's disconnected() method if appropriate."""
         try: received = self._recv(1024)
         except: received = ''
 
@@ -79,8 +107,8 @@ class TCPsocket(PlugIn):
         return received
 
     def send(self,raw_data):
-        """Writes raw outgoing data. Blocks until done.
-           If supplied data is unicode string, treating it as utf-8 encoded."""
+        """ Writes raw outgoing data. Blocks until done.
+            If supplied data is unicode string, encodes it to utf-8 before send."""
         if type(raw_data)==type(u''): raw_data = raw_data.encode('utf-8')
         elif type(raw_data)<>type(''): raw_data = ustr(raw_data).encode('utf-8')
         try:
@@ -91,29 +119,41 @@ class TCPsocket(PlugIn):
             self._owner.disconnected()
 
     def pending_data(self,timeout=0):
+        """ Returns true if there is a data ready to be read. """
         return select.select([self._sock],[],[],timeout)[0]
 
     def disconnect(self):
-        """Close the socket"""
+        """ Closes the socket. """
         self.DEBUG("Closing socket",'stop')
         self._sock.close()
 
     def disconnected(self):
-        """Called when a Network Error or disconnection occurs.
-        Designed to be overidden"""
+        """ Called when a Network Error or disconnection occurs.
+            Designed to be overidden. """
         self.DEBUG("Socket operation failed",'error')
 
 DBG_CONNECT_PROXY='CONNECTproxy'
 class HTTPPROXYsocket(TCPsocket):
-    def __init__(self,proxy,server=None):
+    """ HTTP (CONNECT) proxy connection class. Uses TCPsocket as the base class
+        redefines only connect method. Allows to use HTTP proxies like squid with
+        (optionally) simple authentication (using login and password). """
+    def __init__(self,proxy,server):
+        """ Caches proxy and target addresses.
+            'proxy' argument is a dictionary with mandatory keys 'host' and 'port' (proxy address)
+            and optional keys 'user' and 'password' to use for authentication.
+            'server' argument is a tuple of host and port - just like TCPsocket uses. """
         TCPsocket.__init__(self,server)
         self._proxy=proxy
 
     def plugin(self, owner):
+        """ Starts connection. Used interally. Returns non-empty string on success."""
         owner.debug_flags.append(DBG_CONNECT_PROXY)
         return TCPsocket.plugin(self,owner)
 
     def connect(self,dupe=None):
+        """ Starts connection. Connects to proxy, supplies login and password to it
+            (if were specified while creating instance). Instructs proxy to make
+            connection to the target server. Returns non-empty sting on success. """
         if not TCPsocket.connect(self,(self._proxy['host'],self._proxy['port'])): return
         self.DEBUG("Proxy server contacted, performing authentification",'start')
         connector = ['CONNECT %s:%s HTTP/1.0'%self._server,
@@ -142,7 +182,12 @@ class HTTPPROXYsocket(TCPsocket):
         return self._owner.DEBUG(DBG_CONNECT_PROXY,text,severity)
 
 class TLS(PlugIn):
+    """ TLS connection used to encrypts already estabilished tcp connection."""
     def PlugIn(self,owner,now=0):
+        """ If the 'now' argument is true then starts using encryption immidiatedly.
+            If 'now' in false then starts encryption as soon as TLS feature is
+            declared by the server (if it were already declared - it is ok).
+        """
         if owner.__dict__.has_key('TLS'): return  # Already enabled.
         PlugIn.PlugIn(self,owner)
         DBG_LINE='TLS'
@@ -154,11 +199,15 @@ class TLS(PlugIn):
         self.starttls=None
 
     def plugout(self,owner,now=0):
+        """ Unregisters TLS handler's from owner's dispatcher. Take note that encription
+            can not be stopped once started. You can only break the connection and start over."""
         self._owner.UnregisterHandler('features',self.FeaturesHandler,xmlns=NS_STREAMS)
         self._owner.UnregisterHandlerOnce('proceed',self.StartTLSHandler,xmlns=NS_TLS)
         self._owner.UnregisterHandlerOnce('failure',self.StartTLSHandler,xmlns=NS_TLS)
 
     def FeaturesHandler(self, conn, feats):
+        """ Used to analyse server <features/> tag for TLS support.
+            If TLS is supported starts the encryption negotiation. Used internally"""
         if not feats.getTag('starttls',namespace=NS_TLS):
             self.DEBUG("TLS unsupported by remote server.",'warn')
             return
@@ -169,6 +218,7 @@ class TLS(PlugIn):
         raise NodeProcessed
 
     def _startSSL(self):
+        """ Immidiatedly switch socket to TLS mode. Used internally."""
         tcpsock=self._owner.Connection
         tcpsock._sslObj    = socket.ssl(tcpsock._sock, None, None)
         tcpsock._sslIssuer = tcpsock._sslObj.issuer()
@@ -178,6 +228,8 @@ class TLS(PlugIn):
         self.starttls='success'
 
     def StartTLSHandler(self, conn, starttls):
+        """ Handle server reply if TLS is allowed to process. Behaves accordingly.
+            Used internally."""
         if starttls.getNamespace()<>NS_TLS: return
         self.starttls=starttls.getName()
         if self.starttls=='failure':

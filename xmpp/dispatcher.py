@@ -247,7 +247,9 @@ class Dispatcher(PlugIn):
 
     def WaitForResponse(self, ID, timeout=DefaultTimeout):
         """ Block and wait until stanza with specific "id" attribute will come.
-            If no such stanza is arrived within timeout, return None. """
+            If no such stanza is arrived within timeout, return None.
+            If operation failed for some reason then owner's attributes
+            lastErrNode, lastErr and lastErrCode are set accordingly. """
         self._expected[ID]=None
         has_timed_out=0
         abort_time=time.time() + timeout

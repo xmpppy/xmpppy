@@ -14,12 +14,25 @@
 
 # $Id$
 
+"""
+This module contains IBB class that is the simple implementation of JEP-0047.
+Note that this is just a transport for data. You have to negotiate data transfer before
+(via StreamInitiation most probably). Unfortunately SI is not implemented yet.
+"""
+
 from protocol import *
 from dispatcher import PlugIn
 import base64
 
 class IBB(PlugIn):
+    """ IBB used to transfer small-sized data chunk over estabilished xmpp connection.
+        Data is split into small blocks (by default 3000 bytes each), encoded as base 64
+        and sent to another entity that compiles these blocks back into the data chunk.
+        This is very inefficiend but should work under any circumstances. Note that 
+        using IBB normally should be the last resort.
+    """
     def __init__(self):
+        """ Initialise internal variables. """
         PlugIn.__init__(self)
         self.DBG_LINE='ibb'
         self._exported_methods=[self.OpenStream]
@@ -27,11 +40,13 @@ class IBB(PlugIn):
         self._ampnode=Node(NS_AMP+' amp',payload=[Node('rule',{'condition':'deliver-at','value':'stored','action':'error'}),Node('rule',{'condition':'match-resource','value':'exact','action':'error'})])
 
     def plugin(self,owner):
+        """ Register handlers for receiving incoming datastreams. Used internally. """
         self._owner.RegisterHandlerOnce('iq',self.StreamOpenReplyHandler) # Move to StreamOpen and specify stanza id
         self._owner.RegisterHandler('iq',self.IqHandler,ns=NS_IBB)
         self._owner.RegisterHandler('message',self.ReceiveHandler,ns=NS_IBB)
 
     def IqHandler(self,conn,stanza):
+        """ Handles streams state change. Used internally. """
         typ=stanza.getType()
         self.DEBUG('IqHandler called typ->%s'%typ,'info')
         if typ=='set' and stanza.getTag('open',namespace=NS_IBB): self.StreamOpenHandler(conn,stanza)
@@ -42,6 +57,7 @@ class IBB(PlugIn):
         raise NodeProcessed
 
     def StreamOpenHandler(self,conn,stanza):
+        """ Handles opening of new incoming stream. Used internally. """
         """
 <iq type='set' 
     from='romeo@montague.net/orchard'
@@ -66,7 +82,11 @@ class IBB(PlugIn):
             self._streams[sid]={'direction':'<'+str(stanza.getFrom()),'block-size':blocksize,'fp':open('/tmp/xmpp_file_'+sid,'w'),'seq':0,'syn_id':stanza.getID()}
         conn.send(rep)
 
-    def OpenStream(self,sid,to,fp,blocksize=4096):
+    def OpenStream(self,sid,to,fp,blocksize=3000):
+        """ Start new stream. You should provide stream id 'sid', the endpoind jid 'to',
+            the file object containing info for send 'fp'. Also the desired blocksize can be specified.
+            Take into account that recommended stanza size is 4k and IBB uses base64 encoding
+            that increases size of data by 1/3."""
         if sid in self._streams.keys(): return
         if not JID(to).getResource(): return
         self._streams[sid]={'direction':'|>'+to,'block-size':blocksize,'fp':fp,'seq':0}
@@ -77,6 +97,7 @@ class IBB(PlugIn):
         return self._streams[sid]
 
     def SendHandler(self,conn):
+        """ Send next portion of data if it is time to do it. Used internally. """
         self.DEBUG('SendHandler called','info')
         for sid in self._streams.keys():
             stream=self._streams[sid]
@@ -114,6 +135,9 @@ class IBB(PlugIn):
 """
 
     def ReceiveHandler(self,conn,stanza):
+        """ Receive next portion of incoming datastream and store it write
+            it to temporary file. Used internally.
+        """
         sid,seq,data=stanza.getTagAttr('data','sid'),stanza.getTagAttr('data','seq'),stanza.getTagData('data')
         self.DEBUG('ReceiveHandler called sid->%s seq->%s'%(sid,seq),'info')
         try: seq=int(seq); data=base64.decodestring(data)
@@ -133,6 +157,8 @@ class IBB(PlugIn):
             conn.send(Error(Iq(to=stanza.getFrom(),frm=stanza.getTo(),payload=[Node(NS_IBB+' close')]),err,reply=0))
 
     def StreamCloseHandler(self,conn,stanza):
+        """ Handle stream closure due to all data transmitted.
+            Raise xmpppy event specifying successfull data receive. """
         sid=stanza.getTagAttr('close','sid')
         self.DEBUG('StreamCloseHandler called sid->%s'%sid,'info')
         if sid in self._streams.keys():
@@ -142,6 +168,8 @@ class IBB(PlugIn):
         else: conn.send(Error(stanza,ERR_ITEM_NOT_FOUND))
 
     def StreamBrokenHandler(self,conn,stanza):
+        """ Handle stream closure due to all some error while receiving data.
+            Raise xmpppy event specifying unsuccessfull data receive. """
         syn_id=stanza.getID()
         self.DEBUG('StreamBrokenHandler called syn_id->%s'%syn_id,'info')
         for sid in self._streams.keys():
@@ -152,6 +180,9 @@ class IBB(PlugIn):
                 del self._streams[sid]
 
     def StreamOpenReplyHandler(self,conn,stanza):
+        """ Handle remote side reply about is it agree or not to receive our datastream.
+            Used internally. Raises xmpppy event specfiying if the data transfer
+            is agreed upon."""
         syn_id=stanza.getID()
         self.DEBUG('StreamOpenReplyHandler called syn_id->%s'%syn_id,'info')
         for sid in self._streams.keys():
