@@ -122,19 +122,19 @@ class Dispatcher:
 
         typ=stanza.getType()
         if not typ: typ=''
-        try: ns=stanza.getQueryNS()
-        except: ns=''
-        if not ns: ns=''
-        typns=typ+ns
+        props=stanza.getProperties()
         ID=stanza.getID()
 
-        self._owner.DEBUG(DBG_DISPATCHER,"Dispatching %s stanza with type->%s ns->%s id->%s"%(name,typ,ns,ID),'ok')
+        self._owner.DEBUG(DBG_DISPATCHER,"Dispatching %s stanza with type->%s props->%s id->%s"%(name,typ,props,ID),'ok')
 
-        if not self.handlers[name].has_key(ns): ns=''
-        if not self.handlers[name].has_key(typ): typ=''
-        if not self.handlers[name].has_key(typns): typns=''
+        list=['default']                                                     # we will use all handlers:
+        if self.handlers[name].has_key(typ): list.append(typ)                # from very common...
+        for prop in props:
+            if self.handlers[name].has_key(prop): list.append(prop)
+            if self.handlers[name].has_key(typ+prop): list.append(typ+prop)  # ...to very particular
+
         chain=[]
-        for key in ['default',typ,ns,typns]: # we will use all handlers: from very common to very particular
+        for key in list:
             if key: chain += self.handlers[name][key]
 
         output=''

@@ -86,6 +86,11 @@ class Protocol(Node):
         if not val: val=time.strftime('%Y%m%dT%H:%M:%S', time.gmtime())
         self.timestamp=val
         self.setTag('x',{'stamp':self.timestamp},namespace=NS_DELAY)
+    def getProperties(self):
+        props=[]
+        for child in self.getChildren():
+            if child.getNamespace()<>self.getNamespace(): props.append(child.getNamespace())
+        return props
 
 class Message(Protocol):
     def __init__(self, to=None, body=None, type=None, subject=None, attrs={}, frm=None, payload=[], timestamp=None, node=None):
@@ -117,8 +122,12 @@ class Iq(Protocol):
         Protocol.__init__(self, 'iq', to=to, type=type, attrs=attrs, frm=frm, node=node)
         if payload: self.setQueryPayload(payload)
         if queryNS: self.setQueryNS(queryNS)
-    def getQueryNS(self): return self.setTag('query').getNamespace()
-    def getQueryPayload(self): return self.setTag('query').getPayload()
+    def getQueryNS(self):
+        tag=self.getTag('query')
+        if tag: return tag.getNamespace()
+    def getQueryPayload(self):
+        tag=self.getTag('query')
+        if tag: return tag.getPayload()
     def setQueryNS(self,namespace): self.setTag('query').setNamespace(namespace)
     def setQueryPayload(self,payload): self.setTag('query').setPayload(payload)
 
