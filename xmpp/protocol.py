@@ -168,6 +168,7 @@ class Message(Protocol):
     def setBody(self,val): self.setTagData('body',val)
     def setSubject(self,val): self.setTagData('subject',val)
     def setThread(self,val): self.setTagData('thread',val)
+    def buildReply(self,text=None): return Message(to=self.getFrom(),frm=self.getTo(),body=text,node=self)
 
 class Presence(Protocol):
     def __init__(self, to=None, type=None, priority=None, show=None, status=None, attrs={}, frm=None, timestamp=None, payload=[], node=None):
@@ -195,6 +196,7 @@ class Iq(Protocol):
         if tag: return tag.getPayload()
     def setQueryNS(self,namespace): self.setTag('query').setNamespace(namespace)
     def setQueryPayload(self,payload): self.setTag('query').setPayload(payload)
+    def buildReply(self,type): return Iq(type,to=self.getFrom(),frm=self.getTo(),attrs={'id':self.getID()})
 
 class DataForm(Node):
     def __init__(self,data=None,node=None):
