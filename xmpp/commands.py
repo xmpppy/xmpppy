@@ -57,7 +57,9 @@ class Commands(PlugIn):
     def plugin(self, owner, browser):
         """Makes handlers within the session"""
         # Plug into the session and the disco manager
-        owner.RegisterHandler('iq',self._CommandHandler,ns=NS_COMMANDS)
+        # We only need get and set, results are not needed by a service provider, only a service user.
+        owner.RegisterHandler('iq',self._CommandHandler,typ='set',ns=NS_COMMANDS)
+        owner.RegisterHandler('iq',self._CommandHandler,typ='get',ns=NS_COMMANDS)
         browser.setDiscoHandler(self._DiscoHandler,node=NS_COMMANDS,jid='')
         self._browser = browser
         
