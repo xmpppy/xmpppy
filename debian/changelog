@@ -1,3 +1,10 @@
+python-xmpp (0.1-rc3-1) unstable; urgency=low
+
+  * Sync with latest released version.
+  * Sponsored upload by Cosimo Alfarano <kalfa@debian.org>
+
+ -- Alexey Nezhdanov <snakeru@users.sourceforge.net>  Thu, 24 Jun 2004 06:51:06 +0400
+
 python-xmpp (0.1-rc2-2) unstable; urgency=low
 
   * Added bugfixes from CVS version.

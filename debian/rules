@@ -66,6 +66,11 @@ binary-indep: build install
 	dh_testdir -i
 	dh_testroot -i
 	
+	mkdir examples
+	mv docs/examples/* examples
+	mkdir html
+	mv docs/*html html
+	
 	dh_installdocs -i
 	dh_installexamples -i
 	dh_installchangelogs -i
