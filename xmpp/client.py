@@ -113,7 +113,7 @@ class Client(CommonClient):
         self.connected='tls'
         return self.connected
 
-    def auth(self,user,password,resource='xmpppy'):
+    def auth(self,user,password,resource=''):
         self._User,self._Password,self._Resource=user,password,resource
         auth.SASL(user,password).PlugIn(self)
         while not self.Dispatcher.Stream._document_attrs and self.Process(): pass
@@ -122,6 +122,7 @@ class Client(CommonClient):
             while self.SASL.startsasl=='in-process' and self.Process(): pass
         else: self.SASL.startsasl='failure'
         if self.SASL.startsasl=='failure':
+            if not resource: resource='xmpppy'
             if auth.NonSASL(user,password,resource).PlugIn(self):
                 self.connected+='+old_auth'
                 return 'old_auth'
