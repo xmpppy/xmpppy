@@ -231,6 +231,9 @@ class Iq(Protocol):
     def getQueryPayload(self):
         tag=self.getTag('query')
         if tag: return tag.getPayload()
+    def getQueryChildren(self):
+        tag=self.getTag('query')
+        if tag: return tag.getChildren()
     def setQueryNS(self,namespace): self.setTag('query').setNamespace(namespace)
     def setQueryPayload(self,payload): self.setTag('query').setPayload(payload)
     def setQuerynode(self,node): self.setTagAttr('query','node',node)
