@@ -157,6 +157,7 @@ class NodeBuilder:
         self._dispatch_depth = 1
         self._document_attrs = None
         self._mini_dom=initial_node
+        self.last_is_data = 0
 
         if data: self._parser.Parse(data,1)
 
@@ -177,6 +178,7 @@ class NodeBuilder:
             self._ptr = self._ptr.kids[-1]
         if self.__depth == 1:
             self._document_attrs = attrs
+        if not self.last_is_data and self._ptr.parent: self._ptr.parent.data.append('')
         self.last_is_data = 0
 
     def endtag(self, tag ):
