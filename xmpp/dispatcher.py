@@ -88,7 +88,8 @@ class Dispatcher(PlugIn):
         self.RegisterProtocol('unknown',Protocol,xmlns=xmlns)
         self.RegisterProtocol('default',Protocol,xmlns=xmlns)
 
-    def RegisterProtocol(self,tag_name,Proto,xmlns=NS_CLIENT,order='info'):
+    def RegisterProtocol(self,tag_name,Proto,xmlns=None,order='info'):
+        if not xmlns: xmlns=self._owner.Namespace
         self.DEBUG('Registering protocol "%s" as %s(%s)'%(tag_name,Proto,xmlns), order)
         self.handlers[xmlns][tag_name]={type:Proto, 'default':[]}
 
@@ -105,10 +106,12 @@ class Dispatcher(PlugIn):
         if makefirst: self.handlers[xmlns][name][typ+ns].insert({'func':handler,'system':system})
         else: self.handlers[xmlns][name][typ+ns].append({'func':handler,'system':system})
 
-    def RegisterHandlerOnce(self,name,handler,typ='',ns='',xmlns=NS_CLIENT,makefirst=0, system=0):
+    def RegisterHandlerOnce(self,name,handler,typ='',ns='',xmlns=None,makefirst=0, system=0):
+        if not xmlns: xmlns=self._owner.Namespace
         self.RegisterHandler(name, handler, typ, ns, xmlns, makefirst, system)
 
-    def UnregisterHandler(self,name,handler,typ='',ns='',xmlns=NS_CLIENT):
+    def UnregisterHandler(self,name,handler,typ='',ns='',xmlns=None):
+        if not xmlns: xmlns=self._owner.Namespace
         if not typ and not ns: typ='default'
         for pack in self.handlers[xmlns][name][typ+ns]:
             if handler==pack['func']: break
