@@ -73,8 +73,6 @@ class SASL:
         self.username=username
         self.password=password
         self.startsasl=None
-        self.nc=0
-        self.uri='xmpp'
 
     def PlugIn(self,owner):
         self._owner=owner
@@ -97,7 +95,7 @@ class SASL:
         if "DIGEST-MD5" in mecs:
             node=Node('auth',attrs={'xmlns':NS_SASL,'mechanism':'DIGEST-MD5'})
         elif "PLAIN" in mecs:
-            sasl_data='%s\x00%s\x00%s'%(self._owner.Server,self.username,self.password)
+            sasl_data='%s\x00%s\x00%s'%(self.username+'@'+self._owner.Server,self.username,self.password)
             node=Node('auth',attrs={'xmlns':NS_SASL,'mechanism':'PLAIN'},payload=[base64.encodestring(sasl_data)])
         else:
             self.startsasl='failure'
@@ -122,27 +120,25 @@ class SASL:
             self._owner.User=self.username
             return
 ########################################3333
-        incoming_data=challenge.getData()       # может быть потребуется str
+        incoming_data=challenge.getData()
         chal={}
         for pair in base64.decodestring(incoming_data).split(','):
             key,value=pair.split('=')
             if key in ['realm','nonce','qop','cipher']: value=value[1:-1]
             chal[key]=value
-        if chal.has_key('realm'):       # может быть потребуется str
+        if chal.has_key('realm'):
             resp={}
-            resp['username']=self.username       # может быть потребуется str
-            resp['realm']=chal['realm']       # может быть потребуется str
-            resp['nonce']=chal['nonce']       # может быть потребуется str
-            cnonce='OA6MHXh6VqTrRk'
-#            for i in range(7):
-#                cnonce+=hex(int(random.random()*65536*4096))[2:]
+            resp['username']=self.username
+            resp['realm']=chal['realm']
+            resp['nonce']=chal['nonce']
+            cnonce=''
+            for i in range(7):
+                cnonce+=hex(int(random.random()*65536*4096))[2:]
             resp['cnonce']=cnonce
-            self.nc+=1
-            resp['nc']=('0000000%i'%self.nc)[-8:]
+            resp['nc']=('00000001')
             resp['qop']='auth'
-            resp['digest-uri']=self.uri+'/'+self._owner.Server       # может быть потребуется str
-            _A1=C([resp['username'],resp['realm'],self.password])
-            A1=C([H(_A1),resp['nonce'],resp['cnonce']])
+            resp['digest-uri']='xmpp/'
+            A1=C([H(C([resp['username'],resp['realm'],self.password])),resp['nonce'],resp['cnonce']])
             A2=C(['AUTHENTICATE',resp['digest-uri']])
             response= HH(C([HH(A1),resp['nonce'],resp['nc'],resp['cnonce'],resp['qop'],HH(A2)]))
             resp['response']=response
@@ -152,8 +148,7 @@ class SASL:
                 if key in ['nc','qop','response','charset']: sasl_data+="%s=%s,"%(key,resp[key])
                 else: sasl_data+='%s="%s",'%(key,resp[key])
 ########################################3333
-            print "sasl_data",sasl_data[:-1]
-            node=Node('response',attrs={'xmlns':NS_SASL},payload=[base64.encodestring(sasl_data[:-1])])
+            node=Node('response',attrs={'xmlns':NS_SASL},payload=[base64.encodestring(sasl_data[:-1]).replace('\n','')])
             self._owner.send(node.__str__())
         elif chal.has_key('rspauth'): self._owner.send(Node('response',attrs={'xmlns':NS_SASL}).__str__())
         else: 
@@ -163,6 +158,7 @@ class SASL:
 
 DBG_BIND='bind'
 NS_BIND='urn:ietf:params:xml:ns:xmpp-bind'
+NS_SESSION='urn:ietf:params:xml:ns:xmpp-session'
 class Bind:
     def __init__(self):
         self.bound=None
@@ -179,14 +175,22 @@ class Bind:
             self.bound='failure'
             self._owner.DEBUG(DBG_BIND,'Server does not requested binding.','error')
             return
+        if feats.getTag('session',namespace=NS_SESSION): self.session=1
+        else: self.session=-1
         self.bound=[]
 
-    def Bind(self,resource):
+    def Bind(self,resource=None):
         while self.bound is None and self._owner.Process(1): pass
-#        resp=self._owner.SendAndWaitForResponse(Protocol('iq',type='set',payload=[Node('bind',attrs={'xmlns':NS_BIND},payload=[Node('resource',payload=[resource])])]))
-        resp=self._owner.SendAndWaitForResponse(Protocol('iq',type='set',payload=[Node('bind',attrs={'xmlns':NS_BIND})]))
+        if resource: resource=[Node('resource',payload=[resource])]
+        else: resource=[]
+        resp=self._owner.SendAndWaitForResponse(Protocol('iq',type='set',payload=[Node('bind',attrs={'xmlns':NS_BIND},payload=resource)]))
         if resp and resp.getType()=='result':
             self.bound.append(resp.getTag('bind').getTagData('jid'))
             self._owner.DEBUG(DBG_BIND,'Successfully bound %s.'%self.bound[-1],'ok')
+            resp=self._owner.SendAndWaitForResponse(Protocol('iq',type='set',payload=[Node('session',attrs={'xmlns':NS_SESSION})]))
+            if resp and resp.getType()=='result': self._owner.DEBUG(DBG_BIND,'Successfully opened session.','ok')
+            else:
+                self._owner.DEBUG(DBG_BIND,'Session open failed.','error')
+                self.session=0
         elif resp: self._owner.DEBUG(DBG_BIND,'Binding failed: %s.'%resp.getTag('error'),'error')
         else: self._owner.DEBUG(DBG_BIND,'Binding failed: timeout expired.','error')
