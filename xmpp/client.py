@@ -86,10 +86,12 @@ class CommonClient:
         if proxy: connected=transports.HTTPPROXYsocket(proxy,server).PlugIn(self)
         else: connected=transports.TCPsocket(server).PlugIn(self)
         if not connected: return
-        if self.Connection.getPort()==5223: transports.TLS().PlugIn(self,now=1)
+        self.connected='tcp'
+        if self.Connection.getPort()==5223:
+            transports.TLS().PlugIn(self,now=1)
+            self.connected='tls'
         dispatcher.Dispatcher().PlugIn(self)
         while self.Dispatcher.Stream._document_attrs is None: self.Process(1)
-        self.connected='tcp'
         return 'ok'
 
 class Client(CommonClient):
@@ -100,7 +102,8 @@ class Client(CommonClient):
         while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
         if not self.Dispatcher.Stream.features.getTag('starttls'): return       # TLS not supported by server
         while not self.TLS.starttls and self.Process(): pass
-        if self.TLS.starttls<>'proceed': self.event('tls_failed'); return 'tls failed'
+        if self.TLS.starttls<>'success': self.event('tls_failed'); return 'tls failed'
+        self.connected='tls'
         return 'ok'
 
     def auth(self,user,password,resource='xmpppy'):
@@ -112,13 +115,13 @@ class Client(CommonClient):
         else: self.SASL.startsasl='failure'
         if self.SASL.startsasl=='failure':
             if auth.NonSASL(user,password,resource).PlugIn(self):
-                self.connected='jabber'
+                self.connected+='+old_auth'
                 return 'ok'
         else:
             auth.Bind().PlugIn(self)
             while self.Bind.bound is None: self.Process()
             if self.Bind.Bind(resource):
-                self.connected='xmpp'
+                self.connected+='+sasl'
                 return 'ok'
 
     def sendInitPresence(self,requestRoster=1):
