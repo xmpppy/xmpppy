@@ -197,24 +197,30 @@ class Iq(Protocol):
     def setQueryPayload(self,payload): self.setTag('query').setPayload(payload)
 
 class DataForm(Node):
-    def __init__(self,data):
-        Node.__init__(self,'x')
+    def __init__(self,data=None,node=None):
+        Node.__init__(self,'x',node=node)
         self.setNamespace(NS_DATA)
         if type(data) in [type(()),type([])]:
             dict={}
             for i in data: dict[i]=''
-        else: dict=data
+        elif data: dict=data
         for key in dict.keys():
             self.setField(key,dict[key])
     def asDict(self):
         ret={}
         for i in self.getTags('field'):
-            ret[i.getAttr('var')]=i.getTagData('value')
+            key,val=i.getAttr('var'),i.getTagData('value')
+            if not ret.has_key(key) or val: ret[key]=val # Workaround for broken jabberd1.4 registration form reply
         return ret
     def getField(self,name):
         tag=self.getTag('field',attrs={'var':name})
         if tag: return tag.getTagData('value')
-    def setField(self,name, val): self.setTag('field',attrs={'var':name}).setTagData('value',val)
+    def __getitem__(self,name):
+        tag=self.getTag('field',attrs={'var':name})
+        if tag: return tag.getTagData('value')
+        else: raise IndexError('No such field')
+    def setField(self,name,val): self.setTag('field',attrs={'var':name}).setTagData('value',val)
+    __setitem__=setField
     def setFromDict(self,dict):
         for i in dict.keys(): self.setField(i,dict[i])
 
