@@ -93,6 +93,7 @@ class Client:
         if self.Dispatcher.Stream._document_attrs.has_key('version') and self.Dispatcher.Stream._document_attrs['version']=='1.0':
             while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
             while self.SASL.startsasl=='in-process' and self.Process(): pass
+        else: self.SASL.startsasl='failure'
         if self.SASL.startsasl=='failure': auth.NonSASL(user,password,resource).PlugIn(self)
         else:
             auth.Bind().PlugIn(self)
