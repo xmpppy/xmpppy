@@ -197,6 +197,12 @@ class NodeBuilder:
 
         if data: self._parser.Parse(data,1)
 
+    def destroy(self):
+        self._parser.StartElementHandler       = None
+        self._parser.EndElementHandler         = None
+        self._parser.CharacterDataHandler      = None
+        self._parser.StartNamespaceDeclHandler = None
+
     def starttag(self, tag, attrs):
         """XML Parser callback"""
         attlist=attrs.keys()       #
