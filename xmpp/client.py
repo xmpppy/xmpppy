@@ -76,7 +76,7 @@ import transports,dispatcher,auth,roster
 class CommonClient:
     def __init__(self,server,port=5222,debug=['always', 'nodebuilder']):
         if self.__class__.__name__=='Client': self.Namespace,self.DBG='jabber:client',DBG_CLIENT
-        elif self.__class__.__name__=='Component': self.Namespace,self.DBG='jabber:component:accept',DBG_COMPONENT
+        elif self.__class__.__name__=='Component': self.Namespace,self.DBG=dispatcher.NS_COMPONENT_ACCEPT,DBG_COMPONENT
         self.disconnect_handlers=[]
         self.Server=server
         self.Port=port

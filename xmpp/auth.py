@@ -68,7 +68,7 @@ class NonSASL(PlugIn):
     def authComponent(self,owner):
         self.handshake=0
         owner.send(Protocol('handshake',payload=[sha.new(owner.Dispatcher.Stream._document_attrs['id']+self.password).hexdigest()]))
-        owner.RegisterHandler('handshake',self.handshakeHandler)
+        owner.RegisterHandler('handshake',self.handshakeHandler,xmlns=NS_COMPONENT_ACCEPT)
         while not self.handshake:
             self.DEBUG("waiting on handshake",'notify')
             owner.Process(1)

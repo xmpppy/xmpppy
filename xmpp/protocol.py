@@ -23,6 +23,7 @@ NS_AUTH         ='jabber:iq:auth'
 NS_BIND         ='urn:ietf:params:xml:ns:xmpp-bind'
 NS_BROWSE       ='jabber:iq:browse'
 NS_CLIENT       ='jabber:client'
+NS_COMPONENT_ACCEPT='jabber:component:accept'
 NS_DATA         ='jabber:x:data'                                # JEP-0004
 NS_DELAY        ='jabber:x:delay'
 NS_DIALBACK     ='jabber:server:dialback'
