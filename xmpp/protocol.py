@@ -19,6 +19,9 @@ import time
 
 NS_DELAY='jabber:x:delay'
 
+def resultNode(node): return node and node.getType()=='result'
+def errorNode(node): return node and node.getType()=='error'
+
 class JID:
     def __init__(self, jid, node='', domain='', resource=''):
         if not jid: raise ValueError('JID must contain at least domain name')
