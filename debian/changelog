@@ -1,3 +1,18 @@
+python-xmpp (0.1-rc2-2) unstable; urgency=low
+
+  * Added bugfixes from CVS version.
+  * Added python to "Build-Depends". Closes: #254368
+  * Sponsored upload by Cosimo Alfarano <kalfa@debian.org>
+
+ -- Alexey Nezhdanov <snakeru@users.sourceforge.net>  Tue, 15 Jun 2004 09:09:01 +0400
+
+python-xmpp (0.1-rc2-1) unstable; urgency=low
+
+  * Sync with latest released version.
+  * Sponsored upload by Cosimo Alfarano <kalfa@debian.org>
+
+ -- Alexey Nezhdanov <snakeru@users.sourceforge.net>  Fri, 28 May 2004 23:39:31 +0400
+
 python-xmpp (0.1-rc1-1) unstable; urgency=low
 
   * Sync with latest released version.

@@ -2,9 +2,9 @@ Source: python-xmpp
 Section: python
 Priority: optional
 Maintainer: Alexey Nezhdanov <snakeru@users.sourceforge.net>
-Build-Depends-Indep: debhelper (>> 3.0.0)
+Build-Depends-Indep: debhelper (>> 3.0.0), python
 Standards-Version: 3.6.1.0
-Uploaders: Alexey Nezhdanov <snakeru@users.sourceforge.net>, Cosimo Alfarano <kalfa@debian.org>
+Uploaders: Cosimo Alfarano <kalfa@debian.org>
 
 Package: python-xmpp
 Architecture: all
