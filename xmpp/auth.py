@@ -95,7 +95,8 @@ class SASL:
         owner.debug_flags.append(DBG_SASL)
         owner.DEBUG(DBG_SASL,'Plugging into %s'%owner,'start')
         self._owner.SASL=self
-        self._owner.RegisterHandler('features',self.FeaturesHandler)
+        if self._owner.Dispatcher.Stream.features: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
+        else: self._owner.RegisterHandler('features',self.FeaturesHandler)
 
     def FeaturesHandler(self,conn,feats):
         if not feats.getTag('mechanisms',namespace=NS_SASL):
@@ -138,14 +139,16 @@ class SASL:
 ########################################3333
         incoming_data=challenge.getData()
         chal={}
-        for pair in base64.decodestring(incoming_data).split(','):
+        data=base64.decodestring(incoming_data)
+        self._owner.DEBUG(DBG_SASL,'Got challenge:'+data,'ok')
+        for pair in data.split(','):
             key,value=pair.split('=')
-            if key in ['realm','nonce','qop','cipher']: value=value[1:-1]
+            if value[:1]=='"' and value[-1:]=='"': value=value[1:-1]
             chal[key]=value
-        if chal.has_key('realm'):
+        if chal.has_key('qop') and chal['qop']=='auth':
             resp={}
             resp['username']=self.username
-            resp['realm']=chal['realm']
+            resp['realm']=self._owner.Server
             resp['nonce']=chal['nonce']
             cnonce=''
             for i in range(7):
@@ -184,7 +187,8 @@ class Bind:
         owner.debug_flags.append(DBG_BIND)
         owner.DEBUG(DBG_BIND,'Plugging into %s'%owner,'start')
         self._owner.Bind=self
-        self._owner.RegisterHandler('features',self.FeaturesHandler)
+        if self._owner.Dispatcher.Stream.features: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
+        else: self._owner.RegisterHandler('features',self.FeaturesHandler)
 
     def FeaturesHandler(self,conn,feats):
         if not feats.getTag('bind',namespace=NS_BIND):
