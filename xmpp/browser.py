@@ -82,7 +82,7 @@ class Browser(PlugIn):
             for item in lst: q.addChild('item',item)
         elif request.getQueryNS()==NS_DISCO_INFO:
             if type(handler)==dict: dt=handler['info']
-            else: lst=handler(conn,request,'info')
+            else: dt=handler(conn,request,'info')
             # handler must return dictionary:
             # {'ids':[{},{},{},{}], 'features':[fe,at,ur,es], 'xdata':DataForm}
             for id in dt['ids']: q.addChild('identity',id)
