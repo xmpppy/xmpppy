@@ -1,0 +1,88 @@
+#!/usr/bin/make -f
+# Sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# This is the debhelper compatibility version to use.
+export DH_COMPAT=3
+
+# python version for which a pkg will be build
+export PYVERSIONS=python2.1 python2.2 python2.3
+
+ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -g
+endif
+ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+	INSTALL_PROGRAM += -s
+endif
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	# Add here commands to configure the package.
+
+	touch configure-stamp
+
+
+build: build-stamp
+
+build-stamp: configure-stamp 
+	dh_testdir
+
+	# Add here commands to compile the package.
+
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f $(CURDIR)/*pyo
+	rm -f $(CURDIR)/*pyc
+	rm -f build-stamp configure-stamp
+
+	# Add here commands to clean up after the build process.
+
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs -v
+
+	# Add here commands to install the package into debian/python-xmpp
+	install -m 0644 $(CURDIR)/xmpp/*py \
+	        $(CURDIR)/debian/python2.1-xmpp/usr/lib/python2.1/site-packages
+	install -m 0644 $(CURDIR)/xmpp/*py \
+	        $(CURDIR)/debian/python2.2-xmpp/usr/lib/python2.2/site-packages
+	install -m 0644 $(CURDIR)/xmpp/*py \
+	        $(CURDIR)/debian/python2.3-xmpp/usr/lib/python2.3/site-packages
+
+
+# Build architecture-independent files here.
+binary-indep: build install
+	dh_testdir -i
+	dh_testroot -i
+	
+	install -m 0644 $(CURDIR)/README.py \
+	        $(CURDIR)/debian/docs
+	
+	dh_installdocs -i
+	dh_installexamples -i
+	dh_installchangelogs -i
+	dh_link -i
+	dh_compress -i
+	dh_fixperms -i
+	dh_installdeb -i
+	dh_shlibdeps -i
+	dh_gencontrol -i
+	dh_md5sums -i
+	dh_builddeb -i
+
+# Build architecture-dependent files here.
+binary-arch: build install
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure
