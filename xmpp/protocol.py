@@ -1,6 +1,6 @@
 ##   protocol.py 
 ##
-##   Copyright (C) 2003 Alexey "Snake" Nezhdanov
+##   Copyright (C) 2003-2004 Alexey "Snake" Nezhdanov
 ##
 ##   This program is free software; you can redistribute it and/or modify
 ##   it under the terms of the GNU General Public License as published by
@@ -228,7 +228,8 @@ class Error(Node):
         if argv.has_key('type'): type=argv['type']
         if argv.has_key('code'): code=argv['code']
         if argv.has_key('text'): text=argv['text']
-        Node.__init__(self,'error',{'type':type},[Node(NS_STANZAS+' '+name),Node(NS_STANZAS+' text',{},[text])])
+        Node.__init__(self,'error',{'type':type},[Node(NS_STANZAS+' '+name)])
+        if text: self.addChild(node=Node(NS_STANZAS+' text',{},[text]))
         if code: self.setAttr('code',code)
         if argv.has_key('base_stanza'):
             base=argv['base_stanza']
