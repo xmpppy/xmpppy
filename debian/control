@@ -3,7 +3,7 @@ Section: python
 Priority: optional
 Maintainer: Alexey Nezhdanov <snakeru@users.sourceforge.net>
 Build-Depends-Indep: debhelper (>> 3.0.0)
-Standards-Version: 3.5.8.0
+Standards-Version: 3.6.1
 
 Package: python-xmpp
 Architecture: all
