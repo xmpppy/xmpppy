@@ -48,7 +48,7 @@ def messageCB(sess,mess):
 
 if 1:
     cl=Client(JID(BOT[0]).getDomain(),debug=[])
-    cl.connect(PROXY)
+    cl.connect(proxy=PROXY)
     cl.RegisterHandler('message',messageCB)
     cl.auth(JID(BOT[0]).getNode(),BOT[1])
     p=Presence(to='%s/logger'%CONF[0])
