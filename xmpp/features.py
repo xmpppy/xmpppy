@@ -111,6 +111,8 @@ def changePasswordTo(disp,newpassword):
     if resultNode(resp): return 1
 
 ### Privacy ### jabber:iq:privacy ### draft-ietf-xmpp-im-19 ####################
+#type=[jid|group|subscription]
+#action=[allow|deny]
 
 def getPrivacyLists(disp):
     try:
@@ -126,16 +128,16 @@ def getPrivacyLists(disp):
 def getPrivacyList(disp,listname):
     try:
         resp=disp.SendAndWaitForResponse(Iq('get',NS_PRIVACY,payload=[Node('list',{'name':listname})]))
-        if resultNode(resp): return resp.getQueryPayload()[0].getTag('list',{'name':listname})
+        if resultNode(resp): return resp.getQueryPayload()[0]
     except: pass
 
 def setActivePrivacyList(disp,listname=None,type='active'):
     if listname: attrs={'name':listname}
-    else: attrs=None
+    else: attrs={}
     resp=disp.SendAndWaitForResponse(Iq('set',NS_PRIVACY,payload=[Node(type,attrs)]))
     if resultNode(resp): return 1
 
-def setActivePrivacyList(disp,listname=None): return SetActivePrivacyList(disp,listname,'default')
+def setDefaultPrivacyList(disp,listname=None): return setActivePrivacyList(disp,listname,'default')
 
 def setPrivacyList(disp,payload):
     resp=disp.SendAndWaitForResponse(Iq('set',NS_PRIVACY,payload=[payload]))
