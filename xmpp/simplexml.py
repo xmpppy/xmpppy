@@ -171,6 +171,10 @@ class NodeBuilder:
 
     def starttag(self, tag, attrs):
         """XML Parser callback"""
+        for attr in attrs.keys():       # FIXME: Crude hack. And it also slows down the whole library considerably.
+            if attr[:37]=="http://www.w3.org/XML/1998/namespace ":
+                attrs['xml:'+attr[37:]]=attrs[attr]
+                del attrs[attr]
         self.__depth += 1
         self.DEBUG(DBG_NODEBUILDER, "DEPTH -> %i , tag -> %s, attrs -> %s" % (self.__depth, tag, `attrs`), 'down')
         if self.__depth == self._dispatch_depth:
