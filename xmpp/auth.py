@@ -14,6 +14,11 @@
 
 # $Id$
 
+"""
+Provides library with all Non-SASL and SASL authentication mechanisms.
+Can be used both for client and transport authentication.
+"""
+
 from protocol import *
 from client import PlugIn
 import sha,base64,random,dispatcher
@@ -24,7 +29,9 @@ def H(some): return md5.new(some).digest()
 def C(some): return ':'.join(some)
 
 class NonSASL(PlugIn):
+    """ Implements old Non-SASL (JEP-0078) authentication used in jabberd1.4 and transport authentication."""
     def __init__(self,user,password,resource):
+        """ Caches username, password and resource for auth. """
         PlugIn.__init__(self)
         self.DBG_LINE='gen_auth'
         self.user=user
@@ -32,6 +39,8 @@ class NonSASL(PlugIn):
         self.resource=resource
 
     def plugin(self,owner):
+        """ Determine the best auth method (digest/0k/plain) and use it for auth.
+            Returns used method name on success. Used internally. """
         if not self.resource: return self.authComponent(owner)
         self.DEBUG('Querying server about possible auth methods','start')
         resp=owner.Dispatcher.SendAndWaitForResponse(Iq('get',NS_AUTH,payload=[Node('username',payload=[self.user])]))
@@ -43,29 +52,33 @@ class NonSASL(PlugIn):
         query.setTagData('username',self.user)
         query.setTagData('resource',self.resource)
 
-        if query.getTag('token'):
+        if query.getTag('digest'):
+            self.DEBUG("Performing digest authentication",'ok')
+            query.setTagData('digest',sha.new(owner.Dispatcher.Stream._document_attrs['id']+self.password).hexdigest())
+            method='digest'
+        elif query.getTag('token'):
             token=query.getTagData('token')
             seq=query.getTagData('sequence')
             self.DEBUG("Performing zero-k authentication",'ok')
             hash = sha.new(sha.new(self.password).hexdigest()+token).hexdigest()
             for foo in xrange(int(seq)): hash = sha.new(hash).hexdigest()
             query.setTagData('hash',hash)
-        elif query.getTag('digest'):
-            self.DEBUG("Performing digest authentication",'ok')
-            query.setTagData('digest',sha.new(owner.Dispatcher.Stream._document_attrs['id']+self.password).hexdigest())
+            method='0k'
         else:
             self.DEBUG("Sequre methods unsupported, performing plain text authentication",'warn')
             query.setTagData('password',self.password)
+            method='plain'
         resp=owner.Dispatcher.SendAndWaitForResponse(iq)
         if isResultNode(resp):
             self.DEBUG('Sucessfully authenticated with remove host.','ok')
             owner.User=self.user
             owner.Resource=self.resource
             owner._registered_name=owner.User+'@'+owner.Server+'/'+owner.Resource
-            return 'ok'
+            return method
         self.DEBUG('Authentication failed!','error')
 
     def authComponent(self,owner):
+        """ Authenticate component. Send handshake stanza and wait for result. Returns "ok" on success. """
         self.handshake=0
         owner.send(Protocol('handshake',payload=[sha.new(owner.Dispatcher.Stream._document_attrs['id']+self.password).hexdigest()]))
         owner.RegisterHandler('handshake',self.handshakeHandler,xmlns=NS_COMPONENT_ACCEPT)
@@ -76,14 +89,19 @@ class NonSASL(PlugIn):
         if self.handshake+1: return 'ok'
 
     def handshakeHandler(self,disp,stanza):
+        """ Handler for registering in dispatcher for accepting transport authentication. """
         if stanza.getName()=='handshake': self.handshake=1
         else: self.handshake=-1
 
 class SASL(PlugIn):
+    """ Implements SASL authentication. """
     def plugin(self,owner):
         self.startsasl=None
 
     def auth(self,username,password):
+        """ Start authentication. Result can be obtained via "SASL.startsasl" attribute and will be
+            either "success" or "failure". Note that successfull auth will take at least
+            two Dispatcher.Process() calls. """
         self.username=username
         self.password=password
         if self._owner.Dispatcher.Stream.features:
@@ -92,12 +110,14 @@ class SASL(PlugIn):
         else: self._owner.RegisterHandler('features',self.FeaturesHandler,xmlns=NS_STREAMS)
 
     def plugout(self):
+        """ Remove SASL handlers from owner's dispatcher. Used internally. """
         self._owner.UnregisterHandler('features',self.FeaturesHandler,xmlns=NS_STREAMS)
         self._owner.UnregisterHandler('challenge',self.SASLHandler,xmlns=NS_SASL)
         self._owner.UnregisterHandler('failure',self.SASLHandler,xmlns=NS_SASL)
         self._owner.UnregisterHandler('success',self.SASLHandler,xmlns=NS_SASL)
 
     def FeaturesHandler(self,conn,feats):
+        """ Used to determine if server supports SASL auth. Used internally. """
         if not feats.getTag('mechanisms',namespace=NS_SASL):
             self.startsasl='failure'
             self.DEBUG('SASL not supported by server','error')
@@ -122,6 +142,7 @@ class SASL(PlugIn):
         raise NodeProcessed
 
     def SASLHandler(self,conn,challenge):
+        """ Perform next SASL auth step. Used internally. """
         if challenge.getNamespace()<>NS_SASL: return
         if challenge.getName()=='failure':
             self.startsasl='failure'
@@ -176,21 +197,25 @@ class SASL(PlugIn):
         raise NodeProcessed
 
 class Bind(PlugIn):
+    """ Bind some JID to the current connection to allow router know of our location."""
     def __init__(self):
         PlugIn.__init__(self)
         self.DBG_LINE='bind'
         self.bound=None
 
     def plugin(self,owner):
+        """ Start resource binding, if allowed at this time. Used internally. """
         if self._owner.Dispatcher.Stream.features:
             try: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
             except NodeProcessed: pass
         else: self._owner.RegisterHandler('features',self.FeaturesHandler,xmlns=NS_STREAMS)
 
     def plugout(self,owner):
+        """ Remove Bind handler from owner's dispatcher. Used internally. """
         self._owner.UnregisterHandler('features',self.FeaturesHandler,xmlns=NS_STREAMS)
 
     def FeaturesHandler(self,conn,feats):
+        """ Determine if server supports resource binding and set some internal attributes accordingly. """
         if not feats.getTag('bind',namespace=NS_BIND):
             self.bound='failure'
             self.DEBUG('Server does not requested binding.','error')
@@ -200,6 +225,7 @@ class Bind(PlugIn):
         self.bound=[]
 
     def Bind(self,resource=None):
+        """ Perform binding. Use provided resource name or random (if not provided). """
         while self.bound is None and self._owner.Process(1): pass
         if resource: resource=[Node('resource',payload=[resource])]
         else: resource=[]
