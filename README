@@ -1,0 +1,10 @@
+This library now have no any documentation except of README.py that must be
+located in "examples" directory. You can see there for some example code
+to figure out how to get online and send/receive some stanzas.
+
+Reading of source files, at least the client.py and simplexml.py files is 
+highly recommended.
+
+Support can be obtained via xmpppy-devel maillist - see
+http://lists.sourceforge.net/lists/listinfo/xmpppy-devel
+for details of subscription.
