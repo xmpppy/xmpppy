@@ -1,8 +1,12 @@
-This library now have no any documentation except of README.py that is both the
-valid script and detailed (by the way of comments) example of library use.
+This library currently have only a few docs (in the docs\ directory):
+ - README.py - both the valid script and detailed (by the way of comments) 
+   example of library use.
+ - Xmpppy's home page along with another usage example.
 
 Reading of source (at least the client.py and simplexml.py) is highly
 recommended.
+
+Debian packages can be found on official Debian mirrors under the name of "python-xmpp".
 
 Support can be obtained via xmpppy-devel maillist - see
 http://lists.sourceforge.net/lists/listinfo/xmpppy-devel
