@@ -224,11 +224,19 @@ class Client(CommonClient):
 
 class Component(CommonClient):
     """ Component class. The only difference from CommonClient is ability to perform component authentication. """
+    def __init__(self,server,port=5347,typ=None,debug=['always', 'nodebuilder']):
+        """ Init function for Components.
+            As components use a different auth mechanism which includes the namespace of the component.
+            Jabberd1.4 and Ejabberd use the default namespace then for all client messages.
+            Jabberd2 uses jabber:client."""
+        CommonClient.__init__(self,server,port=port,debug=debug)
+        self.typ=typ
+    
     def connect(self,server=None,proxy=None):
         """ This will connect to the server, and if the features tag is found then set
             the namespace to be jabber:client as that is required for jabberd2"""
         CommonClient.connect(self,server=server,proxy=proxy)
-        if self.Dispatcher.Stream.features != None:
+        if self.typ=='jabberd2' or not self.typ and self.Dispatcher.Stream.features != None:
                 self.defaultNamespace=auth.NS_CLIENT
                 self.Dispatcher.RegisterNamespace(self.defaultNamespace)
                 self.Dispatcher.RegisterProtocol('iq',dispatcher.Iq)
