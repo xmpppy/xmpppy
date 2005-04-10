@@ -161,6 +161,8 @@ class CommonClient:
             self.connected='tls'
         dispatcher.Dispatcher().PlugIn(self)
         while self.Dispatcher.Stream._document_attrs is None: self.Process(1)
+        if self.Dispatcher.Stream._document_attrs.has_key('version') and self.Dispatcher.Stream._document_attrs['version']=='1.0':
+            while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
         return self.connected
 
 class Client(CommonClient):
@@ -222,14 +224,18 @@ class Client(CommonClient):
 
 class Component(CommonClient):
     """ Component class. The only difference from CommonClient is ability to perform component authentication. """
-    def __init__(self,server,port=5222,typ='jabberd14',debug=['always', 'nodebuilder']):
-        """ Init function for Components. 
-            As components use a different auth mechanism which includes the namespace of the component.
-            Jabberd1.4 and Ejabberd use the default namespace then for all client messages.
-            Jabberd2 uses jabber:client."""
-        CommonClient.__init__(self,server,port=port,debug=debug)
-        if typ == 'jabberd2': self.defaultNamespace=auth.NS_CLIENT
-    
+    def connect(self,server=None,proxy=None):
+        """ This will connect to the server, and if the features tag is found then set
+            the namespace to be jabber:client as that is required for jabberd2"""
+        CommonClient.connect(self,server=server,proxy=proxy)
+        if self.Dispatcher.Stream.features != None:
+                self.defaultNamespace=auth.NS_CLIENT
+                self.Dispatcher.RegisterNamespace(self.defaultNamespace)
+                self.Dispatcher.RegisterProtocol('iq',dispatcher.Iq)
+                self.Dispatcher.RegisterProtocol('message',dispatcher.Message)
+                self.Dispatcher.RegisterProtocol('presence',dispatcher.Presence)
+        return self.connected
+
     def auth(self,name,password,dup=None):
         """ Authenticate component "name" with password "password"."""
         self._User,self._Password,self._Resource=name,password,''
