@@ -75,8 +75,6 @@ class Node:
         for i in payload:
             if type(i)==type(self): self.addChild(node=i)
             else: self.data.append(ustr(i))
-        self.T=T(self)
-        self.NT=NT(self)
 
     def __str__(self,fancy=0):
         s = (fancy-1) * 2 * ' ' + "<" + self.name
@@ -240,6 +238,15 @@ class Node:
     def __delitem__(self,item):
         """ Deletes node's attribute "item". """
         return self.delAttr(item,val)
+    def __getattr__(self,attr):
+        """ Reduce memory usage caused by T/NT classes - use memory only when needed. """
+        if attr=='T':
+            self.T=T(self)
+            return self.T
+        if attr=='NT':
+            self.NT=NT(self)
+            return self.NT
+        raise AttributeError
 
 class T:
     """ Auxiliary class used to quick acces to node's child nodes. """
