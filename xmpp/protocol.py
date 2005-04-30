@@ -28,6 +28,7 @@ NS_AUTH         ='jabber:iq:auth'
 NS_BIND         ='urn:ietf:params:xml:ns:xmpp-bind'
 NS_BROWSE       ='jabber:iq:browse'
 NS_CLIENT       ='jabber:client'
+NS_COMMANDS     ='http://jabber.org/protocol/commands'
 NS_COMPONENT_ACCEPT='jabber:component:accept'
 NS_DATA         ='jabber:x:data'                                # JEP-0004
 NS_DELAY        ='jabber:x:delay'
@@ -59,7 +60,9 @@ NS_TLS          ='urn:ietf:params:xml:ns:xmpp-tls'
 NS_VACATION     ='http://jabber.org/protocol/vacation'
 NS_VCARD        ='vcard-temp'
 NS_VERSION      ='jabber:iq:version'
+NS_ENCRYPTED    ='jabber:x:encrypted'                           # JEP-0027
 NS_XMPP_STREAMS ='urn:ietf:params:xml:ns:xmpp-streams'
+NS_SIGNED       ='jabber:x:signed'                              # JEP-0027
 
 xmpp_stream_error_conditions="""
 bad-format --  --  -- The entity has sent XML that cannot be processed.
@@ -349,6 +352,31 @@ class Presence(Protocol):
     def setStatus(self,val):
         """ Sets the status string of the message. """
         self.setTagData('status',val)
+
+    def _muc_getSubTagDataAttr(self,tag,attr):
+        for xtag in self.getTags('x'):
+            for child in xtag.getTags('item'):
+                for cchild in child.getTags(tag):
+                    return cchild.getData(),cchild.getAttr(attr)
+        return None,None
+    def getRole(self):
+        """Returns the presence role (for groupchat)"""
+        return self._muc_getItemAttr('item','role')
+    def getAffiliation(self):
+        """Returns the presence affiliation (for groupchat)"""
+        return self._muc_getItemAttr('item','affiliation')
+    def getJid(self):
+        """Returns the presence jid (for groupchat)"""
+        return self._muc_getItemAttr('item','jid')
+    def getReason(self):
+        """Returns the reason of the presence (for groupchat)"""
+        return self._muc_getSubTagDataAttr('reason','')[0]
+    def getActor(self):
+        """Returns the reason of the presence (for groupchat)"""
+        return self._muc_getSubTagDataAttr('actor','jid')[1]
+    def getStatusCode(self):
+        """Returns the status code of the presence (for groupchat)"""
+        return self._muc_getItemAttr('status','code')
 
 class Iq(Protocol): 
     """ XMPP Iq object - get/set dialog mechanism. """
