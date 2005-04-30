@@ -213,7 +213,7 @@ class Bind(PlugIn):
             except NodeProcessed: pass
         else: self._owner.RegisterHandler('features',self.FeaturesHandler,xmlns=NS_STREAMS)
 
-    def plugout(self,owner):
+    def plugout(self):
         """ Remove Bind handler from owner's dispatcher. Used internally. """
         self._owner.UnregisterHandler('features',self.FeaturesHandler,xmlns=NS_STREAMS)
 
