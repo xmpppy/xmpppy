@@ -34,8 +34,6 @@ What it supplies:
 from xmpp.protocol import *
 from xmpp.client import PlugIn
 
-NS_COMMANDS='http://jabber.org/protocol/commands'
-
 class Commands(PlugIn):
     """Commands is an ancestor of Plugin and can be attached to any session.
     
@@ -167,7 +165,10 @@ class Commands(PlugIn):
             return self._handlers[jid][name]
         
 class Command_Handler_Prototype(PlugIn):
-    """This is a prototype command handler, as each command uses a disco method and execute method you can implement it any way you like, however this is my first attempt at making a generic handler that you can hang process stages on too. There is an example command below.
+    """This is a prototype command handler, as each command uses a disco method 
+       and execute method you can implement it any way you like, however this is 
+       my first attempt at making a generic handler that you can hang process 
+       stages on too. There is an example command below.
     
     The parameters are as follows:
     name : the name of the command within the jabber environment
@@ -241,14 +242,19 @@ class Command_Handler_Prototype(PlugIn):
             return self.discoinfo
         
 class TestCommand(Command_Handler_Prototype):
+    """ Example class. You should read source if you wish to understate how it works. 
+        Generally, it presents a "master" that giudes user through to calculate something.
+    """
     name = 'testcommand'
     description = 'a noddy example command'
     def __init__(self):
+        """ Init internal constants. """
         Command_Handler_Prototype.__init__(self)
         self.pi = 3.14
         self.initial = {'execute':self.cmdFirstStage}
     
     def cmdFirstStage(self,conn,request):
+        """ Determine """
         # This is the only place this should be repeated as all other stages should have SessionIDs
         try:
             session = request.getTagAttr('command','sessionid')
