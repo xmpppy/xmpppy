@@ -193,12 +193,7 @@ class Client(CommonClient):
             while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
             while self.SASL.startsasl=='in-process' and self.Process(): pass
         else: self.SASL.startsasl='failure'
-        if self.SASL.startsasl=='failure':
-            if not resource: resource='xmpppy'
-            if auth.NonSASL(user,password,resource).PlugIn(self):
-                self.connected+='+old_auth'
-                return 'old_auth'
-        else:
+        if self.SASL.startsasl=='success':
             auth.Bind().PlugIn(self)
             while self.Bind.bound is None: self.Process()
             if self.Bind.Bind(resource):
