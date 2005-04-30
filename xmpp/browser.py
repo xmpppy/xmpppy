@@ -27,7 +27,9 @@ from dispatcher import *
 from client import PlugIn
 
 class Browser(PlugIn):
-    """ Standart xmpppy class that is ancestor of PlugIn and can be attached
+    """ WARNING! This class is for components only. It will not work in client mode!
+
+        Standart xmpppy class that is ancestor of PlugIn and can be attached
         to your application.
         All processing will be performed in the handlers registered in the browser
         instance. You can register any number of handlers ensuring that for each
@@ -85,14 +87,14 @@ class Browser(PlugIn):
     def plugin(self, owner):
         """ Registers it's own iq handlers in your application dispatcher instance.
             Used internally."""
-        owner.RegisterHandler('iq',self._DiscoveryHandler,ns=NS_DISCO_INFO)
-        owner.RegisterHandler('iq',self._DiscoveryHandler,ns=NS_DISCO_ITEMS)
+        owner.RegisterHandler('iq',self._DiscoveryHandler,typ='get',ns=NS_DISCO_INFO)
+        owner.RegisterHandler('iq',self._DiscoveryHandler,typ='get',ns=NS_DISCO_ITEMS)
 
     def plugout(self):
         """ Unregisters browser's iq handlers from your application dispatcher instance.
             Used internally."""
-        self._owner.UnregisterHandler('iq',self._DiscoveryHandler,ns=NS_DISCO_INFO)
-        self._owner.UnregisterHandler('iq',self._DiscoveryHandler,ns=NS_DISCO_ITEMS)
+        self._owner.UnregisterHandler('iq',self._DiscoveryHandler,typ='get',ns=NS_DISCO_INFO)
+        self._owner.UnregisterHandler('iq',self._DiscoveryHandler,typ='get',ns=NS_DISCO_ITEMS)
 
     def _traversePath(self,node,jid,set=0):
         """ Returns dictionary and key or None,None
@@ -136,7 +138,7 @@ class Browser(PlugIn):
                           {'jid':'jid2','action':'action2','node':'node2','name':'name2'},
                           {'jid':'jid3','node':'node3','name':'name3'},
                           {'jid':'jid4','node':'node4'}
-                        ]
+                        ],
                 'info' :{
                           'ids':[
                                   {'category':'category1','type':'type1','name':'name1'},
@@ -182,7 +184,9 @@ class Browser(PlugIn):
             to handle the request. Used internally.
         """
         handler=self.getDiscoHandler(request.getQuerynode(),request.getTo())
-        if not handler: return conn.send(Error(request,ERR_ITEM_NOT_FOUND))
+        if not handler:
+            conn.send(Error(request,ERR_ITEM_NOT_FOUND))
+            raise NodeProcessed
         rep=request.buildReply('result')
         q=rep.getTag('query')
         if request.getQueryNS()==NS_DISCO_ITEMS:
