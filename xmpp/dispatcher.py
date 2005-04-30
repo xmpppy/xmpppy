@@ -54,6 +54,7 @@ class Dispatcher(PlugIn):
         self.handlers=handlers
 
     def _init(self):
+        """ Registers default namespaces/protocols/handlers. Used internally.  """
         self.RegisterNamespace('unknown')
         self.RegisterNamespace(NS_STREAMS)
         self.RegisterNamespace(self._owner.defaultNamespace)
@@ -73,6 +74,7 @@ class Dispatcher(PlugIn):
         self.StreamInit()
 
     def plugout(self):
+        """ Prepares instance to be destructed. """
         self.Stream.dispatch=None
         self.Stream.DEBUG=None
         self.Stream.features=None
