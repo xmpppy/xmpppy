@@ -42,6 +42,7 @@ class error:
         """Serialise exception into pre-cached descriptive string."""
         return self._comment
 
+BUFLEN=1024
 class TCPsocket(PlugIn):
     """ This class defines direct TCP connection method. """
     def __init__(self, server=None):
@@ -90,11 +91,11 @@ class TCPsocket(PlugIn):
 
     def receive(self):
         """ Reads all pending incoming data. Calls owner's disconnected() method if appropriate."""
-        try: received = self._recv(1024)
+        try: received = self._recv(BUFLEN)
         except: received = ''
 
-        while select.select([self._sock],[],[],0)[0]:
-            try: add = self._recv(1024)
+        while self.pending_data(0):
+            try: add = self._recv(BUFLEN)
             except: add=''
             received +=add
             if not add: break
@@ -179,6 +180,7 @@ class HTTPPROXYsocket(TCPsocket):
         return 'ok'
 
     def DEBUG(self,text,severity):
+        """Overwrites DEBUG tag to allow debug output be presented as "CONNECTproxy"."""
         return self._owner.DEBUG(DBG_CONNECT_PROXY,text,severity)
 
 class TLS(PlugIn):
