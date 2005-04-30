@@ -77,9 +77,9 @@ class Node:
             else: self.data.append(ustr(i))
 
     def __str__(self,fancy=0):
-        s = (fancy-1) * 2 * ' ' + "<" + self.name
         """ Method used to dump node into textual representation.
             if "fancy" argument is set to True produces indented output for readability."""
+        s = (fancy-1) * 2 * ' ' + "<" + self.name
         if self.namespace:
             if not self.parent or self.parent.namespace!=self.namespace:
                 s = s + ' xmlns="%s"'%self.namespace
@@ -249,7 +249,7 @@ class Node:
         raise AttributeError
 
 class T:
-    """ Auxiliary class used to quick acces to node's child nodes. """
+    """ Auxiliary class used to quick access to node's child nodes. """
     def __init__(self,node): self.__dict__['node']=node
     def __getattr__(self,attr): return self.node.setTag(attr)
     def __setattr__(self,attr,val):
