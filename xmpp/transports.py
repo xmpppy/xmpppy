@@ -90,8 +90,12 @@ class TCPsocket(PlugIn):
         del self._owner.Connection
 
     def receive(self):
-        """ Reads all pending incoming data. Calls owner's disconnected() method if appropriate."""
+        """ Reads all pending incoming data.
+            In case of disconnection calls owner's disconnected() method and then raises IOError exception."""
         try: received = self._recv(BUFLEN)
+        except socket.sslerror:
+            self._seen_data=0
+            return ''
         except: received = ''
 
         while self.pending_data(0):
@@ -101,10 +105,12 @@ class TCPsocket(PlugIn):
             if not add: break
 
         if len(received): # length of 0 means disconnect
+            self._seen_data=1
             self.DEBUG(received,'got')
         else:
             self.DEBUG('Socket error while receiving data','error')
             self._owner.disconnected()
+            raise IOError("Disconnected from server")
         return received
 
     def send(self,raw_data):
@@ -168,14 +174,23 @@ class HTTPPROXYsocket(TCPsocket):
             connector.append('Proxy-Authorization: Basic '+credentials)
         connector.append('\r\n')
         self.send('\r\n'.join(connector))
-        reply = self.receive().replace('\r','')
+        try: reply = self.receive().replace('\r','')
+        except IOError:
+            self.DEBUG('Proxy suddenly disconnected','error')
+            self._owner.disconnected()
+            return
         try: proto,code,desc=reply.split('\n')[0].split(' ',2)
         except: raise error('Invalid proxy reply')
         if code<>'200':
             self.DEBUG('Invalid proxy reply: %s %s %s'%(proto,code,desc),'error')
             self._owner.disconnected()
             return
-        while reply.find('\n\n') == -1: reply += self.receive().replace('\r','')
+        while reply.find('\n\n') == -1:
+            try: reply += self.receive().replace('\r','')
+            except IOError:
+                self.DEBUG('Proxy suddenly disconnected','error')
+                self._owner.disconnected()
+                return
         self.DEBUG("Authentification successfull. Jabber server contacted.",'ok')
         return 'ok'
 
@@ -219,14 +234,25 @@ class TLS(PlugIn):
         self._owner.Connection.send('<starttls xmlns="%s"/>'%NS_TLS)
         raise NodeProcessed
 
+    def pending_data(self,timeout=0):
+        """ Returns true if there possible is a data ready to be read. """
+        return self._tcpsock._seen_data or select.select([self._tcpsock._sock],[],[],timeout)[0]
+
     def _startSSL(self):
         """ Immidiatedly switch socket to TLS mode. Used internally."""
+        """ Here we should switch pending_data to hint mode."""
         tcpsock=self._owner.Connection
         tcpsock._sslObj    = socket.ssl(tcpsock._sock, None, None)
         tcpsock._sslIssuer = tcpsock._sslObj.issuer()
         tcpsock._sslServer = tcpsock._sslObj.server()
         tcpsock._recv = tcpsock._sslObj.read
         tcpsock._send = tcpsock._sslObj.write
+
+        tcpsock._seen_data=1
+        self._tcpsock=tcpsock
+        tcpsock.pending_data=self.pending_data
+        tcpsock._sock.setblocking(0)
+
         self.starttls='success'
 
     def StartTLSHandler(self, conn, starttls):
