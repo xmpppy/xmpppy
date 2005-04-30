@@ -186,13 +186,18 @@ class Client(CommonClient):
         """ Authenticate connnection and bind resource. If resource is not provided
             random one or library name used. """
         self._User,self._Password,self._Resource=user,password,resource
-        auth.SASL().PlugIn(self)
-        self.SASL.auth(user,password)
         while not self.Dispatcher.Stream._document_attrs and self.Process(): pass
         if self.Dispatcher.Stream._document_attrs.has_key('version') and self.Dispatcher.Stream._document_attrs['version']=='1.0':
             while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
-            while self.SASL.startsasl=='in-process' and self.Process(): pass
-        else: self.SASL.startsasl='failure'
+        auth.SASL().PlugIn(self)
+        if self.SASL.startsasl=='not-supported':
+            if not resource: resource='xmpppy'
+            if auth.NonSASL(user,password,resource).PlugIn(self):
+                self.connected+='+old_auth'
+                return 'old_auth'
+            return
+        self.SASL.auth(user,password)
+        while self.SASL.startsasl=='in-process' and self.Process(): pass
         if self.SASL.startsasl=='success':
             auth.Bind().PlugIn(self)
             while self.Bind.bound is None: self.Process()

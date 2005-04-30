@@ -97,7 +97,8 @@ class NonSASL(PlugIn):
 class SASL(PlugIn):
     """ Implements SASL authentication. """
     def plugin(self,owner):
-        self.startsasl=None
+        if not self._owner.Dispatcher.Stream._document_attrs.has_key('version'): self.startsasl='not-supported'
+        else: self.startsasl=None
 
     def auth(self,username,password):
         """ Start authentication. Result can be obtained via "SASL.startsasl" attribute and will be
@@ -120,7 +121,7 @@ class SASL(PlugIn):
     def FeaturesHandler(self,conn,feats):
         """ Used to determine if server supports SASL auth. Used internally. """
         if not feats.getTag('mechanisms',namespace=NS_SASL):
-            self.startsasl='failure'
+            self.startsasl='not-supported'
             self.DEBUG('SASL not supported by server','error')
             return
         mecs=[]
