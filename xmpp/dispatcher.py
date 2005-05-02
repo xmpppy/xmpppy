@@ -62,6 +62,7 @@ class Dispatcher(PlugIn):
         self.RegisterProtocol('presence',Presence)
         self.RegisterProtocol('message',Message)
         self.RegisterDefaultHandler(self.returnStanzaHandler)
+        self.RegisterHandler('error',self.streamErrorHandler,xmlns=NS_STREAMS)
 
     def plugin(self, owner):
         """ Plug the Dispatcher instance into Client class instance and send initial stream header. Used internally."""
@@ -188,6 +189,16 @@ class Dispatcher(PlugIn):
         """ Return stanza back to the sender with <feature-not-implemennted/> error set. """
         if stanza.getType() in ['get','set']:
             conn.send(Error(stanza,ERR_FEATURE_NOT_IMPLEMENTED))
+
+    def streamErrorHandler(self,conn,error):
+        name,text='error',error.getData()
+        for tag in error.getChildren():
+            if tag.getNamespace()==NS_XMPP_STREAMS:
+                if tag.getName()=='text': text=tag.getData()
+                else: name=tag.getName()
+        if name in stream_exceptions.keys(): exc=stream_exceptions[name]
+        else: exc=StreamError
+        raise exc((name,text))
 
     def RegisterCycleHandler(self,handler):
         """ Register handler that will be called on every Dispatcher.Process() call. """
