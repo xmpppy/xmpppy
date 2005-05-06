@@ -405,6 +405,10 @@ class Presence(Protocol):
         """ Sets the status string of the message. """
         self.setTagData('status',val)
 
+    def _muc_getItemAttr(self,tag,attr):
+        for xtag in self.getTags('x'):
+            for child in xtag.getTags(tag):
+                return child.getAttr(attr)
     def _muc_getSubTagDataAttr(self,tag,attr):
         for xtag in self.getTags('x'):
             for child in xtag.getTags('item'):
@@ -660,6 +664,7 @@ class DataForm(Node):
                 for i in field.getTags('value'): val.append(i.getData())
             else: val=field.getTagData('value')
             ret[name]=val
+        if self. self.getTag('instructions'): ret['instructions']=self.getInstructions()
         return ret
     def __getitem__(self,name):
         """ Simple dictionary interface for getting datafields values by their names."""
