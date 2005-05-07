@@ -664,7 +664,7 @@ class DataForm(Node):
                 for i in field.getTags('value'): val.append(i.getData())
             else: val=field.getTagData('value')
             ret[name]=val
-        if self. self.getTag('instructions'): ret['instructions']=self.getInstructions()
+        if self.getTag('instructions'): ret['instructions']=self.getInstructions()
         return ret
     def __getitem__(self,name):
         """ Simple dictionary interface for getting datafields values by their names."""
