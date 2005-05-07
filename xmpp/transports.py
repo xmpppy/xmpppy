@@ -150,6 +150,7 @@ class HTTPPROXYsocket(TCPsocket):
             and optional keys 'user' and 'password' to use for authentication.
             'server' argument is a tuple of host and port - just like TCPsocket uses. """
         TCPsocket.__init__(self,server)
+        self.DBG_LINE=DBG_CONNECT_PROXY
         self._proxy=proxy
 
     def plugin(self, owner):
