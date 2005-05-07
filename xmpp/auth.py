@@ -98,6 +98,9 @@ class SASL(PlugIn):
     """ Implements SASL authentication. """
     def plugin(self,owner):
         if not self._owner.Dispatcher.Stream._document_attrs.has_key('version'): self.startsasl='not-supported'
+        elif self._owner.Dispatcher.Stream.features:
+            try: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
+            except NodeProcessed: pass
         else: self.startsasl=None
 
     def auth(self,username,password):
