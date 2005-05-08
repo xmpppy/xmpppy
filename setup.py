@@ -22,7 +22,7 @@ It was initially designed as rework of jabberpy library but
 lately become separate product.
 
 Unlike jabberpy it is distributed under the terms of GPL.""",
-      download_url='http://sourceforge.net/project/showfiles.php?group_id=97081',
+      download_url='http://sourceforge.net/project/showfiles.php?group_id=97081&package_id=103821',
       packages=['xmpp'],
       license="GPL",
       platforms="All",
