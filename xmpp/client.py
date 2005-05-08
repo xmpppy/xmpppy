@@ -167,12 +167,12 @@ class CommonClient:
 
 class Client(CommonClient):
     """ Example client class, based on CommonClient. """
-    def connect(self,server=None,proxy=None):
+    def connect(self,server=None,proxy=None,tls=1):
         """ Connect to jabber server. If you want to specify different ip/port to connect to you can
             pass it as tuple as first parameter. If there is HTTP proxy between you and server -
             specify it's address and credentials (if needed) in the second argument.
             Example: connect(('192.168.5.5':5222),{'host':'proxy.my.net','port':8080,'user':'me','password':'secret'})"""
-        if not CommonClient.connect(self,server,proxy): return self.connected
+        if not CommonClient.connect(self,server,proxy) or not tls: return self.connected
         transports.TLS().PlugIn(self)
         if not self.Dispatcher.Stream._document_attrs.has_key('version') or not self.Dispatcher.Stream._document_attrs['version']=='1.0': return self.connected
         while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented

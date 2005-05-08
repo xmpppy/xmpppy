@@ -87,6 +87,7 @@ class Dispatcher(PlugIn):
         self.Stream=simplexml.NodeBuilder()
         self.Stream._dispatch_depth=2
         self.Stream.dispatch=self.dispatch
+        self.Stream.stream_header_received=self._check_stream_start
         self._owner.debug_flags.append(simplexml.DBG_NODEBUILDER)
         self.Stream.DEBUG=self._owner.DEBUG
         self.Stream.features=None
@@ -96,6 +97,10 @@ class Dispatcher(PlugIn):
         self._metastream.setAttr('xmlns:stream',NS_STREAMS)
         self._metastream.setAttr('to',self._owner.Server)
         self._owner.send("<?xml version='1.0'?>%s>"%str(self._metastream)[:-2])
+
+    def _check_stream_start(self,ns,tag,attrs):
+        if ns<>NS_STREAMS or tag<>'stream':
+            raise ValueError('Incorrect stream start: (%s,%s). Terminating.'%(tag,ns))
 
     def Process(self, timeout=0):
         """ Check incoming stream for data waiting. If "timeout" is positive - block for as max. this time.
