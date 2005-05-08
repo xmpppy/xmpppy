@@ -8,8 +8,9 @@ if sys.version < '2.2.3':
     DistributionMetadata.classifiers = None
     DistributionMetadata.download_url = None
 
+# Set proper release version in source code also!!!
 setup(name='xmpppy',
-      version='0.2-pre2',
+      version='0.2-rc1',
       author='Alexey Nezhdanov',
       author_email='snakeru@users.sourceforge.net',
       url='http://xmpppy.sourceforge.net/',
