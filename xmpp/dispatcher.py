@@ -164,7 +164,7 @@ class Dispatcher(PlugIn):
         if not self.handlers.has_key(xmlns): self.RegisterNamespace(xmlns,'warn')
         if not self.handlers[xmlns].has_key(name): self.RegisterProtocol(name,Protocol,xmlns,'warn')
         if not self.handlers[xmlns][name].has_key(typ+ns): self.handlers[xmlns][name][typ+ns]=[]
-        if makefirst: self.handlers[xmlns][name][typ+ns].insert({'func':handler,'system':system})
+        if makefirst: self.handlers[xmlns][name][typ+ns].insert(0,{'func':handler,'system':system})
         else: self.handlers[xmlns][name][typ+ns].append({'func':handler,'system':system})
 
     def RegisterHandlerOnce(self,name,handler,typ='',ns='',xmlns=None,makefirst=0, system=0):
