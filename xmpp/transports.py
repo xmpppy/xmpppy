@@ -93,9 +93,12 @@ class TCPsocket(PlugIn):
         """ Reads all pending incoming data.
             In case of disconnection calls owner's disconnected() method and then raises IOError exception."""
         try: received = self._recv(BUFLEN)
-        except socket.sslerror:
+        except socket.sslerror,e:
             self._seen_data=0
-            return ''
+            if e[0]==2: return ''
+            self.DEBUG('Socket error while receiving data','error')
+            self._owner.disconnected()
+            raise IOError("Disconnected from server")
         except: received = ''
 
         while self.pending_data(0):
