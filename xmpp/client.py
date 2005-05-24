@@ -184,15 +184,15 @@ class Client(CommonClient):
         self.connected='tls'
         return self.connected
 
-    def auth(self,user,password,resource=''):
+    def auth(self,user,password,resource='',sasl=1):
         """ Authenticate connnection and bind resource. If resource is not provided
             random one or library name used. """
         self._User,self._Password,self._Resource=user,password,resource
         while not self.Dispatcher.Stream._document_attrs and self.Process(): pass
         if self.Dispatcher.Stream._document_attrs.has_key('version') and self.Dispatcher.Stream._document_attrs['version']=='1.0':
             while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
-        auth.SASL().PlugIn(self)
-        if self.SASL.startsasl=='not-supported':
+        if sasl: auth.SASL().PlugIn(self)
+        if not sasl or self.SASL.startsasl=='not-supported':
             if not resource: resource='xmpppy'
             if auth.NonSASL(user,password,resource).PlugIn(self):
                 self.connected+='+old_auth'
