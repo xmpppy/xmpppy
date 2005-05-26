@@ -96,17 +96,24 @@ class NonSASL(PlugIn):
 
 class SASL(PlugIn):
     """ Implements SASL authentication. """
+    def __init__(self,username,password):
+        PlugIn.__init__(self)
+        self.username=username
+        self.password=password
+
     def plugin(self,owner):
         if not self._owner.Dispatcher.Stream._document_attrs.has_key('version'): self.startsasl='not-supported'
+        elif self._owner.Dispatcher.Stream.features:
+            try: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
+            except NodeProcessed: pass
         else: self.startsasl=None
 
-    def auth(self,username,password):
+    def auth(self):
         """ Start authentication. Result can be obtained via "SASL.startsasl" attribute and will be
             either "success" or "failure". Note that successfull auth will take at least
             two Dispatcher.Process() calls. """
-        self.username=username
-        self.password=password
-        if self._owner.Dispatcher.Stream.features:
+        if self.startsasl: pass
+        elif self._owner.Dispatcher.Stream.features:
             try: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
             except NodeProcessed: pass
         else: self._owner.RegisterHandler('features',self.FeaturesHandler,xmlns=NS_STREAMS)

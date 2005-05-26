@@ -191,14 +191,14 @@ class Client(CommonClient):
         while not self.Dispatcher.Stream._document_attrs and self.Process(): pass
         if self.Dispatcher.Stream._document_attrs.has_key('version') and self.Dispatcher.Stream._document_attrs['version']=='1.0':
             while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
-        if sasl: auth.SASL().PlugIn(self)
+        if sasl: auth.SASL(user,password).PlugIn(self)
         if not sasl or self.SASL.startsasl=='not-supported':
             if not resource: resource='xmpppy'
             if auth.NonSASL(user,password,resource).PlugIn(self):
                 self.connected+='+old_auth'
                 return 'old_auth'
             return
-        self.SASL.auth(user,password)
+        self.SASL.auth()
         while self.SASL.startsasl=='in-process' and self.Process(): pass
         if self.SASL.startsasl=='success':
             auth.Bind().PlugIn(self)
