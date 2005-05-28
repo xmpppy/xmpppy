@@ -84,7 +84,7 @@ class Commands(PlugIn):
                 conn.send(Error(request,ERR_NOT_FOUND))
                 raise NodeProcessed
         elif self._handlers[''].has_key(node):
-                self._handlers[jid][node]['execute'](conn,request)
+                self._handlers[''][node]['execute'](conn,request)
         else:
             conn.send(Error(requet,ERR_NOT_FOUND))
             raise NodeProcessed
@@ -179,6 +179,7 @@ class Command_Handler_Prototype(PlugIn):
     All stages set the 'actions' dictionary for each session to represent the possible options available.
     """
     name = 'examplecommand'
+    count = 0
     description = 'an example command'
     discofeatures = [NS_COMMANDS,NS_DATA]
     # This is the command template
@@ -212,13 +213,18 @@ class Command_Handler_Prototype(PlugIn):
             session = request.getTagAttr('command','sessionid')
         except:
             session = None
+        try:
+            action = request.getTagAttr('command','action')
+        except:
+            action = None
+        if action == None: action = 'execute'
         # Check session is in session list
         if self.sessions.has_key(session):
             if self.sessions[session]['jid']==request.getFrom():
-                # Check status is vaild
-                if self.sessions[session]['actions'].has_key(request.getTagAttr('command','status')):
+                # Check action is vaild
+                if self.sessions[session]['actions'].has_key(action):
                     # Execute next action
-                    self.sessions[session]['actions'][request.getTagAttr('command','status')](conn,request)
+                    self.sessions[session]['actions'][action](conn,request)
                 else:
                     # Stage not presented as an option
                     self._owner.send(Error(request,BAD_REQUEST))
@@ -230,7 +236,7 @@ class Command_Handler_Prototype(PlugIn):
             self._owner.send(Error(request,BAD_REQUEST))
         else:
             # New session
-            self.initial[request.getTagAttr('command','status')](conn,request)
+            self.initial[action](conn,request)
     
     def _DiscoHandler(self,conn,request,type):
         """The handler for discovery events"""
