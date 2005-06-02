@@ -159,7 +159,7 @@ class CommonClient:
         self.connected='tcp'
         if self.Connection.getPort() in [5223,443]:
             transports.TLS().PlugIn(self,now=1)
-            self.connected='tls'
+            self.connected='ssl'
         dispatcher.Dispatcher().PlugIn(self)
         while self.Dispatcher.Stream._document_attrs is None: self.Process(1)
         if self.Dispatcher.Stream._document_attrs.has_key('version') and self.Dispatcher.Stream._document_attrs['version']=='1.0':
