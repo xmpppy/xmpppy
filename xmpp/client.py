@@ -157,7 +157,7 @@ class CommonClient:
         if not connected: return
         self._Server,self._Proxy=server,proxy
         self.connected='tcp'
-        if self.Connection.getPort()==5223:
+        if self.Connection.getPort() in [5223,443]:
             transports.TLS().PlugIn(self,now=1)
             self.connected='tls'
         dispatcher.Dispatcher().PlugIn(self)
