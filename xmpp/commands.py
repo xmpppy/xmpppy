@@ -35,7 +35,7 @@ from xmpp.protocol import *
 from xmpp.client import PlugIn
 
 class Commands(PlugIn):
-    """Commands is an ancestor of Plugin and can be attached to any session.
+    """Commands is an ancestor of PlugIn and can be attached to any session.
     
     The commands class provides a lookup and browse mechnism. It follows the same priciple of the Browser class, for Service Discovery to provide the list of commands, it adds the 'list' disco type to your existing disco handler function. 
     
@@ -43,21 +43,21 @@ class Commands(PlugIn):
         The commands are added into the existing Browser on the correct nodes. When the command list is built the supplied discovery handler function needs to have a 'list' option in type. This then gets enumerated, all results returned as None are ignored.
         The command executed is then called using it's Execute method. All session management is handled by the command itself.
     """
-    def __init__(self):
+    def __init__(self, browser):
         """Initialises class and sets up local variables"""
         PlugIn.__init__(self)
         DBG_LINE='commands'
         self._exported_methods=[]
         self._handlers={'':{}}
+        self._browser = browser
     
-    def plugin(self, owner, browser):
+    def plugin(self, owner):
         """Makes handlers within the session"""
         # Plug into the session and the disco manager
         # We only need get and set, results are not needed by a service provider, only a service user.
         owner.RegisterHandler('iq',self._CommandHandler,typ='set',ns=NS_COMMANDS)
         owner.RegisterHandler('iq',self._CommandHandler,typ='get',ns=NS_COMMANDS)
-        browser.setDiscoHandler(self._DiscoHandler,node=NS_COMMANDS,jid='')
-        self._browser = browser
+        self._browser.setDiscoHandler(self._DiscoHandler,node=NS_COMMANDS,jid='')
         
     def plugout(self):
         """Removes handlers from the session"""
@@ -195,15 +195,18 @@ class Command_Handler_Prototype(PlugIn):
     def plugin(self,owner,jid=''):
         """Plug command into the commands class"""
         # The owner in this instance is the Command Processor
-        owner.addCommand(self.name,self._DiscoHandler,self.Execute,jid=jid)
+        self._commands = owner
+        self._owner = owner._owner
+        self._jid = jid
+        self._commands.addCommand(self.name,self._DiscoHandler,self.Execute,jid=self._jid)
     
-    def plugout(self,jid):
+    def plugout(self):
         """Remove command from the commands class"""
-        self._owner.delCommand(name,jid)
+        self._commands.delCommand(name,self._jid)
 
     def getSessionID(self):
         """Returns an id for the command session"""
-	self.count = self.count+1
+        self.count = self.count+1
         return 'cmd-%s-%d'%(self.name,self.count)
     
     def Execute(self,conn,request):
@@ -227,13 +230,16 @@ class Command_Handler_Prototype(PlugIn):
                     self.sessions[session]['actions'][action](conn,request)
                 else:
                     # Stage not presented as an option
-                    self._owner.send(Error(request,BAD_REQUEST))
+                    self._owner.send(Error(request,ERR_BAD_REQUEST))
+                    raise NodeProcessed
             else:
                 # Jid and session don't match. Go away imposter
-                self._owner.send(Error(request,BAD_REQUEST))
+                self._owner.send(Error(request,ERR_BAD_REQUEST))
+                raise NodeProcessed
         elif session != None:
             # Not on this sessionid you won't.
-            self._owner.send(Error(request,BAD_REQUEST))
+            self._owner.send(Error(request,ERR_BAD_REQUEST))
+            raise NodeProcessed
         else:
             # New session
             self.initial[action](conn,request)
@@ -278,7 +284,7 @@ class TestCommand(Command_Handler_Prototype):
         raise NodeProcessed
 
     def cmdSecondStage(self,conn,request):
-        form = DataForm(node = result.getTag(name='command').getTag(namespace=NS_DATA))
+        form = DataForm(node = result.getTag(name='command').getTag(name='x',namespace=NS_DATA))
         sessions[request.getTagAttr('command','sessionid')]['data']['type']=form.getField('calctype')
         sessions[request.getTagAttr('command','sessionid')]['actions']={'cancel':self.cmdCancel,None:self.cmdThirdStage,'previous':cmdFirstStage}
         # The form generation is split out to another method as it may be called by cmdThirdStage
@@ -293,7 +299,7 @@ class TestCommand(Command_Handler_Prototype):
         raise NodeProcessed
         
     def cmdThirdStage(self,conn,request):
-        form = DataForm(node = result.getTag(name='command').getTag(namespace=NS_DATA))
+        form = DataForm(node = result.getTag(name='command').getTag(name='x',namespace=NS_DATA))
         try:
             num = float(form.getField('radius'))
         except:
