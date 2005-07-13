@@ -149,7 +149,7 @@ class Roster(PlugIn):
         """ Returns list of connected resources of contact 'jid'."""
         return self._data[jid[:(jid+'/').find('/')]]['resources'].keys()
     def setItem(self,jid,name=None,groups=[]):
-        """ Renames contact 'jid' and sets the groups list that it now belongs to."""
+        """ Creates/renames contact 'jid' and sets the groups list that it now belongs to."""
         iq=Iq('set',NS_ROSTER)
         query=iq.getTag('query')
         attrs={'jid':jid}
