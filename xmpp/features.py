@@ -162,7 +162,7 @@ def setPrivacyList(disp,list):
     """ Set the ruleset. 'list' should be the simpleXML node formatted
         according to RFC 3921 (XMPP-IM) (I.e. Node('list',{'name':listname},payload=[...]) )
         Returns true on success."""
-    resp=disp.SendAndWaitForResponse(Iq('set',NS_PRIVACY,payload=[payload]))
+    resp=disp.SendAndWaitForResponse(Iq('set',NS_PRIVACY,payload=[list]))
     if isResultNode(resp): return 1
 
 def delPrivacyList(disp,listname):
