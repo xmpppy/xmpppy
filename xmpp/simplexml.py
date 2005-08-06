@@ -251,7 +251,7 @@ class Node:
 class T:
     """ Auxiliary class used to quick access to node's child nodes. """
     def __init__(self,node): self.__dict__['node']=node
-    def __getattr__(self,attr): return self.node.setTag(attr)
+    def __getattr__(self,attr): return self.node.getTag(attr)
     def __setattr__(self,attr,val):
         if isinstance(val,Node): Node.__init__(self.node.setTag(attr),node=val)
         else: return self.node.setTagData(attr,val)
