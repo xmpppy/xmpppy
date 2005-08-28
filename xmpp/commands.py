@@ -81,12 +81,12 @@ class Commands(PlugIn):
             if self._handlers[jid].has_key(node):
                 self._handlers[jid][node]['execute'](conn,request)
             else:
-                conn.send(Error(request,ERR_NOT_FOUND))
+                conn.send(Error(request,ERR_ITEM_NOT_FOUND))
                 raise NodeProcessed
         elif self._handlers[''].has_key(node):
                 self._handlers[''][node]['execute'](conn,request)
         else:
-            conn.send(Error(requet,ERR_NOT_FOUND))
+            conn.send(Error(requet,ERR_ITEM_NOT_FOUND))
             raise NodeProcessed
     
     def _DiscoHandler(self,conn,request,typ):
@@ -118,7 +118,7 @@ class Commands(PlugIn):
             iq.setQueryPayload(list)
             conn.send(iq)
         else:
-            conn.send(Error(request,ERR_NOT_FOUND))
+            conn.send(Error(request,ERR_ITEM_NOT_FOUND))
         raise NodeProcessed
     
     def addCommand(self,name,cmddisco,cmdexecute,jid=''):
