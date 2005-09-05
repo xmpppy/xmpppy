@@ -32,6 +32,21 @@ from simplexml import ustr
 from client import PlugIn
 from protocol import *
 
+# determine which DNS resolution library is available
+HAVE_DNSPYTHON = False
+HAVE_PYDNS = False
+try:
+    import dns.resolver # http://dnspython.org/
+    HAVE_DNSPYTHON = True
+except ImportError:
+    try:
+        import DNS # http://pydns.sf.net/
+        HAVE_PYDNS = True
+    except ImportError:
+        #TODO: use self.DEBUG()
+        print "Could not load one of the supported DNS libraries (dnspython or pydns). SRV records will not be queried and you may need to set custom hostname/port for some servers to be accessible."
+        
+
 class error:
     """An exception to be raised in case of low-level errors in methods of 'transports' module."""
     def __init__(self,comment):
@@ -51,6 +66,37 @@ class TCPsocket(PlugIn):
         PlugIn.__init__(self)
         self.DBG_LINE='socket'
         self._exported_methods=[self.send,self.disconnect]
+
+        # SRV resolver
+        if HAVE_DNSPYTHON or HAVE_PYDNS:
+            host, port = server
+            possible_queries = ['_xmpp-client._tcp.' + host]
+
+            for query in possible_queries:
+                try:
+                    if HAVE_DNSPYTHON:
+                        answers = [x for x in dns.resolver.query(query, 'SRV')]
+                        if answers:
+                            host = str (answers[0].target)
+                            port = int (answers[0].port)
+                            break
+                    elif HAVE_PYDNS:
+                        # ensure we haven't cached an old configuration
+                        DNS.ParseResolvConf()
+                        response = DNS.Request().req(query, qtype='SRV')
+                        answers = response.answers
+                        if len(answers) > 0:
+                            # ignore the priority and weight for now
+                            _, _, port, host = answers[0]['data']
+                            del _
+                            port = int(port)
+                            break
+                except:
+                    #TODO: use self.DEBUG()
+                    print 'An error occurred while looking up %s' % query
+            server = (host, port)
+        # end of SRV resolver
+
         self._server = server
 
     def plugin(self, owner):
