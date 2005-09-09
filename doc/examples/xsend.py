@@ -16,7 +16,7 @@ if os.access(os.environ['HOME']+'/.xsend',os.R_OK):
         jidparams[key.lower()]=val
 for mandatory in ['jid','password']:
     if mandatory not in jidparams.keys():
-        open(os.environ['HOME']+'/.xsend','w').write('#JID=romeo@montague.net\n#PASSWORD=juliet\n')
+        open(os.environ['HOME']+'/.xsend','w').write('#Uncomment fields before use and type in correct credentials.\n#JID=romeo@montague.net\n#PASSWORD=juliet\n')
         print 'Please point ~/.xsend config file to valid JID for sending messages.'
         sys.exit(0)
 
