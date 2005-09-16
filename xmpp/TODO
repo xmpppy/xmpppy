@@ -10,3 +10,4 @@ Fix TLS/TCP issue by deleting transports.receive and staring over.
 
 --- random thoughts ---
 Add keepalive mechanism.
+Decide if gajim changeset 2659 (input chunking) can go in or not. They notices that is slows things but it really should not...
