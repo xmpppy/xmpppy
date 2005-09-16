@@ -7,3 +7,6 @@ Check that stream errors can be catched it proper way (solved?)
 Evaluate about namespace separation in dispatcher.
 S&D memory leak (cvs diff -r 1.26 -r 1.25 simplexml.py | patch && apt-get install python2.2 && /usr/sbin/jabber-irc)
 Fix TLS/TCP issue by deleting transports.receive and staring over.
+
+--- random thoughts ---
+Add keepalive mechanism.
