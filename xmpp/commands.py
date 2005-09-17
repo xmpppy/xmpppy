@@ -92,34 +92,37 @@ class Commands(PlugIn):
     def _DiscoHandler(self,conn,request,typ):
         """The internal method to process service discovery requests"""
         # This is the disco manager handler.
-        # We must:
-        #    Generate a list of commands and return the list
-        #    * This handler does not handle individual commands disco requests.
-        # Pseudo:
-        #   Enumerate the 'item' disco of each command for the specified jid
-        #   Build responce and send
-        #   To make this code easy to write we add an 'list' disco type, it returns a tuple or 'none' if not advertised
-        list = []
-        items = []
-        jid = str(request.getTo())
-        # Get specific jid based results
-        if self._handlers.has_key(jid):
-            for each in self._handlers[jid].keys():
-                items.append((jid,each))
-        # Get generic results
-        for each in self._handlers[''].keys():
-            items.append(('',each))
-        if items != []:
-            for each in items:
-                i = self._handlers[each[0]][each[1]]['disco'](conn,request,'list')
-                if i != None:
-                    list.append(Node(tag='item',attrs={'jid':i[0],'node':i[1],'name':i[2]}))
-            iq = request.buildReply('result')
-            iq.setQueryPayload(list)
-            conn.send(iq)
-        else:
-            conn.send(Error(request,ERR_ITEM_NOT_FOUND))
-        raise NodeProcessed
+        if typ == 'items':
+            # We must:
+            #    Generate a list of commands and return the list
+            #    * This handler does not handle individual commands disco requests.
+            # Pseudo:
+            #   Enumerate the 'item' disco of each command for the specified jid
+            #   Build responce and send
+            #   To make this code easy to write we add an 'list' disco type, it returns a tuple or 'none' if not advertised
+            list = []
+            items = []
+            jid = str(request.getTo())
+            # Get specific jid based results
+            if self._handlers.has_key(jid):
+                for each in self._handlers[jid].keys():
+                    items.append((jid,each))
+            # Get generic results
+            for each in self._handlers[''].keys():
+                items.append(('',each))
+            if items != []:
+                for each in items:
+                    i = self._handlers[each[0]][each[1]]['disco'](conn,request,'list')
+                    if i != None:
+                        list.append(Node(tag='item',attrs={'jid':i[0],'node':i[1],'name':i[2]}))
+                iq = request.buildReply('result')
+                iq.setQueryPayload(list)
+                conn.send(iq)
+            else:
+                conn.send(Error(request,ERR_ITEM_NOT_FOUND))
+            raise NodeProcessed
+        elif typ == 'info':
+            return {'ids':[],'features':[]}
     
     def addCommand(self,name,cmddisco,cmdexecute,jid=''):
         """The method to call if adding a new command to the session, the requred parameters of cmddisco and cmdexecute are the methods to enable that command to be executed"""
