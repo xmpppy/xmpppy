@@ -12,3 +12,5 @@ Fix TLS/TCP issue by deleting transports.receive and staring over.
 Add keepalive mechanism.
 Decide if gajim changeset 2659 (input chunking) can go in or not. They notices that is slows things but it really should not...
 Investigate http://trac.gajim.org/ticket/676 problem. We should fix - but not workaround it.
+if auth fails because connection was not connected, unplug correctly and/or return gracefully
+if IOException during dispatcher.process then return 0 instead of None
