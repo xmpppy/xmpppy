@@ -63,7 +63,8 @@ class Commands(PlugIn):
         """Removes handlers from the session"""
         # unPlug from the session and the disco manager
         self._owner.UnregisterHandler('iq',self_CommandHandler,ns=NS_COMMANDS)
-        self._browser.delDiscoHandler(self._DiscoHandler,node=NS_COMMANDS)
+        for jid in self._handlers:
+            self._browser.delDiscoHandler(self._DiscoHandler,node=NS_COMMANDS)
         
     def _CommandHandler(self,conn,request):
         """The internal method to process the routing of command execution requests"""
@@ -107,9 +108,10 @@ class Commands(PlugIn):
             if self._handlers.has_key(jid):
                 for each in self._handlers[jid].keys():
                     items.append((jid,each))
-            # Get generic results
-            for each in self._handlers[''].keys():
-                items.append(('',each))
+            else:
+                # Get generic results
+                for each in self._handlers[''].keys():
+                    items.append(('',each))
             if items != []:
                 for each in items:
                     i = self._handlers[each[0]][each[1]]['disco'](conn,request,'list')
@@ -132,6 +134,7 @@ class Commands(PlugIn):
         #   Add item into command list
         if not self._handlers.has_key(jid):
             self._handlers[jid]={}
+            self._browser.setDiscoHandler(self._DiscoHandler,node=NS_COMMANDS,jid=jid)
         if self._handlers[jid].has_key(name):
             raise NameError,'Command Exists'
         else:
@@ -186,7 +189,7 @@ class Command_Handler_Prototype(PlugIn):
     description = 'an example command'
     discofeatures = [NS_COMMANDS,NS_DATA]
     # This is the command template
-    def __init__(self):
+    def __init__(self,jid=''):
         """Set up the class"""
         PlugIn.__init__(self)
         DBG_LINE='command'
@@ -194,13 +197,13 @@ class Command_Handler_Prototype(PlugIn):
         self.sessions = {}
         # Disco information for command list pre-formatted as a tuple
         self.discoinfo = {'ids':[{'category':'automation','type':'command','name':self.description}],'features': self.discofeatures}
+        self._jid = jid
         
-    def plugin(self,owner,jid=''):
+    def plugin(self,owner):
         """Plug command into the commands class"""
         # The owner in this instance is the Command Processor
         self._commands = owner
         self._owner = owner._owner
-        self._jid = jid
         self._commands.addCommand(self.name,self._DiscoHandler,self.Execute,jid=self._jid)
     
     def plugout(self):
@@ -262,9 +265,9 @@ class TestCommand(Command_Handler_Prototype):
     """
     name = 'testcommand'
     description = 'a noddy example command'
-    def __init__(self):
+    def __init__(self,jid=''):
         """ Init internal constants. """
-        Command_Handler_Prototype.__init__(self)
+        Command_Handler_Prototype.__init__(self,jid)
         self.pi = 3.14
         self.initial = {'execute':self.cmdFirstStage}
     
