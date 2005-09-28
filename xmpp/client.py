@@ -173,7 +173,7 @@ class Client(CommonClient):
         """ Connect to jabber server. If you want to specify different ip/port to connect to you can
             pass it as tuple as first parameter. If there is HTTP proxy between you and server -
             specify it's address and credentials (if needed) in the second argument.
-            Example: connect(('192.168.5.5':5222),{'host':'proxy.my.net','port':8080,'user':'me','password':'secret'})
+            Example: connect(('192.168.5.5',5222),{'host':'proxy.my.net','port':8080,'user':'me','password':'secret'})
             Returns '' or 'tcp' or 'tls', depending on the result."""
         if not CommonClient.connect(self,server,proxy) or not tls: return self.connected
         transports.TLS().PlugIn(self)
@@ -231,13 +231,17 @@ class Component(CommonClient):
         """ Init function for Components.
             As components use a different auth mechanism which includes the namespace of the component.
             Jabberd1.4 and Ejabberd use the default namespace then for all client messages.
-            Jabberd2 uses jabber:client."""
+            Jabberd2 uses jabber:client.
+	    'server' argument is a server name that you are connecting to (f.e. "localhost").
+	    'port' can be specified if 'server' resolves to correct IP. If it is not then you'll need to specify IP 
+	    and port while calling "connect()"."""
         CommonClient.__init__(self,server,port=port,debug=debug)
         self.typ=typ
     
     def connect(self,server=None,proxy=None):
         """ This will connect to the server, and if the features tag is found then set
-            the namespace to be jabber:client as that is required for jabberd2"""
+            the namespace to be jabber:client as that is required for jabberd2.
+	    'server' and 'proxy' arguments have the same meaning as in xmpp.Client.connect() """
         CommonClient.connect(self,server=server,proxy=proxy)
         if self.typ=='jabberd2' or not self.typ and self.Dispatcher.Stream.features != None:
                 self.defaultNamespace=auth.NS_CLIENT
