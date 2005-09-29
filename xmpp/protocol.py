@@ -21,42 +21,60 @@ xmpp-related data structures.
 
 from simplexml import Node,ustr
 import time
-
+NS_ACTIVITY	='http://jabber.org/protocol/activity'		# Jep-0108
+NS_ADDRESS	='http://jabber.org/protocol/address'		# Jep-0033
 NS_AGENTS       ='jabber:iq:agents'
 NS_AMP          ='http://jabber.org/protocol/amp'
+NS_AMP_ERRORS	=NS_AMP+'#errors'
 NS_AUTH         ='jabber:iq:auth'
 NS_BIND         ='urn:ietf:params:xml:ns:xmpp-bind'
 NS_BROWSE       ='jabber:iq:browse'
+NS_BYTESTREAM   ='http://jabber.org/protocol/bytestreams' 	# JEP-0065  
+NS_CAPS		='http://jabber.org/protocol/caps'		# Jep-0115
+NS_CHATSTATES	='http://jabber.org/protocol/chatstates'	# Jep-0085
 NS_CLIENT       ='jabber:client'
 NS_COMMANDS     ='http://jabber.org/protocol/commands'
 NS_COMPONENT_ACCEPT='jabber:component:accept'
+NS_COMPRESS	='http://jabber.org/protocol/compress'		# JEP-0138
 NS_DATA         ='jabber:x:data'                                # JEP-0004
 NS_DELAY        ='jabber:x:delay'
 NS_DIALBACK     ='jabber:server:dialback'
 NS_DISCO        ='http://jabber.org/protocol/disco'
 NS_DISCO_INFO   =NS_DISCO+'#info'
 NS_DISCO_ITEMS  =NS_DISCO+'#items'
+NS_ENCRYPTED    ='jabber:x:encrypted'                           # JEP-0027
+NS_FEATURE      ='http://jabber.org/protocol/feature-neg'  
+NS_FILE         ='http://jabber.org/protocol/si/profile/file-transfer' # JEP-0096  
+NS_GEOLOC	='http://jabber.org/protocol/geoloc'		# Jep-0080
 NS_GROUPCHAT    ='gc-1.0'
+NS_HTTP_BIND	='http://jabber.org/protocol/httpbind'		# Jep-0124
 NS_IBB          ='http://jabber.org/protocol/ibb'
 NS_INVISIBLE    ='presence-invisible'                           # jabberd2
 NS_IQ           ='iq'                                           # jabberd2
 NS_LAST         ='jabber:iq:last'
 NS_MESSAGE      ='message'                                      # jabberd2
+NS_MOOD		='http://jabber.org/protocol/mood'		# Jep-0107
 NS_MUC          ='http://jabber.org/protocol/muc'
 NS_MUC_USER     =NS_MUC+'#user'
 NS_MUC_ADMIN    =NS_MUC+'#admin'
 NS_MUC_OWNER    =NS_MUC+'#owner'
-NS_OFFLINE      ='http://www.jabber.org/jeps/jep-0030.html'     # JEP-0013   
+NS_OFFLINE      ='http://www.jabber.org/jeps/jep-0030.html'     # JEP-0013
+NS_PHYSLOC	='http://jabber.org/protocol/physloc'		# Jep-0112   
 NS_PRESENCE     ='presence'                                     # jabberd2
 NS_PRIVACY      ='jabber:iq:privacy'
 NS_PRIVATE      ='jabber:iq:private'
+NS_PUBSUB	='http://jabber.org/protocol/pubsub'		# Jep-0060
 NS_REGISTER     ='jabber:iq:register'
 NS_ROSTER       ='jabber:iq:roster'
+NS_ROSTERX	='http://jabber.org/protocol/rosterx'		# Jep-0144
 NS_RPC          ='jabber:iq:rpc'                                # JEP-0009
 NS_SASL         ='urn:ietf:params:xml:ns:xmpp-sasl'
 NS_SEARCH       ='jabber:iq:search'
 NS_SERVER       ='jabber:server'
 NS_SESSION      ='urn:ietf:params:xml:ns:xmpp-session'
+NS_SI           ='http://jabber.org/protocol/si' # JEP-0096  
+NS_SI_PUB	='http://jabber.org/protocol/sipub'		# Jep-0137
+NS_SIGNED       ='jabber:x:signed'                              # JEP-0027
 NS_STANZAS      ='urn:ietf:params:xml:ns:xmpp-stanzas'
 NS_STREAMS      ='http://etherx.jabber.org/streams'
 NS_TIME         ='jabber:iq:time'
@@ -64,9 +82,11 @@ NS_TLS          ='urn:ietf:params:xml:ns:xmpp-tls'
 NS_VACATION     ='http://jabber.org/protocol/vacation'
 NS_VCARD        ='vcard-temp'
 NS_VERSION      ='jabber:iq:version'
-NS_ENCRYPTED    ='jabber:x:encrypted'                           # JEP-0027
+NS_WAITINGLIST	='http://jabber.org/protocol/waitinglist'	# Jep-0130
+NS_XHTML_IM	='http://jabber.org/protocol/xhtml-im'		# Jep-0071
+NS_DATA_LAYOUT	='http://jabber.org/protocol/xdata-layout'	# Jep-0141
+NS_DATA_VALIDATE='http://jabber.org/protocol/xdata-validate'	# Jep-0122
 NS_XMPP_STREAMS ='urn:ietf:params:xml:ns:xmpp-streams'
-NS_SIGNED       ='jabber:x:signed'                              # JEP-0027
 
 xmpp_stream_error_conditions="""
 bad-format --  --  -- The entity has sent XML that cannot be processed.
