@@ -26,6 +26,8 @@ All these methods takes 'disp' first argument that should be already connected
 
 from protocol import *
 
+REGISTER_DATA_RECEIVED='REGISTER DATA RECEIVED'
+
 ### DISCO ### http://jabber.org/protocol/disco ### JEP-0030 ####################
 ### Browse ### jabber:iq:browse ### JEP-0030 ###################################
 ### Agents ### jabber:iq:agents ### JEP-0030 ###################################
@@ -74,7 +76,7 @@ def discoverInfo(disp,jid,node=None):
     return identities , features
 
 ### Registration ### jabber:iq:register ### JEP-0077 ###########################
-def getRegInfo(disp,host,info={}):
+def getRegInfo(disp,host,info={},sync=True):
     """ Gets registration form from remote host.
         You can pre-fill the info dictionary.
         F.e. if you are requesting info on registering user joey than specify 
@@ -82,16 +84,24 @@ def getRegInfo(disp,host,info={}):
         'disp' must be connected dispatcher instance."""
     iq=Iq('get',NS_REGISTER,to=host)
     for i in info.keys(): iq.setTagData(i,info[i])
-    resp=disp.SendAndWaitForResponse(iq)
+    if sync:
+        resp=disp.SendAndWaitForResponse(iq)
+        _ReceivedRegInfo(disp.Dispatcher,resp, host)
+    else: disp.SendAndCallForResponse(iq,_ReceivedRegInfo, {'agent': host})
+
+def _ReceivedRegInfo(con, resp, agent):
+    iq=Iq('get',NS_REGISTER,to=agent)
     if not isResultNode(resp): return
     df=resp.getTag('query',namespace=NS_REGISTER).getTag('x',namespace=NS_DATA)
-    if df: return DataForm(node=df)
+    if df:
+        con.Event(NS_REGISTER,REGISTER_DATA_RECEIVED,(agent, DataForm(node=df)))
+        return
     df=DataForm(typ='form')
     for i in resp.getQueryPayload():
         if type(i)<>type(iq): pass
         elif i.getName()=='instructions': df.addInstructions(i.getData())
         else: df.setField(i.getName()).setValue(i.getData())
-    return df
+    con.Event(NS_REGISTER,REGISTER_DATA_RECEIVED,(agent, df))
 
 def register(disp,host,info):
     """ Perform registration on remote server with provided info.
