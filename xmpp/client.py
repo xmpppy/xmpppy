@@ -162,7 +162,8 @@ class CommonClient:
             transports.TLS().PlugIn(self,now=1)
             self.connected='ssl'
         dispatcher.Dispatcher().PlugIn(self)
-        while self.Dispatcher.Stream._document_attrs is None: self.Process(1)
+        while self.Dispatcher.Stream._document_attrs is None: 
+	   if not self.Process(1): return 
         if self.Dispatcher.Stream._document_attrs.has_key('version') and self.Dispatcher.Stream._document_attrs['version']=='1.0':
             while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
         return self.connected
@@ -178,7 +179,7 @@ class Client(CommonClient):
 	    If you want to disable tls/ssl support completely, set it to 0.
             Example: connect(('192.168.5.5',5222),{'host':'proxy.my.net','port':8080,'user':'me','password':'secret'})
             Returns '' or 'tcp' or 'tls', depending on the result."""
-        if not CommonClient.connect(self,server,proxy,secure) or secure==0: return self.connected
+        if not CommonClient.connect(self,server,proxy,secure) or secure<>None and not secure: return self.connected
         transports.TLS().PlugIn(self)
         if not self.Dispatcher.Stream._document_attrs.has_key('version') or not self.Dispatcher.Stream._document_attrs['version']=='1.0': return self.connected
         while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
@@ -206,7 +207,7 @@ class Client(CommonClient):
         while self.SASL.startsasl=='in-process' and self.Process(): pass
         if self.SASL.startsasl=='success':
             auth.Bind().PlugIn(self)
-            while self.Bind.bound is None: self.Process()
+            while self.Bind.bound and self.Process(): pass
             if self.Bind.Bind(resource):
                 self.connected+='+sasl'
                 return 'sasl'
