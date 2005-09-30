@@ -149,8 +149,8 @@ class CommonClient:
         self.Dispatcher.restoreHandlers(handlerssave)
         return self.connected
 
-    def connect(self,server=None,proxy=None):
-        """ Make a tcp/ip connection, protect it with tls if possible and start XMPP stream.
+    def connect(self,server=None,proxy=None,ssl=None):
+        """ Make a tcp/ip connection, protect it with tls/ssl if possible and start XMPP stream.
             Returns None or 'tcp' or 'tls', depending on the result."""
         if not server: server=(self.Server,self.Port)
         if proxy: connected=transports.HTTPPROXYsocket(proxy,server).PlugIn(self)
@@ -158,7 +158,7 @@ class CommonClient:
         if not connected: return
         self._Server,self._Proxy=server,proxy
         self.connected='tcp'
-        if self.Connection.getPort() in [5223,443]:
+	if (ssl is None and self.Connection.getPort() in (5223, 443)) or ssl:
             transports.TLS().PlugIn(self,now=1)
             self.connected='ssl'
         dispatcher.Dispatcher().PlugIn(self)
@@ -169,13 +169,16 @@ class CommonClient:
 
 class Client(CommonClient):
     """ Example client class, based on CommonClient. """
-    def connect(self,server=None,proxy=None,tls=1):
+    def connect(self,server=None,proxy=None,secure=None):
         """ Connect to jabber server. If you want to specify different ip/port to connect to you can
-            pass it as tuple as first parameter. If there is HTTP proxy between you and server -
+            pass it as tuple as first parameter. If there is HTTP proxy between you and server 
             specify it's address and credentials (if needed) in the second argument.
+	    If you want ssl/tls support to be discovered and enable automatically - leave third argument as None. (ssl will be autodetected only if port is 5223 or 443)
+	    If you want to force SSL start (i.e. if port 5223 or 443 is remapped to some non-standart port) then set it to 1.
+	    If you want to disable tls/ssl support completely, set it to 0.
             Example: connect(('192.168.5.5',5222),{'host':'proxy.my.net','port':8080,'user':'me','password':'secret'})
             Returns '' or 'tcp' or 'tls', depending on the result."""
-        if not CommonClient.connect(self,server,proxy) or not tls: return self.connected
+        if not CommonClient.connect(self,server,proxy,secure) or secure==0: return self.connected
         transports.TLS().PlugIn(self)
         if not self.Dispatcher.Stream._document_attrs.has_key('version') or not self.Dispatcher.Stream._document_attrs['version']=='1.0': return self.connected
         while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
