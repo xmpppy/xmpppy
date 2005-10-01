@@ -45,7 +45,9 @@ except ImportError:
     except ImportError:
         #TODO: use self.DEBUG()
         print "Could not load one of the supported DNS libraries (dnspython or pydns). SRV records will not be queried and you may need to set custom hostname/port for some servers to be accessible."
-        
+
+DATA_RECEIVED='DATA RECEIVED'
+DATA_SENT='DATA SENT'
 
 class error:
     """An exception to be raised in case of low-level errors in methods of 'transports' module."""
@@ -156,6 +158,8 @@ class TCPsocket(PlugIn):
         if len(received): # length of 0 means disconnect
             self._seen_data=1
             self.DEBUG(received,'got')
+            if hasattr(self._owner, 'Dispatcher'):
+                self._owner.Dispatcher.Event('', DATA_RECEIVED, received)
         else:
             self.DEBUG('Socket error while receiving data','error')
             self._owner.disconnected()
@@ -169,7 +173,10 @@ class TCPsocket(PlugIn):
         elif type(raw_data)<>type(''): raw_data = ustr(raw_data).encode('utf-8')
         try:
             self._send(raw_data)
-            self.DEBUG(raw_data,'sent')
+            # Avoid printing messages that are empty keepalive packets.
+            if raw_data.strip():
+                self.DEBUG(raw_data,'sent')
+                self._owner.Dispatcher.Event('', DATA_SENT, raw_data)
         except:
             self.DEBUG("Socket error while sending data",'error')
             self._owner.disconnected()
