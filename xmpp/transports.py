@@ -62,7 +62,7 @@ class error:
 BUFLEN=1024
 class TCPsocket(PlugIn):
     """ This class defines direct TCP connection method. """
-    def __init__(self, server=None):
+    def __init__(self, server=None, use_srv=True):
         """ Cache connection point 'server'. 'server' is the tuple of (host, port)
             absolutely the same as standart tcp socket uses. """
         PlugIn.__init__(self)
@@ -70,7 +70,7 @@ class TCPsocket(PlugIn):
         self._exported_methods=[self.send,self.disconnect]
 
         # SRV resolver
-        if HAVE_DNSPYTHON or HAVE_PYDNS:
+        if use_srv and (HAVE_DNSPYTHON or HAVE_PYDNS):
             host, port = server
             possible_queries = ['_xmpp-client._tcp.' + host]
 
@@ -79,8 +79,8 @@ class TCPsocket(PlugIn):
                     if HAVE_DNSPYTHON:
                         answers = [x for x in dns.resolver.query(query, 'SRV')]
                         if answers:
-                            host = str (answers[0].target)
-                            port = int (answers[0].port)
+                            host = str(answers[0].target)
+                            port = int(answers[0].port)
                             break
                     elif HAVE_PYDNS:
                         # ensure we haven't cached an old configuration
@@ -200,12 +200,12 @@ class HTTPPROXYsocket(TCPsocket):
     """ HTTP (CONNECT) proxy connection class. Uses TCPsocket as the base class
         redefines only connect method. Allows to use HTTP proxies like squid with
         (optionally) simple authentication (using login and password). """
-    def __init__(self,proxy,server):
+    def __init__(self,proxy,server,use_srv=True):
         """ Caches proxy and target addresses.
             'proxy' argument is a dictionary with mandatory keys 'host' and 'port' (proxy address)
             and optional keys 'user' and 'password' to use for authentication.
             'server' argument is a tuple of host and port - just like TCPsocket uses. """
-        TCPsocket.__init__(self,server)
+        TCPsocket.__init__(self,server,use_srv)
         self.DBG_LINE=DBG_CONNECT_PROXY
         self._proxy=proxy
 
