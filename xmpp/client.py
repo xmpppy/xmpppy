@@ -162,8 +162,8 @@ class CommonClient:
             transports.TLS().PlugIn(self,now=1)
             self.connected='ssl'
         dispatcher.Dispatcher().PlugIn(self)
-        while self.Dispatcher.Stream._document_attrs is None: 
-	   if not self.Process(1): return 
+        while self.Dispatcher.Stream._document_attrs is None:
+            if not self.Process(1): return
         if self.Dispatcher.Stream._document_attrs.has_key('version') and self.Dispatcher.Stream._document_attrs['version']=='1.0':
             while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
         return self.connected
@@ -207,7 +207,7 @@ class Client(CommonClient):
         while self.SASL.startsasl=='in-process' and self.Process(): pass
         if self.SASL.startsasl=='success':
             auth.Bind().PlugIn(self)
-            while self.Bind.bound and self.Process(): pass
+            while self.Bind.bound is None and self.Process(): pass
             if self.Bind.Bind(resource):
                 self.connected+='+sasl'
                 return 'sasl'
