@@ -21,6 +21,7 @@ examples of xmpppy structures usage.
 These classes can be used for simple applications "AS IS" though.
 """
 
+import socket
 import debug
 Debug=debug
 Debug.DEBUGGING_IS_ON=1
@@ -159,8 +160,11 @@ class CommonClient:
         self._Server,self._Proxy=server,proxy
         self.connected='tcp'
 	if (ssl is None and self.Connection.getPort() in (5223, 443)) or ssl:
-            transports.TLS().PlugIn(self,now=1)
-            self.connected='ssl'
+            try:               # FIXME. This should be done in transports.py
+                transports.TLS().PlugIn(self,now=1)
+                self.connected='ssl'
+            except socket.sslerror:
+                return
         dispatcher.Dispatcher().PlugIn(self)
         while self.Dispatcher.Stream._document_attrs is None:
             if not self.Process(1): return
