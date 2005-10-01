@@ -3,9 +3,15 @@ Before 0.2 release:
 Adapt and integrate Commands module.
 Ensure that all docstrings are in place.
 Add SI to filetransfer
-Check that stream errors can be catched it proper way (solved?)
 Evaluate about namespace separation in dispatcher.
 S&D memory leak (cvs diff -r 1.26 -r 1.25 simplexml.py | patch && apt-get install python2.2 && /usr/sbin/jabber-irc)
+
+Regenerate documentation
+Add client mode detection to Browser class.
+
+Commands:
+    auto-add commands item
+
 Fix TLS/TCP issue by deleting transports.receive and staring over.
 
 --- random thoughts ---
