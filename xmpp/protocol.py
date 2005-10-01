@@ -445,6 +445,9 @@ class Presence(Protocol):
     def getAffiliation(self):
         """Returns the presence affiliation (for groupchat)"""
         return self._muc_getItemAttr('item','affiliation')
+    def getNick(self):
+        """Returns the nick value (for nick change in groupchat)"""
+        return self._muc_getItemAttr('item','nick')
     def getJid(self):
         """Returns the presence jid (for groupchat)"""
         return self._muc_getItemAttr('item','jid')
