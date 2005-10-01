@@ -311,9 +311,9 @@ class TLS(PlugIn):
         if starttls.getNamespace()<>NS_TLS: return
         self.starttls=starttls.getName()
         if self.starttls=='failure':
-            self.DEBUG("Got starttls responce: "+self.starttls,'error')
+            self.DEBUG("Got starttls response: "+self.starttls,'error')
             return
-        self.DEBUG("Got starttls proceed responce. Switching to SSL...",'ok')
+        self.DEBUG("Got starttls proceed response. Switching to TLS/SSL...",'ok')
         self._startSSL()
         self._owner.Dispatcher.PlugOut()
         dispatcher.Dispatcher().PlugIn(self._owner)
