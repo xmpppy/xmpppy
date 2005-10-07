@@ -118,6 +118,7 @@ class Commands(PlugIn):
                     if i != None:
                         list.append(Node(tag='item',attrs={'jid':i[0],'node':i[1],'name':i[2]}))
                 iq = request.buildReply('result')
+                if request.getQuerynode(): iq.setQuerynode(request.getQuerynode())
                 iq.setQueryPayload(list)
                 conn.send(iq)
             else:

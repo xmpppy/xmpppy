@@ -191,6 +191,7 @@ class Browser(PlugIn):
             raise NodeProcessed
         self.DEBUG("Handling request with jid->%s node->%s ns->%s"%(request.getTo(),request.getQuerynode(),request.getQueryNS()),'ok')
         rep=request.buildReply('result')
+        if request.getQuerynode(): rep.setQuerynode(request.getQuerynode())
         q=rep.getTag('query')
         if request.getQueryNS()==NS_DISCO_ITEMS:
             # handler must return list: [{jid,action,node,name}]
