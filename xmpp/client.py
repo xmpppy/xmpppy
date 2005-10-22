@@ -159,7 +159,7 @@ class CommonClient:
         if not connected: return
         self._Server,self._Proxy=server,proxy
         self.connected='tcp'
-	if (ssl is None and self.Connection.getPort() in (5223, 443)) or ssl:
+        if (ssl is None and self.Connection.getPort() in (5223, 443)) or ssl:
             try:               # FIXME. This should be done in transports.py
                 transports.TLS().PlugIn(self,now=1)
                 self.connected='ssl'
@@ -178,9 +178,9 @@ class Client(CommonClient):
         """ Connect to jabber server. If you want to specify different ip/port to connect to you can
             pass it as tuple as first parameter. If there is HTTP proxy between you and server 
             specify it's address and credentials (if needed) in the second argument.
-	    If you want ssl/tls support to be discovered and enable automatically - leave third argument as None. (ssl will be autodetected only if port is 5223 or 443)
-	    If you want to force SSL start (i.e. if port 5223 or 443 is remapped to some non-standart port) then set it to 1.
-	    If you want to disable tls/ssl support completely, set it to 0.
+            If you want ssl/tls support to be discovered and enable automatically - leave third argument as None. (ssl will be autodetected only if port is 5223 or 443)
+            If you want to force SSL start (i.e. if port 5223 or 443 is remapped to some non-standart port) then set it to 1.
+            If you want to disable tls/ssl support completely, set it to 0.
             Example: connect(('192.168.5.5',5222),{'host':'proxy.my.net','port':8080,'user':'me','password':'secret'})
             Returns '' or 'tcp' or 'tls', depending on the result."""
         if not CommonClient.connect(self,server,proxy,secure,use_srv) or secure<>None and not secure: return self.connected
@@ -240,16 +240,16 @@ class Component(CommonClient):
             As components use a different auth mechanism which includes the namespace of the component.
             Jabberd1.4 and Ejabberd use the default namespace then for all client messages.
             Jabberd2 uses jabber:client.
-	    'server' argument is a server name that you are connecting to (f.e. "localhost").
-	    'port' can be specified if 'server' resolves to correct IP. If it is not then you'll need to specify IP 
-	    and port while calling "connect()"."""
+            'server' argument is a server name that you are connecting to (f.e. "localhost").
+            'port' can be specified if 'server' resolves to correct IP. If it is not then you'll need to specify IP 
+            and port while calling "connect()"."""
         CommonClient.__init__(self,server,port=port,debug=debug)
         self.typ=typ
     
     def connect(self,server=None,proxy=None):
         """ This will connect to the server, and if the features tag is found then set
             the namespace to be jabber:client as that is required for jabberd2.
-	    'server' and 'proxy' arguments have the same meaning as in xmpp.Client.connect() """
+            'server' and 'proxy' arguments have the same meaning as in xmpp.Client.connect() """
         CommonClient.connect(self,server=server,proxy=proxy)
         if self.typ=='jabberd2' or not self.typ and self.Dispatcher.Stream.features != None:
                 self.defaultNamespace=auth.NS_CLIENT

@@ -117,7 +117,7 @@ class Debug:
                   #
                   # active_flags are those that will trigger output
                   #
-                  active_flags = None, 
+                  active_flags = None,
                   #
                   # Log file should be file object or file namne
                   #
@@ -128,7 +128,7 @@ class Debug:
                   # with prefix = chr(27) + '[34m'
                   #      sufix = chr(27) + '[37;1m\n'
                   #
-                  prefix = 'DEBUG: ', 
+                  prefix = 'DEBUG: ',
                   sufix = '\n',
                   #
                   # If you want unix style timestamps, 
@@ -136,7 +136,7 @@ class Debug:
                   #  1 before prefix, good when prefix is a string
                   #  2 after prefix, good when prefix is a color
                   #
-                  time_stamp = 0,		  
+                  time_stamp = 0,
                   #
                   # flag_show should normaly be of, but can be turned on to get a
                   # good view of what flags are actually used for calls,
