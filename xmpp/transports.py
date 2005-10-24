@@ -64,7 +64,7 @@ class TCPsocket(PlugIn):
     """ This class defines direct TCP connection method. """
     def __init__(self, server=None, use_srv=True):
         """ Cache connection point 'server'. 'server' is the tuple of (host, port)
-            absolutely the same as standart tcp socket uses. """
+            absolutely the same as standard tcp socket uses. """
         PlugIn.__init__(self)
         self.DBG_LINE='socket'
         self._exported_methods=[self.send,self.disconnect]

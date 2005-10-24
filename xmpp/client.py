@@ -179,7 +179,7 @@ class Client(CommonClient):
             pass it as tuple as first parameter. If there is HTTP proxy between you and server 
             specify it's address and credentials (if needed) in the second argument.
             If you want ssl/tls support to be discovered and enable automatically - leave third argument as None. (ssl will be autodetected only if port is 5223 or 443)
-            If you want to force SSL start (i.e. if port 5223 or 443 is remapped to some non-standart port) then set it to 1.
+            If you want to force SSL start (i.e. if port 5223 or 443 is remapped to some non-standard port) then set it to 1.
             If you want to disable tls/ssl support completely, set it to 0.
             Example: connect(('192.168.5.5',5222),{'host':'proxy.my.net','port':8080,'user':'me','password':'secret'})
             Returns '' or 'tcp' or 'tls', depending on the result."""
