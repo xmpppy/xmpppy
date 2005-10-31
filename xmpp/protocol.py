@@ -298,7 +298,7 @@ class Protocol(Node):
         self.timestamp=None
         for x in self.getTags('x',namespace=NS_DELAY):
             try:
-                if x.getAttr('stamp')<self.getTimestamp(): self.setTimestamp(x.getAttr('stamp'))
+                if not self.getTimestamp() or x.getAttr('stamp')<self.getTimestamp(): self.setTimestamp(x.getAttr('stamp'))
             except: pass
         if timestamp is not None: self.setTimestamp(timestamp)  # To auto-timestamp stanza just pass timestamp=''
     def getTo(self):
