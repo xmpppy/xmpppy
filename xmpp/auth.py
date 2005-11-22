@@ -188,7 +188,7 @@ class SASL(PlugIn):
             resp['cnonce']=cnonce
             resp['nc']=('00000001')
             resp['qop']='auth'
-            resp['digest-uri']='xmpp/'
+            resp['digest-uri']='xmpp/'+self._owner.Server
             A1=C([H(C([resp['username'],resp['realm'],self.password])),resp['nonce'],resp['cnonce']])
             A2=C(['AUTHENTICATE',resp['digest-uri']])
             response= HH(C([HH(A1),resp['nonce'],resp['nc'],resp['cnonce'],resp['qop'],HH(A2)]))
