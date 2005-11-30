@@ -174,7 +174,7 @@ class SASL(PlugIn):
         data=base64.decodestring(incoming_data)
         self.DEBUG('Got challenge:'+data,'ok')
         for pair in data.split(','):
-            key,value=pair.split('=')
+            key,value=pair.split('=', 1)
             if value[:1]=='"' and value[-1:]=='"': value=value[1:-1]
             chal[key]=value
         if chal.has_key('qop') and chal['qop']=='auth':
