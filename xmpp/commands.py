@@ -125,7 +125,7 @@ class Commands(PlugIn):
                 conn.send(Error(request,ERR_ITEM_NOT_FOUND))
             raise NodeProcessed
         elif typ == 'info':
-            return {'ids':[],'features':[]}
+            return {'ids':[{'category':'automation','type':'command-list'}],'features':[]}
     
     def addCommand(self,name,cmddisco,cmdexecute,jid=''):
         """The method to call if adding a new command to the session, the requred parameters of cmddisco and cmdexecute are the methods to enable that command to be executed"""
@@ -197,7 +197,7 @@ class Command_Handler_Prototype(PlugIn):
         self.sessioncount = 0
         self.sessions = {}
         # Disco information for command list pre-formatted as a tuple
-        self.discoinfo = {'ids':[{'category':'automation','type':'command','name':self.description}],'features': self.discofeatures}
+        self.discoinfo = {'ids':[{'category':'automation','type':'command-node','name':self.description}],'features': self.discofeatures}
         self._jid = jid
         
     def plugin(self,owner):
