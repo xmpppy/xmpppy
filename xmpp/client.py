@@ -145,6 +145,10 @@ class CommonClient:
         """ Example of reconnection method. In fact, it can be used to batch connection and auth as well. """
         handlerssave=self.Dispatcher.dumpHandlers()
         self.Dispatcher.PlugOut()
+        if self.__dict__.has_key('NonSASL'): self.NonSASL.PlugOut()
+        if self.__dict__.has_key('SASL'): self.SASL.PlugOut()
+        if self.__dict__.has_key('HTTPPROXYsocket'): self.HTTPPROXYsocket.PlugOut()
+        if self.__dict__.has_key('TCPsocket'): self.TCPsocket.PlugOut()
         if not self.connect(server=self._Server,proxy=self._Proxy): return
         if not self.auth(self._User,self._Password,self._Resource): return
         self.Dispatcher.restoreHandlers(handlerssave)
@@ -154,9 +158,12 @@ class CommonClient:
         """ Make a tcp/ip connection, protect it with tls/ssl if possible and start XMPP stream.
             Returns None or 'tcp' or 'tls', depending on the result."""
         if not server: server=(self.Server,self.Port)
-        if proxy: connected=transports.HTTPPROXYsocket(proxy,server,use_srv).PlugIn(self)
-        else: connected=transports.TCPsocket(server,use_srv).PlugIn(self)
-        if not connected: return
+        if proxy: socket=transports.HTTPPROXYsocket(proxy,server,use_srv)
+        else: socket=transports.TCPsocket(server,use_srv)
+        connected=socket.PlugIn(self)
+        if not connected: 
+            socket.PlugOut()
+            return
         self._Server,self._Proxy=server,proxy
         self.connected='tcp'
         if (ssl is None and self.Connection.getPort() in (5223, 443)) or ssl:
@@ -251,7 +258,7 @@ class Component(CommonClient):
             the namespace to be jabber:client as that is required for jabberd2.
             'server' and 'proxy' arguments have the same meaning as in xmpp.Client.connect() """
         CommonClient.connect(self,server=server,proxy=proxy)
-        if self.typ=='jabberd2' or not self.typ and self.Dispatcher.Stream.features != None:
+        if self.connected and (self.typ=='jabberd2' or not self.typ and self.Dispatcher.Stream.features != None):
                 self.defaultNamespace=auth.NS_CLIENT
                 self.Dispatcher.RegisterNamespace(self.defaultNamespace)
                 self.Dispatcher.RegisterProtocol('iq',dispatcher.Iq)
@@ -262,4 +269,8 @@ class Component(CommonClient):
     def auth(self,name,password,dup=None):
         """ Authenticate component "name" with password "password"."""
         self._User,self._Password,self._Resource=name,password,''
-        return auth.NonSASL(name,password,'').PlugIn(self)
+        try:
+            return auth.NonSASL(name,password,'').PlugIn(self)
+        except transports.NotAuthorized, (text): 
+            self.DEBUG(self.DBG,"Failed to authenticate %s: %s"%(name, text),'error')
+        except: pass

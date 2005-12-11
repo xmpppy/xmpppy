@@ -128,14 +128,17 @@ class TCPsocket(PlugIn):
             self._recv=self._sock.recv
             self.DEBUG("Successfully connected to remote host %s"%`server`,'start')
             return 'ok'
+        except socket.error, (errno, strerror): 
+            self.DEBUG("Failed to connect to remote host %s: %s (%s)"%(`server`, strerror, errno),'error')
         except: pass
 
     def plugout(self):
         """ Disconnect from the remote server and unregister self.disconnected method from
             the owner's dispatcher. """
-        self._owner.DeregisterDisconnectHandler(self.disconnected)
-        self.shutdown()
-        del self._owner.Connection
+        self._sock.close()
+        if self._owner.__dict__.has_key('Connection'):
+            del self._owner.Connection
+            self._owner.UnregisterDisconnectHandler(self.disconnected)
 
     def receive(self):
         """ Reads all pending incoming data.
