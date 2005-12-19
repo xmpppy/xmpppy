@@ -45,7 +45,11 @@ from string import join
 
 import types
 
-
+try:
+    open('/etc/hosname')
+    colors_enabled=True
+except:
+    colors_enabled=False
 
 color_none         = chr(27) + "[0m"
 color_black        = chr(27) + "[30m"
@@ -390,9 +394,11 @@ class Debug:
     colors={}
     def Show(self, flag, msg, prefix=''):
         msg=msg.replace('\r','\\r').replace('\n','\\n')
-        if self.colors.has_key(prefix): msg=self.colors[prefix]+msg+color_none
+        if not colors_enabled: pass
+        elif self.colors.has_key(prefix): msg=self.colors[prefix]+msg+color_none
         else: msg=color_none+msg
-        if self.colors.has_key(flag): prefixcolor=self.colors[flag]
+        if not colors_enabled: prefixcolor=''
+        elif self.colors.has_key(flag): prefixcolor=self.colors[flag]
         else: prefixcolor=color_none
         
         prefix= self.prefix+prefixcolor+(flag+' '*12)[:12]+' '+(prefix+' '*6)[:6]
