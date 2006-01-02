@@ -40,15 +40,16 @@ in this code
 
 
 import sys
+import traceback
 import time
+import os
 from string import join
 
 import types
 
-try:
-    open('/etc/hosname')
+if os.environ.has_key('TERM'):
     colors_enabled=True
-except:
+else:
     colors_enabled=False
 
 color_none         = chr(27) + "[0m"
@@ -393,13 +394,18 @@ class Debug:
 
     colors={}
     def Show(self, flag, msg, prefix=''):
-        msg=msg.replace('\r','\\r').replace('\n','\\n')
+        msg=msg.replace('\r','\\r').replace('\n','\\n').replace('><','>\n  <')
         if not colors_enabled: pass
         elif self.colors.has_key(prefix): msg=self.colors[prefix]+msg+color_none
         else: msg=color_none+msg
         if not colors_enabled: prefixcolor=''
         elif self.colors.has_key(flag): prefixcolor=self.colors[flag]
         else: prefixcolor=color_none
+        
+        if prefix=='error':
+            _exception = sys.exc_info()
+            if _exception[0]:
+                msg=msg+'\n'+''.join(traceback.format_exception(_exception[0], _exception[1], _exception[2])).rstrip()
         
         prefix= self.prefix+prefixcolor+(flag+' '*12)[:12]+' '+(prefix+' '*6)[:6]
         self.show(msg, flag, prefix)
