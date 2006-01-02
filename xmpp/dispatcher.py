@@ -228,12 +228,29 @@ class Dispatcher(PlugIn):
             3) data that comes along with event. Depends on event."""
         if self._eventHandler: self._eventHandler(realm,event,data)
 
-    def dispatch(self,stanza,session=None):
+    def dispatch(self,stanza,session=None,direct=0):
         """ Main procedure that performs XMPP stanza recognition and calling apppropriate handlers for it.
             Called internally. """
         if not session: session=self
         session.Stream._mini_dom=None
         name=stanza.getName()
+
+        if not direct and self._owner._component:
+            if name == 'route':
+                if stanza.getAttr('error') == None:
+                    if len(stanza.getChildren()) == 1:
+                        stanza = stanza.getChildren()[0]
+                        name=stanza.getName()
+                    else:
+                        for each in stanza.getChildren():
+                            self.dispatch(each,session,direct=1)
+                        return
+            elif name == 'presence':
+                return
+            elif name in ('features','bind'):
+                pass
+            else:
+                raise UnsupportedStanzaType(name)
 
         if name=='features': session.Stream.features=stanza
 
@@ -245,7 +262,7 @@ class Dispatcher(PlugIn):
             self.DEBUG("Unknown stanza: " + name,'warn')
             name='unknown'
         else:
-            self.DEBUG("Got %s stanza"%name, 'ok')
+            self.DEBUG("Got %s/%s stanza"%(xmlns,name), 'ok')
 
         if stanza.__class__.__name__=='Node': stanza=self.handlers[xmlns][name][type](node=stanza)
 
@@ -335,6 +352,15 @@ class Dispatcher(PlugIn):
             stanza.setID(_ID)
         else: _ID=stanza.getID()
         if self._owner._registered_name and not stanza.getAttr('from'): stanza.setAttr('from',self._owner._registered_name)
+        if self._owner._component and stanza.getName()!='bind':
+            to=self._owner.Server
+            if stanza.getTo() and stanza.getTo().getDomain():
+                to=stanza.getTo().getDomain()
+            frm=stanza.getFrom()
+            if frm.getDomain():
+                frm=frm.getDomain()
+            route=Protocol('route',to=to,frm=frm,payload=[stanza])
+            stanza=route
         stanza.setParent(self._metastream)
         self._owner_send(stanza)
         return _ID

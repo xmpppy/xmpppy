@@ -35,6 +35,7 @@ NS_CHATSTATES   ='http://jabber.org/protocol/chatstates'                # JEP-00
 NS_CLIENT       ='jabber:client'
 NS_COMMANDS     ='http://jabber.org/protocol/commands'
 NS_COMPONENT_ACCEPT='jabber:component:accept'
+NS_COMPONENT_1  ='http://jabberd.jabberstudio.org/ns/component/1.0'
 NS_COMPRESS     ='http://jabber.org/protocol/compress'                  # JEP-0138
 NS_DATA         ='jabber:x:data'                                        # JEP-0004
 NS_DELAY        ='jabber:x:delay'

@@ -109,6 +109,7 @@ class CommonClient:
         self._registered_name=None
         self.RegisterDisconnectHandler(self.DisconnectHandler)
         self.connected=''
+        self._component=0
 
     def RegisterDisconnectHandler(self,handler):
         """ Register handler that will be called on disconnect."""
@@ -242,7 +243,7 @@ class Client(CommonClient):
 
 class Component(CommonClient):
     """ Component class. The only difference from CommonClient is ability to perform component authentication. """
-    def __init__(self,server,port=5347,typ=None,debug=['always', 'nodebuilder']):
+    def __init__(self,server,port=5347,typ=None,debug=['always', 'nodebuilder'],domains=None,component=0):
         """ Init function for Components.
             As components use a different auth mechanism which includes the namespace of the component.
             Jabberd1.4 and Ejabberd use the default namespace then for all client messages.
@@ -252,11 +253,19 @@ class Component(CommonClient):
             and port while calling "connect()"."""
         CommonClient.__init__(self,server,port=port,debug=debug)
         self.typ=typ
+        self.component=component
+        if domains:
+            self.domains=domains
+        else:
+            self.domains=[server]
     
     def connect(self,server=None,proxy=None):
         """ This will connect to the server, and if the features tag is found then set
             the namespace to be jabber:client as that is required for jabberd2.
             'server' and 'proxy' arguments have the same meaning as in xmpp.Client.connect() """
+        if self.component:
+            self.Namespace=auth.NS_COMPONENT_1
+            self.Server=server[0]
         CommonClient.connect(self,server=server,proxy=proxy)
         if self.connected and (self.typ=='jabberd2' or not self.typ and self.Dispatcher.Stream.features != None):
                 self.defaultNamespace=auth.NS_CLIENT
@@ -266,11 +275,32 @@ class Component(CommonClient):
                 self.Dispatcher.RegisterProtocol('presence',dispatcher.Presence)
         return self.connected
 
-    def auth(self,name,password,dup=None):
+    def auth(self,name,password,dup=None,sasl=0):
         """ Authenticate component "name" with password "password"."""
         self._User,self._Password,self._Resource=name,password,''
         try:
-            return auth.NonSASL(name,password,'').PlugIn(self)
-        except transports.NotAuthorized, (text): 
-            self.DEBUG(self.DBG,"Failed to authenticate %s: %s"%(name, text),'error')
-        except: pass
+            if self.component: sasl=1
+            if sasl: auth.SASL(name,password).PlugIn(self)
+            if not sasl or self.SASL.startsasl=='not-supported':
+                if auth.NonSASL(name,password,'').PlugIn(self):
+                    self.connected+='+old_auth'
+                    return 'old_auth'
+                return
+            self.SASL.auth()
+            while self.SASL.startsasl=='in-process' and self.Process(): pass
+            if self.SASL.startsasl=='success':
+                if self.component:
+                    self._component=self.component
+                    for domain in self.domains:
+                        auth.ComponentBind().PlugIn(self)
+                        while self.ComponentBind.bound is None: self.Process()
+                        if (not self.ComponentBind.Bind(domain)):
+                            self.ComponentBind.PlugOut()
+                            return
+                        self.ComponentBind.PlugOut()
+                self.connected+='+sasl'
+                return 'sasl'
+            else:
+                raise auth.NotAuthorized(self.SASL.startsasl)
+        except:
+            self.DEBUG(self.DBG,"Failed to authenticate %s"%name,'error')
