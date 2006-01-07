@@ -44,6 +44,7 @@ NS_DISCO        ='http://jabber.org/protocol/disco'
 NS_DISCO_INFO   =NS_DISCO+'#info'
 NS_DISCO_ITEMS  =NS_DISCO+'#items'
 NS_ENCRYPTED    ='jabber:x:encrypted'                                   # JEP-0027
+NS_EVENT        ='jabber:x:event'                                       # JEP-0022
 NS_FEATURE      ='http://jabber.org/protocol/feature-neg'  
 NS_FILE         ='http://jabber.org/protocol/si/profile/file-transfer'  # JEP-0096
 NS_GEOLOC       ='http://jabber.org/protocol/geoloc'                    # JEP-0080
@@ -687,7 +688,7 @@ class DataForm(Node):
         for field in self.getTags('field'):
             name=field.getAttr('var')
             typ=field.getType()
-            if type(typ) in [type(''),type(u'')] and typ[-6:]=='multi':
+            if type(typ) in [type(''),type(u'')] and typ[-6:]=='-multi':
                 val=[]
                 for i in field.getTags('value'): val.append(i.getData())
             else: val=field.getTagData('value')
