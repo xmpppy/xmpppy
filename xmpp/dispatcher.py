@@ -361,6 +361,7 @@ class Dispatcher(PlugIn):
                 frm=frm.getDomain()
             route=Protocol('route',to=to,frm=frm,payload=[stanza])
             stanza=route
+        stanza.setNamespace(self._owner.Namespace)
         stanza.setParent(self._metastream)
         self._owner_send(stanza)
         return _ID

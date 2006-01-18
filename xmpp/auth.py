@@ -295,7 +295,7 @@ class ComponentBind(PlugIn):
     def Bind(self,domain=None):
         """ Perform binding. Use provided domain name (if not provided). """
         while self.bound is None and self._owner.Process(1): pass
-        resp=self._owner.SendAndWaitForResponse(Protocol('bind',attrs={'name':domain})) #,xmlns=NS_COMPONENT_1
+        resp=self._owner.SendAndWaitForResponse(Protocol('bind',attrs={'name':domain},xmlns=NS_COMPONENT_1))
         if resp and resp.getAttr('error'):
             self.DEBUG('Binding failed: %s.'%resp.getAttr('error'),'error')
         elif resp:
