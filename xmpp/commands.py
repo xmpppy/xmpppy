@@ -31,8 +31,8 @@ What it supplies:
     A means of handling requests, by redirection though the command manager.
 """
 
-from xmpp.protocol import *
-from xmpp.client import PlugIn
+from protocol import *
+from client import PlugIn
 
 class Commands(PlugIn):
     """Commands is an ancestor of PlugIn and can be attached to any session.

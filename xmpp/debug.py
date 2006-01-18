@@ -43,7 +43,6 @@ import sys
 import traceback
 import time
 import os
-from string import join
 
 import types
 
@@ -201,7 +200,7 @@ class Debug:
                 mod_name = ""
             self.show('Debug created for %s%s' % (caller.f_code.co_filename,
                                                    mod_name ))
-            self.show(' flags defined: %s' % join( self.active ))
+            self.show(' flags defined: %s' % ','.join( self.active ))
             
         if type(flag_show) in (type(''), type(None)):
             self.flag_show = flag_show
