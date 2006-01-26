@@ -44,7 +44,7 @@ except ImportError:
         HAVE_PYDNS = True
     except ImportError:
         #TODO: use self.DEBUG()
-        sys.stdout.write("Could not load one of the supported DNS libraries (dnspython or pydns). SRV records will not be queried and you may need to set custom hostname/port for some servers to be accessible.\n")
+        sys.stderr.write("Could not load one of the supported DNS libraries (dnspython or pydns). SRV records will not be queried and you may need to set custom hostname/port for some servers to be accessible.\n")
 
 DATA_RECEIVED='DATA RECEIVED'
 DATA_SENT='DATA SENT'
