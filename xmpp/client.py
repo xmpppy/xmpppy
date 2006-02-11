@@ -178,7 +178,7 @@ class CommonClient:
         while self.Dispatcher.Stream._document_attrs is None:
             if not self.Process(1): return
         if self.Dispatcher.Stream._document_attrs.has_key('version') and self.Dispatcher.Stream._document_attrs['version']=='1.0':
-            while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
+            while not self.Dispatcher.Stream.features and self.Process(1): pass      # If we get version 1.0 stream the features tag MUST BE presented
         return self.connected
 
 class Client(CommonClient):
@@ -195,9 +195,9 @@ class Client(CommonClient):
         if not CommonClient.connect(self,server,proxy,secure,use_srv) or secure<>None and not secure: return self.connected
         transports.TLS().PlugIn(self)
         if not self.Dispatcher.Stream._document_attrs.has_key('version') or not self.Dispatcher.Stream._document_attrs['version']=='1.0': return self.connected
-        while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
+        while not self.Dispatcher.Stream.features and self.Process(1): pass      # If we get version 1.0 stream the features tag MUST BE presented
         if not self.Dispatcher.Stream.features.getTag('starttls'): return self.connected       # TLS not supported by server
-        while not self.TLS.starttls and self.Process(): pass
+        while not self.TLS.starttls and self.Process(1): pass
         if not hasattr(self, 'TLS') or self.TLS.starttls!='success': self.event('tls_failed'); return self.connected
         self.connected='tls'
         return self.connected
@@ -206,9 +206,9 @@ class Client(CommonClient):
         """ Authenticate connnection and bind resource. If resource is not provided
             random one or library name used. """
         self._User,self._Password,self._Resource=user,password,resource
-        while not self.Dispatcher.Stream._document_attrs and self.Process(): pass
+        while not self.Dispatcher.Stream._document_attrs and self.Process(1): pass
         if self.Dispatcher.Stream._document_attrs.has_key('version') and self.Dispatcher.Stream._document_attrs['version']=='1.0':
-            while not self.Dispatcher.Stream.features and self.Process(): pass      # If we get version 1.0 stream the features tag MUST BE presented
+            while not self.Dispatcher.Stream.features and self.Process(1): pass      # If we get version 1.0 stream the features tag MUST BE presented
         if sasl: auth.SASL(user,password).PlugIn(self)
         if not sasl or self.SASL.startsasl=='not-supported':
             if not resource: resource='xmpppy'
@@ -217,10 +217,10 @@ class Client(CommonClient):
                 return 'old_auth'
             return
         self.SASL.auth()
-        while self.SASL.startsasl=='in-process' and self.Process(): pass
+        while self.SASL.startsasl=='in-process' and self.Process(1): pass
         if self.SASL.startsasl=='success':
             auth.Bind().PlugIn(self)
-            while self.Bind.bound is None and self.Process(): pass
+            while self.Bind.bound is None and self.Process(1): pass
             if self.Bind.Bind(resource):
                 self.connected+='+sasl'
                 return 'sasl'
@@ -288,13 +288,13 @@ class Component(CommonClient):
                     return 'old_auth'
                 return
             self.SASL.auth()
-            while self.SASL.startsasl=='in-process' and self.Process(): pass
+            while self.SASL.startsasl=='in-process' and self.Process(1): pass
             if self.SASL.startsasl=='success':
                 if self.component:
                     self._component=self.component
                     for domain in self.domains:
                         auth.ComponentBind().PlugIn(self)
-                        while self.ComponentBind.bound is None: self.Process()
+                        while self.ComponentBind.bound is None: self.Process(1)
                         if (not self.ComponentBind.Bind(domain)):
                             self.ComponentBind.PlugOut()
                             return
