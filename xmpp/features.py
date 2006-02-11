@@ -87,6 +87,7 @@ def getRegInfo(disp,host,info={},sync=True):
     if sync:
         resp=disp.SendAndWaitForResponse(iq)
         _ReceivedRegInfo(disp.Dispatcher,resp, host)
+        return resp
     else: disp.SendAndCallForResponse(iq,_ReceivedRegInfo, {'agent': host})
 
 def _ReceivedRegInfo(con, resp, agent):
