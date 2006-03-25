@@ -419,4 +419,5 @@ class Debug:
 
 DBG_ALWAYS='always'
 
-Debug=NoDebug
+##Uncomment this to effectively disable all debugging and all debugging overhead.
+#Debug=NoDebug
