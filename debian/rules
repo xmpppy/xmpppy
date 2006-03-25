@@ -6,10 +6,10 @@
 #export DH_VERBOSE=1
 
 # This is the debhelper compatibility version to use.
-export DH_COMPAT=3
+export DH_COMPAT=5
 
 # python version for which a pkg will be build
-export PYVERSIONS=python2.1 python2.2 python2.3
+export PYVERSIONS=python2.3 python2.4
 
 ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
 	CFLAGS += -g
@@ -53,12 +53,8 @@ install: build
 	dh_installdirs -v
 
 	# Add here commands to install the package into debian/python-xmpp
-	install -m 0644 $(CURDIR)/xmpp/*py \
-	        $(CURDIR)/debian/python2.1-xmpp/usr/lib/python2.1/site-packages/xmpp
-	install -m 0644 $(CURDIR)/xmpp/*py \
-	        $(CURDIR)/debian/python2.2-xmpp/usr/lib/python2.2/site-packages/xmpp
-	install -m 0644 $(CURDIR)/xmpp/*py \
-	        $(CURDIR)/debian/python2.3-xmpp/usr/lib/python2.3/site-packages/xmpp
+	declare -x MODULESDIR=$(CURDIR)/debian/python2.3-xmpp/usr/lib/python2.3/site-packages/ ; make install
+	declare -x MODULESDIR=$(CURDIR)/debian/python2.4-xmpp/usr/lib/python2.4/site-packages/ ; make install
 
 
 # Build architecture-independent files here.
@@ -66,14 +62,14 @@ binary-indep: build install
 	dh_testdir -i
 	dh_testroot -i
 	
-	mkdir examples
-	mv docs/examples/* examples
-	mkdir html
-	mv docs/*html html
+	[ -d examples ] || mkdir examples
+	cp -r doc/examples/* examples
+	[ -d html ] || mkdir html
+	cp -r doc/*html doc/apidocs html
 	
 	dh_installdocs -i
 	dh_installexamples -i
-	dh_installchangelogs -i
+	dh_installchangelogs -i ChangeLog
 	dh_link -i
 	dh_compress -i
 	dh_fixperms -i
@@ -83,6 +79,8 @@ binary-indep: build install
 	dh_gencontrol -i
 	dh_md5sums -i
 	dh_builddeb -i
+	
+	rm -rf html examples
 
 # Build architecture-dependent files here.
 binary-arch: build install

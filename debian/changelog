@@ -1,3 +1,62 @@
+python-xmpp (0.3-1) unstable; urgency=low
+
+  * New upstream release
+  * Update of python2.3-xmpp for debian/testing required.
+    Closes: #312227
+  * Please stop build modules for python2.1/python2.2
+    closes: #351154
+  * New Upstream available (0.3). Closes: #356149
+  * /usr/lib/python2.3/site-packages/xmpp/features.py: error in
+    setPrivacyList. Closes: #321348
+  * Sponsored upload by Cosimo Alfarano <kalfa@debian.org>
+
+ -- Alexey Nezhdanov <snakeru@users.sourceforge.net>  Mon, 13 Mar 2006 09:40:17 +0300
+
+python-xmpp (0.2-rc3-1) unstable; urgency=low
+
+  * Sync with latest released version.
+    closes: #307988
+  * Added bugfixes from current CVS.
+  * Sponsored upload by Cosimo Alfarano <kalfa@debian.org>
+
+ -- Alexey Nezhdanov <snakeru@users.sourceforge.net>  Thu, 12 May 2005 11:41:34 +0400
+
+python-xmpp (0.2-rc2-1) unstable; urgency=low
+
+  * Sync with latest released version.
+  * Sponsored upload by Cosimo Alfarano <kalfa@debian.org>
+
+ -- Alexey Nezhdanov <snakeru@users.sourceforge.net>  Wed,  4 May 2005 20:51:11 +0400
+
+python-xmpp (0.2-rc1-1) unstable; urgency=low
+
+  * Sync with latest released version. 
+  * Sponsored upload by Cosimo Alfarano <kalfa@debian.org>
+
+ -- Alexey Nezhdanov <snakeru@users.sourceforge.net>  Fri, 11 Mar 2005 20:45:54 +0300
+
+python-xmpp (0.1.1-1) unstable; urgency=low
+
+  * Sync with latest released version. 
+  * Sponsored upload by Cosimo Alfarano <kalfa@debian.org>
+
+ -- Alexey Nezhdanov <snakeru@users.sourceforge.net>  Sat, 25 Sep 2004 08:22:52 +0400
+
+python-xmpp (0.1-rc4-1) unstable; urgency=low
+
+  * Sync with latest released version. 
+  * Sponsored upload by Cosimo Alfarano <kalfa@debian.org>
+
+ -- Alexey Nezhdanov <snakeru@users.sourceforge.net>  Thu,  5 Aug 2004 19:31:08 +0400
+
+python-xmpp (0.1-rc3-2) unstable; urgency=low
+
+  * Added bugfixes from CVS version.
+  * Generated and added changelog.
+  * Sponsored upload by Cosimo Alfarano <kalfa@debian.org>
+
+ -- Alexey Nezhdanov <snakeru@users.sourceforge.net>  Sun, 27 Jun 2004 11:26:31 +0400
+
 python-xmpp (0.1-rc3-1) unstable; urgency=low
 
   * Sync with latest released version.

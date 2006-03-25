@@ -2,8 +2,8 @@ Source: python-xmpp
 Section: python
 Priority: optional
 Maintainer: Alexey Nezhdanov <snakeru@users.sourceforge.net>
-Build-Depends-Indep: debhelper (>> 3.0.0), python
-Standards-Version: 3.6.1.0
+Build-Depends-Indep: debhelper (>> 5.0.0), python
+Standards-Version: 3.6.2
 Uploaders: Cosimo Alfarano <kalfa@debian.org>
 
 Package: python-xmpp
@@ -18,36 +18,8 @@ Description: Python library for communication with XMPP (Jabber) servers
  .
  Unlike jabberpy it is distributed under the terms of GPL.
  .
- This package is a dependency package, which depends on Debian's default
- Python version (currently v2.3) and respective xmpppy package version.
-
-Package: python2.1-xmpp
-Architecture: all
-Depends: python2.1, python2.1-xmlbase
-Description: Python library for communication with XMPP (Jabber) servers
- This is a set of modules providing functionality for writing
- xmpp-compliant client or component in python.
- .
- This library was initially designed as "rework" of jabberpy library
- but lately become separate product.
- .
- Unlike jabberpy it is distributed under the terms of GPL.
- .
- This package provides modules for python 2.1
-
-Package: python2.2-xmpp
-Architecture: all
-Depends: python2.2, python2.2-xmlbase
-Description: Python library for communication with XMPP (Jabber) servers
- This is a set of modules providing functionality for writing
- xmpp-compliant client or component in python.
- .
- This library was initially designed as "rework" of jabberpy library
- but lately become separate product.
- .
- Unlike jabberpy it is distributed under the terms of GPL.
- .
- This package provides modules for python 2.2
+ This package is a dependency package, which depends on the default
+ version of python-xmpp.
 
 Package: python2.3-xmpp
 Architecture: all
@@ -62,4 +34,18 @@ Description: Python library for communication with XMPP (Jabber) servers
  Unlike jabberpy it is distributed under the terms of GPL.
  .
  This package provides modules for python 2.3
+
+Package: python2.4-xmpp
+Architecture: all
+Depends: python2.4
+Description: Python library for communication with XMPP (Jabber) servers
+ This is a set of modules providing functionality for writing
+ xmpp-compliant client or component in python.
+ .
+ This library was initially designed as "rework" of jabberpy library
+ but lately become separate product.
+ .
+ Unlike jabberpy it is distributed under the terms of GPL.
+ .
+ This package provides modules for python 2.4
 
