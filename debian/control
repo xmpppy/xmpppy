@@ -23,7 +23,7 @@ Description: Python library for communication with XMPP (Jabber) servers
 
 Package: python2.3-xmpp
 Architecture: all
-Depends: python2.3
+Depends: python2.3, python-dns
 Description: Python library for communication with XMPP (Jabber) servers
  This is a set of modules providing functionality for writing
  xmpp-compliant client or component in python.
@@ -37,7 +37,7 @@ Description: Python library for communication with XMPP (Jabber) servers
 
 Package: python2.4-xmpp
 Architecture: all
-Depends: python2.4
+Depends: python2.4, python-dns
 Description: Python library for communication with XMPP (Jabber) servers
  This is a set of modules providing functionality for writing
  xmpp-compliant client or component in python.
