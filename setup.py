@@ -10,7 +10,7 @@ if sys.version < '2.2.3':
 
 # Set proper release version in source code also!!!
 setup(name='xmpppy',
-      version='0.2-rc1',
+      version='0.3.1',
       author='Alexey Nezhdanov',
       author_email='snakeru@users.sourceforge.net',
       url='http://xmpppy.sourceforge.net/',
@@ -26,6 +26,7 @@ Unlike jabberpy it is distributed under the terms of GPL.""",
       packages=['xmpp'],
       license="GPL",
       platforms="All",
+      keywords=['jabber','xmpp'],
       classifiers = [
           'Topic :: Communications :: Chat',
           'License :: OSI Approved :: GNU General Public License (GPL)',
