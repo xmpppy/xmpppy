@@ -62,7 +62,7 @@ class Commands(PlugIn):
     def plugout(self):
         """Removes handlers from the session"""
         # unPlug from the session and the disco manager
-        self._owner.UnregisterHandler('iq',self_CommandHandler,ns=NS_COMMANDS)
+        self._owner.UnregisterHandler('iq',self._CommandHandler,ns=NS_COMMANDS)
         for jid in self._handlers:
             self._browser.delDiscoHandler(self._DiscoHandler,node=NS_COMMANDS)
         
