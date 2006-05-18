@@ -105,6 +105,19 @@ class Node:
             s = s + "</" + self.name + ">"
             if fancy: s = s + "\n"
         return s
+    def getCDATA(self):
+        """ Serialise node, dropping all tags and leaving CDATA intact.
+            That is effectively kills all formatiing, leaving only text were contained in XML.
+        """
+        s =""
+        cnt = 0
+        if self.kids:
+            for a in self.kids:
+                s=s+self.data[cnt]
+                s = s + mystr(a)
+                cnt=cnt+1
+        if (len(self.data)-1) >= cnt: s = s + self.data[cnt]
+        return s
     def addChild(self, name=None, attrs={}, payload=[], namespace=None, node=None):
         """ If "node" argument is provided, adds it as child node. Else creates new node from
             the other arguments' values and adds it as well."""
