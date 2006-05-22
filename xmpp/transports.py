@@ -123,7 +123,7 @@ class TCPsocket(PlugIn):
         try:
             if not server: server=self._server
             self._sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._sock.connect(server)
+            self._sock.connect((server[0], int(server[1])))
             self._send=self._sock.sendall
             self._recv=self._sock.recv
             self.DEBUG("Successfully connected to remote host %s"%`server`,'start')
