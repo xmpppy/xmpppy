@@ -23,11 +23,14 @@ for mandatory in ['jid','password']:
 jid=xmpp.protocol.JID(jidparams['jid'])
 cl=xmpp.Client(jid.getDomain(),debug=[])
 
-cl.connect()
-cl.auth(jid.getNode(),jidparams['password'])
+con=cl.connect()
+print 'connected with',con
+auth=cl.auth(jid.getNode(),jidparams['password'])
+print 'authenticated using',auth
 
 #cl.SendInitPresence(requestRoster=0)   # you may need to uncomment this for old server
-cl.send(xmpp.protocol.Message(tojid,text))
+id=cl.send(xmpp.protocol.Message(tojid,text))
+print 'sent message with id',id
 
 time.sleep(1)   # some older servers will not send the message if you disconnect immediately after sending
 
