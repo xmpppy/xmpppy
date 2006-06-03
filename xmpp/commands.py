@@ -209,7 +209,7 @@ class Command_Handler_Prototype(PlugIn):
 
     def plugout(self):
         """Remove command from the commands class"""
-        self._commands.delCommand(name,self._jid)
+        self._commands.delCommand(self.name,self._jid)
 
     def getSessionID(self):
         """Returns an id for the command session"""
@@ -269,7 +269,6 @@ class TestCommand(Command_Handler_Prototype):
     def __init__(self,jid=''):
         """ Init internal constants. """
         Command_Handler_Prototype.__init__(self,jid)
-        self.pi = 3.14
         self.initial = {'execute':self.cmdFirstStage}
     
     def cmdFirstStage(self,conn,request):
@@ -281,48 +280,49 @@ class TestCommand(Command_Handler_Prototype):
             session = None
         if session == None:
             session = self.getSessionID()
-            sessions[session]={'jid':request.getFrom(),'actions':{'cancel':self.cmdCancel,'next':self.cmdSecondStage},'data':{'type':None}}
+            self.sessions[session]={'jid':request.getFrom(),'actions':{'cancel':self.cmdCancel,'next':self.cmdSecondStage,'execute':self.cmdSecondStage},'data':{'type':None}}
         # As this is the first stage we only send a form
         reply = request.buildReply('result')
-        form = DataForm(title='Select type of operation',data=['Use the combobox to select the type of calculation you would like to do, then click Next',DataField(name='calctype',label='Calculation Type',value=sessions[session]['data']['type'],options=[['circlediameter','Calculate the Diameter of a circle'],['circlearea','Calculate the area of a circle']],typ='list-single',required=1)])
+        form = DataForm(title='Select type of operation',data=['Use the combobox to select the type of calculation you would like to do, then click Next',DataField(name='calctype',desc='Calculation Type',value=self.sessions[session]['data']['type'],options=[['circlediameter','Calculate the Diameter of a circle'],['circlearea','Calculate the area of a circle']],typ='list-single',required=1)])
         replypayload = [Node('actions',attrs={'execute':'next'},payload=[Node('next')]),form]
-        reply.addChild(name='command',namespace=NS_COMMAND,attrs={'node':request.getTagAttr('command','node'),'sessionid':session,'status':'executing'},payload=replypayload)
+        reply.addChild(name='command',namespace=NS_COMMANDS,attrs={'node':request.getTagAttr('command','node'),'sessionid':session,'status':'executing'},payload=replypayload)
         self._owner.send(reply)
         raise NodeProcessed
 
     def cmdSecondStage(self,conn,request):
-        form = DataForm(node = result.getTag(name='command').getTag(name='x',namespace=NS_DATA))
-        sessions[request.getTagAttr('command','sessionid')]['data']['type']=form.getField('calctype')
-        sessions[request.getTagAttr('command','sessionid')]['actions']={'cancel':self.cmdCancel,None:self.cmdThirdStage,'previous':cmdFirstStage}
+        form = DataForm(node = request.getTag(name='command').getTag(name='x',namespace=NS_DATA))
+        self.sessions[request.getTagAttr('command','sessionid')]['data']['type']=form.getField('calctype').getValue()
+        self.sessions[request.getTagAttr('command','sessionid')]['actions']={'cancel':self.cmdCancel,None:self.cmdThirdStage,'previous':self.cmdFirstStage,'execute':self.cmdThirdStage,'next':self.cmdThirdStage}
         # The form generation is split out to another method as it may be called by cmdThirdStage
         self.cmdSecondStageReply(conn,request)
 
     def cmdSecondStageReply(self,conn,request):
         reply = request.buildReply('result')
-        form = DataForm(title = 'Enter the radius', data=['Enter the radius of the circle (numbers only)',DataField(label='Radius',name='radius',typ='text-single')])
+        form = DataForm(title = 'Enter the radius', data=['Enter the radius of the circle (numbers only)',DataField(desc='Radius',name='radius',typ='text-single')])
         replypayload = [Node('actions',attrs={'execute':'complete'},payload=[Node('complete'),Node('prev')]),form]
-        reply.addChild(name='command',namespace=NS_COMMAND,attrs={'node':request.getTagAttr('command','node'),'sessionid':request.getTagAttr('command','sessionid'),'status':'executing'},payload=replypayload)
+        reply.addChild(name='command',namespace=NS_COMMANDS,attrs={'node':request.getTagAttr('command','node'),'sessionid':request.getTagAttr('command','sessionid'),'status':'executing'},payload=replypayload)
         self._owner.send(reply)
         raise NodeProcessed
 
     def cmdThirdStage(self,conn,request):
-        form = DataForm(node = result.getTag(name='command').getTag(name='x',namespace=NS_DATA))
+        form = DataForm(node = request.getTag(name='command').getTag(name='x',namespace=NS_DATA))
         try:
-            num = float(form.getField('radius'))
+            num = float(form.getField('radius').getValue())
         except:
             self.cmdSecondStageReply(conn,request)
-        if sessions[request.getTagAttr('command','sessionid')]['data']['type'] == 'circlearea':
+        from math import pi
+        if self.sessions[request.getTagAttr('command','sessionid')]['data']['type'] == 'circlearea':
             result = num*(pi**2)
         else:
             result = num*2*pi
-        reply = result.buildReply(request)
-        form = DataForm(typ='result',data=[DataField(label='result',name='result',value=result)])
-        reply.addChild(name='command',namespace=NS_COMMAND,attrs={'node':request.getTagAttr('command','node'),'sessionid':request.getTagAttr('command','sessionid'),'status':'completed'},payload=form)
+        reply = request.buildReply('result')
+        form = DataForm(typ='result',data=[DataField(desc='result',name='result',value=result)])
+        reply.addChild(name='command',namespace=NS_COMMANDS,attrs={'node':request.getTagAttr('command','node'),'sessionid':request.getTagAttr('command','sessionid'),'status':'completed'},payload=[form])
         self._owner.send(reply)
         raise NodeProcessed
 
     def cmdCancel(self,conn,request):
         reply = request.buildReply('result')
-        reply.addChild(name='command',namespace=NS_COMMAND,attrs={'node':request.getTagAttr('command','node'),'sessionid':request.getTagAttr('command','sessionid'),'status':'cancelled'})
+        reply.addChild(name='command',namespace=NS_COMMANDS,attrs={'node':request.getTagAttr('command','node'),'sessionid':request.getTagAttr('command','sessionid'),'status':'cancelled'})
         self._owner.send(reply)
-        del sessions[request.getTagAttr('command','sessionid')]
+        del self.sessions[request.getTagAttr('command','sessionid')]
