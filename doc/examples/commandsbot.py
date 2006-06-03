@@ -2,6 +2,7 @@
 """ The example of using xmpppy's Ad-Hoc Commands (JEP-0050) implementation.
 """
 import xmpp
+from xmpp.protocol import *
 
 options = {
 	'JID': 'circles@example.com',
@@ -67,9 +68,10 @@ class TestCommand(xmpp.commands.Command_Handler_Prototype):
 
 		form = xmpp.DataForm(
 			title='Select type of operation',
-			data=['Use the combobox to select the type of calculation you would like'\
-			      'to do, then click Next.',
-			      calctypefield])
+			data=[
+				'Use the combobox to select the type of calculation you would like'\
+				'to do, then click Next.',
+				calctypefield])
 
 		# Build a reply with the form
 		reply = request.buildReply('result')
@@ -80,10 +82,11 @@ class TestCommand(xmpp.commands.Command_Handler_Prototype):
 			form]
 		reply.addChild(
 			name='command',
-			attrs={'xmlns':xmpp.NS_COMMANDS,
-			       'node':request.getTagAttr('command','node'),
-			       'sessionid':sessionid,
-			       'status':'executing'},
+			namespace=NS_COMMANDS,
+			attrs={
+				'node':request.getTagAttr('command','node'),
+				'sessionid':sessionid,
+				'status':'executing'},
 			payload=replypayload)
 		self._owner.send(reply)	# Question: self._owner or conn?
 		raise xmpp.NodeProcessed
@@ -96,7 +99,7 @@ class TestCommand(xmpp.commands.Command_Handler_Prototype):
 		session = self.sessions[sessionid]
 
 		# load the form
-		node = request.getTag(name='command').getTag(name='x',namespace=xmpp.NS_DATA)
+		node = request.getTag(name='command').getTag(name='x',namespace=NS_DATA)
 		form = xmpp.DataForm(node=node)
 
 		# retrieve the data
@@ -144,8 +147,8 @@ class TestCommand(xmpp.commands.Command_Handler_Prototype):
 
 		reply.addChild(
 			name='command',
+			namespace=NS_COMMANDS,
 			attrs={
-				'xmlns':xmpp.NS_COMMANDS,
 				'node':request.getTagAttr('command','node'),
 				'sessionid':request.getTagAttr('command','sessionid'),
 				'status':'executing'},
@@ -161,7 +164,7 @@ class TestCommand(xmpp.commands.Command_Handler_Prototype):
 		session = self.sessions[sessionid]
 
 		# load the form
-		node = request.getTag(name='command').getTag(name='x',namespace=xmpp.NS_DATA)
+		node = request.getTag(name='command').getTag(name='x',namespace=NS_DATA)
 		form = xmpp.DataForm(node=node)
 
 		# retrieve the data; if the entered value is not a number, return to second stage
@@ -171,10 +174,11 @@ class TestCommand(xmpp.commands.Command_Handler_Prototype):
 			self.calcDataForm(conn, request, notavalue=True)
 
 		# calculate the answer
+		from math import pi
 		if session['data']['type'] == 'circlearea':
-			result = value * (3.14**2)
+			result = (value**2) * pi
 		else:
-			result = value * 2 * 3.14
+			result = 2 * value * pi
 
 		# build the result form
 		form = xmpp.DataForm(
@@ -185,8 +189,8 @@ class TestCommand(xmpp.commands.Command_Handler_Prototype):
 		reply = request.buildReply('result')
 		reply.addChild(
 			name='command',
+			namespace=NS_COMMANDS,
 			attrs={
-				'xmlns':xmpp.NS_COMMANDS,
 				'node':request.getTagAttr('command','node'),
 				'sessionid':sessionid,
 				'status':'completed'},
@@ -208,8 +212,8 @@ class TestCommand(xmpp.commands.Command_Handler_Prototype):
 		reply = request.buildReply('result')
 		reply.addChild(
 			name='command',
+			namespace=NS_COMMANDS,
 			attrs={
-				'xmlns':xmpp.NS_COMMANDS,
 				'node':request.getTagAttr('command','node'),
 				'sessionid':sessionid,
 				'status':'cancelled'})
@@ -260,7 +264,7 @@ class Bot:
 					'type': 'pc',
 					'name': 'Bot'
 					}],
-				'features': [xmpp.NS_DISCO_INFO],
+				'features': [NS_DISCO_INFO],
 				}
 			})
 
@@ -271,7 +275,7 @@ class Bot:
 		self.command_test.plugin(self.commands)
 
 		# presence
-		self.connection.sendInitPresence()
+		self.connection.sendInitPresence(requestRoster=0)
 
 	def loop(self):
 		""" Do nothing except handling new xmpp stanzas. """

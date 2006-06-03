@@ -312,7 +312,7 @@ class TestCommand(Command_Handler_Prototype):
             self.cmdSecondStageReply(conn,request)
         from math import pi
         if self.sessions[request.getTagAttr('command','sessionid')]['data']['type'] == 'circlearea':
-            result = num*(pi**2)
+            result = (num**2)*pi
         else:
             result = num*2*pi
         reply = request.buildReply('result')
