@@ -235,7 +235,7 @@ class Dispatcher(PlugIn):
         session.Stream._mini_dom=None
         name=stanza.getName()
 
-        if not direct and self._owner._component:
+        if not direct and self._owner._route:
             if name == 'route':
                 if stanza.getAttr('error') == None:
                     if len(stanza.getChildren()) == 1:
@@ -352,7 +352,7 @@ class Dispatcher(PlugIn):
             stanza.setID(_ID)
         else: _ID=stanza.getID()
         if self._owner._registered_name and not stanza.getAttr('from'): stanza.setAttr('from',self._owner._registered_name)
-        if self._owner._component and stanza.getName()!='bind':
+        if self._owner._route and stanza.getName()!='bind':
             to=self._owner.Server
             if stanza.getTo() and stanza.getTo().getDomain():
                 to=stanza.getTo().getDomain()

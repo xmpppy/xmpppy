@@ -262,14 +262,18 @@ class Bind(PlugIn):
 
 class ComponentBind(PlugIn):
     """ ComponentBind some JID to the current connection to allow router know of our location."""
-    def __init__(self):
+    def __init__(self, sasl):
         PlugIn.__init__(self)
         self.DBG_LINE='bind'
         self.bound=None
         self.needsUnregister=None
+        self.sasl = sasl
 
     def plugin(self,owner):
         """ Start resource binding, if allowed at this time. Used internally. """
+        if not self.sasl:
+            self.bound=[]
+            return
         if self._owner.Dispatcher.Stream.features:
             try: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
             except NodeProcessed: pass
@@ -295,7 +299,17 @@ class ComponentBind(PlugIn):
     def Bind(self,domain=None):
         """ Perform binding. Use provided domain name (if not provided). """
         while self.bound is None and self._owner.Process(1): pass
-        resp=self._owner.SendAndWaitForResponse(Protocol('bind',attrs={'name':domain},xmlns=NS_COMPONENT_1))
+        if self.sasl:
+            xmlns = NS_COMPONENT_1
+        else:
+            xmlns = None
+        self.bindresponse = None
+        ttl = dispatcher.DefaultTimeout
+        self._owner.RegisterHandler('bind',self.BindHandler,xmlns=xmlns)
+        self._owner.send(Protocol('bind',attrs={'name':domain},xmlns=NS_COMPONENT_1))
+        while self.bindresponse is None and self._owner.Process(1) and ttl > 0: ttl-=1
+        self._owner.UnregisterHandler('bind',self.BindHandler,xmlns=xmlns)
+        resp=self.bindresponse
         if resp and resp.getAttr('error'):
             self.DEBUG('Binding failed: %s.'%resp.getAttr('error'),'error')
         elif resp:
@@ -304,3 +318,7 @@ class ComponentBind(PlugIn):
         else:
             self.DEBUG('Binding failed: timeout expired.','error')
             return ''
+
+    def BindHandler(self,conn,bind):
+        self.bindresponse = bind
+        pass

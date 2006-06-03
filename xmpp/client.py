@@ -109,7 +109,7 @@ class CommonClient:
         self._registered_name=None
         self.RegisterDisconnectHandler(self.DisconnectHandler)
         self.connected=''
-        self._component=0
+        self._route=0
 
     def RegisterDisconnectHandler(self,handler):
         """ Register handler that will be called on disconnect."""
@@ -244,7 +244,7 @@ class Client(CommonClient):
 
 class Component(CommonClient):
     """ Component class. The only difference from CommonClient is ability to perform component authentication. """
-    def __init__(self,server,port=5347,typ=None,debug=['always', 'nodebuilder'],domains=None,component=0):
+    def __init__(self,server,port=5347,typ=None,debug=['always', 'nodebuilder'],domains=None,sasl=0,bind=0,route=0):
         """ Init function for Components.
             As components use a different auth mechanism which includes the namespace of the component.
             Jabberd1.4 and Ejabberd use the default namespace then for all client messages.
@@ -254,7 +254,9 @@ class Component(CommonClient):
             and port while calling "connect()"."""
         CommonClient.__init__(self,server,port=port,debug=debug)
         self.typ=typ
-        self.component=component
+        self.sasl=sasl
+        self.bind=bind
+        self.route=route
         if domains:
             self.domains=domains
         else:
@@ -264,7 +266,7 @@ class Component(CommonClient):
         """ This will connect to the server, and if the features tag is found then set
             the namespace to be jabber:client as that is required for jabberd2.
             'server' and 'proxy' arguments have the same meaning as in xmpp.Client.connect() """
-        if self.component:
+        if self.sasl:
             self.Namespace=auth.NS_COMPONENT_1
             self.Server=server[0]
         CommonClient.connect(self,server=server,proxy=proxy)
@@ -276,29 +278,33 @@ class Component(CommonClient):
                 self.Dispatcher.RegisterProtocol('presence',dispatcher.Presence)
         return self.connected
 
-    def auth(self,name,password,dup=None,sasl=0):
+    def dobind(self, sasl):
+        # This has to be done before binding, because we can receive a route stanza before binding finishes
+        self._route = self.route
+        if self.bind:
+            for domain in self.domains:
+                auth.ComponentBind(sasl).PlugIn(self)
+                while self.ComponentBind.bound is None: self.Process(1)
+                if (not self.ComponentBind.Bind(domain)):
+                    self.ComponentBind.PlugOut()
+                    return
+                self.ComponentBind.PlugOut()
+
+    def auth(self,name,password,dup=None):
         """ Authenticate component "name" with password "password"."""
         self._User,self._Password,self._Resource=name,password,''
         try:
-            if self.component: sasl=1
-            if sasl: auth.SASL(name,password).PlugIn(self)
-            if not sasl or self.SASL.startsasl=='not-supported':
+            if self.sasl: auth.SASL(name,password).PlugIn(self)
+            if not self.sasl or self.SASL.startsasl=='not-supported':
                 if auth.NonSASL(name,password,'').PlugIn(self):
+                    self.dobind(sasl=False)
                     self.connected+='+old_auth'
                     return 'old_auth'
                 return
             self.SASL.auth()
             while self.SASL.startsasl=='in-process' and self.Process(1): pass
             if self.SASL.startsasl=='success':
-                if self.component:
-                    self._component=self.component
-                    for domain in self.domains:
-                        auth.ComponentBind().PlugIn(self)
-                        while self.ComponentBind.bound is None: self.Process(1)
-                        if (not self.ComponentBind.Bind(domain)):
-                            self.ComponentBind.PlugOut()
-                            return
-                        self.ComponentBind.PlugOut()
+                self.dobind(sasl=True)
                 self.connected+='+sasl'
                 return 'sasl'
             else:
