@@ -50,7 +50,7 @@ class Commands(PlugIn):
         self._exported_methods=[]
         self._handlers={'':{}}
         self._browser = browser
-    
+
     def plugin(self, owner):
         """Makes handlers within the session"""
         # Plug into the session and the disco manager
@@ -65,7 +65,7 @@ class Commands(PlugIn):
         self._owner.UnregisterHandler('iq',self._CommandHandler,ns=NS_COMMANDS)
         for jid in self._handlers:
             self._browser.delDiscoHandler(self._DiscoHandler,node=NS_COMMANDS)
-        
+
     def _CommandHandler(self,conn,request):
         """The internal method to process the routing of command execution requests"""
         # This is the command handler itself.
@@ -89,7 +89,7 @@ class Commands(PlugIn):
         else:
             conn.send(Error(requet,ERR_ITEM_NOT_FOUND))
             raise NodeProcessed
-    
+
     def _DiscoHandler(self,conn,request,typ):
         """The internal method to process service discovery requests"""
         # This is the disco manager handler.
@@ -126,7 +126,7 @@ class Commands(PlugIn):
             raise NodeProcessed
         elif typ == 'info':
             return {'ids':[{'category':'automation','type':'command-list'}],'features':[]}
-    
+
     def addCommand(self,name,cmddisco,cmdexecute,jid=''):
         """The method to call if adding a new command to the session, the requred parameters of cmddisco and cmdexecute are the methods to enable that command to be executed"""
         # This command takes a command object and the name of the command for registration
@@ -142,7 +142,7 @@ class Commands(PlugIn):
             self._handlers[jid][name]={'disco':cmddisco,'execute':cmdexecute}
         # Need to add disco stuff here
         self._browser.setDiscoHandler(cmddisco,node=name,jid=jid)
-    
+
     def delCommand(self,name,jid=''):
         """Removed command from the session"""
         # This command takes a command object and the name used for registration
@@ -158,7 +158,7 @@ class Commands(PlugIn):
             command = self.getCommand(name,jid)['disco']
             del self._handlers[jid][name]
             self._browser.delDiscoHandler(command,node=name,jid=jid)
-        
+
     def getCommand(self,name,jid=''):
         """Returns the command tuple"""
         # This gets the command object with name
@@ -170,13 +170,13 @@ class Commands(PlugIn):
             raise NameError,'Command not found'
         else:
             return self._handlers[jid][name]
-        
+
 class Command_Handler_Prototype(PlugIn):
     """This is a prototype command handler, as each command uses a disco method 
        and execute method you can implement it any way you like, however this is 
        my first attempt at making a generic handler that you can hang process 
        stages on too. There is an example command below.
-    
+
     The parameters are as follows:
     name : the name of the command within the jabber environment
     description : the natural language description
@@ -199,14 +199,14 @@ class Command_Handler_Prototype(PlugIn):
         # Disco information for command list pre-formatted as a tuple
         self.discoinfo = {'ids':[{'category':'automation','type':'command-node','name':self.description}],'features': self.discofeatures}
         self._jid = jid
-        
+
     def plugin(self,owner):
         """Plug command into the commands class"""
         # The owner in this instance is the Command Processor
         self._commands = owner
         self._owner = owner._owner
         self._commands.addCommand(self.name,self._DiscoHandler,self.Execute,jid=self._jid)
-    
+
     def plugout(self):
         """Remove command from the commands class"""
         self._commands.delCommand(name,self._jid)
@@ -215,7 +215,7 @@ class Command_Handler_Prototype(PlugIn):
         """Returns an id for the command session"""
         self.count = self.count+1
         return 'cmd-%s-%d'%(self.name,self.count)
-    
+
     def Execute(self,conn,request):
         """The method that handles all the commands, and routes them to the correct method for that stage."""
         # New request or old?
@@ -250,7 +250,7 @@ class Command_Handler_Prototype(PlugIn):
         else:
             # New session
             self.initial[action](conn,request)
-    
+
     def _DiscoHandler(self,conn,request,type):
         """The handler for discovery events"""
         if type == 'list':
@@ -259,7 +259,7 @@ class Command_Handler_Prototype(PlugIn):
             return []
         elif type == 'info':
             return self.discoinfo
-        
+
 class TestCommand(Command_Handler_Prototype):
     """ Example class. You should read source if you wish to understate how it works. 
         Generally, it presents a "master" that giudes user through to calculate something.
@@ -286,7 +286,7 @@ class TestCommand(Command_Handler_Prototype):
         reply = request.buildReply('result')
         form = DataForm(title='Select type of operation',data=['Use the combobox to select the type of calculation you would like to do, then click Next',DataField(name='calctype',label='Calculation Type',value=sessions[session]['data']['type'],options=[['circlediameter','Calculate the Diameter of a circle'],['circlearea','Calculate the area of a circle']],typ='list-single',required=1)])
         replypayload = [Node('actions',attrs={'execute':'next'},payload=[Node('next')]),form]
-        reply.addChild(name='command',attrs={'xmlns':NS_COMMAND,'node':request.getTagAttr('command','node'),'sessionid':session,'status':'executing'},payload=replypayload)
+        reply.addChild(name='command',namespace=NS_COMMAND,attrs={'node':request.getTagAttr('command','node'),'sessionid':session,'status':'executing'},payload=replypayload)
         self._owner.send(reply)
         raise NodeProcessed
 
@@ -296,15 +296,15 @@ class TestCommand(Command_Handler_Prototype):
         sessions[request.getTagAttr('command','sessionid')]['actions']={'cancel':self.cmdCancel,None:self.cmdThirdStage,'previous':cmdFirstStage}
         # The form generation is split out to another method as it may be called by cmdThirdStage
         self.cmdSecondStageReply(conn,request)
-        
+
     def cmdSecondStageReply(self,conn,request):
         reply = request.buildReply('result')
         form = DataForm(title = 'Enter the radius', data=['Enter the radius of the circle (numbers only)',DataField(label='Radius',name='radius',typ='text-single')])
         replypayload = [Node('actions',attrs={'execute':'complete'},payload=[Node('complete'),Node('prev')]),form]
-        reply.addChild(name='command',attrs={'xmlns':NS_COMMAND,'node':request.getTagAttr('command','node'),'sessionid':request.getTagAttr('command','sessionid'),'status':'executing'},payload=replypayload)
+        reply.addChild(name='command',namespace=NS_COMMAND,attrs={'node':request.getTagAttr('command','node'),'sessionid':request.getTagAttr('command','sessionid'),'status':'executing'},payload=replypayload)
         self._owner.send(reply)
         raise NodeProcessed
-        
+
     def cmdThirdStage(self,conn,request):
         form = DataForm(node = result.getTag(name='command').getTag(name='x',namespace=NS_DATA))
         try:
@@ -317,14 +317,12 @@ class TestCommand(Command_Handler_Prototype):
             result = num*2*pi
         reply = result.buildReply(request)
         form = DataForm(typ='result',data=[DataField(label='result',name='result',value=result)])
-        reply.addChild(name='command',attrs={'xmlns':NS_COMMAND,'node':request.getTagAttr('command','node'),'sessionid':request.getTagAttr('command','sessionid'),'status':'completed'},payload=form)
+        reply.addChild(name='command',namespace=NS_COMMAND,attrs={'node':request.getTagAttr('command','node'),'sessionid':request.getTagAttr('command','sessionid'),'status':'completed'},payload=form)
         self._owner.send(reply)
         raise NodeProcessed
-        
+
     def cmdCancel(self,conn,request):
         reply = request.buildReply('result')
-        reply.addChild(name='command',attrs={'xmlns':NS_COMMAND,'node':request.getTagAttr('command','node'),'sessionid':request.getTagAttr('command','sessionid'),'status':'cancelled'})
+        reply.addChild(name='command',namespace=NS_COMMAND,attrs={'node':request.getTagAttr('command','node'),'sessionid':request.getTagAttr('command','sessionid'),'status':'cancelled'})
         self._owner.send(reply)
         del sessions[request.getTagAttr('command','sessionid')]
-            
-    
