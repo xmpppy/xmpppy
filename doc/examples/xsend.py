@@ -12,8 +12,9 @@ text=' '.join(sys.argv[2:])
 jidparams={}
 if os.access(os.environ['HOME']+'/.xsend',os.R_OK):
     for ln in open(os.environ['HOME']+'/.xsend').readlines():
-        key,val=ln.strip().split('=',1)
-        jidparams[key.lower()]=val
+        if not ln[0] in ('#',';'):
+            key,val=ln.strip().split('=',1)
+            jidparams[key.lower()]=val
 for mandatory in ['jid','password']:
     if mandatory not in jidparams.keys():
         open(os.environ['HOME']+'/.xsend','w').write('#Uncomment fields before use and type in correct credentials.\n#JID=romeo@montague.net\n#PASSWORD=juliet\n')
