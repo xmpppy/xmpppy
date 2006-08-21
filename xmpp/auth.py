@@ -21,7 +21,7 @@ Can be used both for client and transport authentication.
 
 from protocol import *
 from client import PlugIn
-import sha,base64,random,dispatcher
+import sha,base64,random,dispatcher,re
 
 import md5
 def HH(some): return md5.new(some).hexdigest()
@@ -173,11 +173,11 @@ class SASL(PlugIn):
         chal={}
         data=base64.decodestring(incoming_data)
         self.DEBUG('Got challenge:'+data,'ok')
-        for pair in data.split(','):
+        for pair in re.findall('(\w+=(?:"[^"]+")|(?:[^,]+))',data):
             key,value=pair.split('=', 1)
             if value[:1]=='"' and value[-1:]=='"': value=value[1:-1]
             chal[key]=value
-        if chal.has_key('qop') and chal['qop']=='auth':
+        if chal.has_key('qop') and 'auth' in chal['qop'].split(','):
             resp={}
             resp['username']=self.username
             resp['realm']=self._owner.Server
