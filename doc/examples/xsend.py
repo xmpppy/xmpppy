@@ -25,8 +25,14 @@ jid=xmpp.protocol.JID(jidparams['jid'])
 cl=xmpp.Client(jid.getDomain(),debug=[])
 
 con=cl.connect()
+if not con:
+    print 'could not connect!'
+    sys.exit()
 print 'connected with',con
 auth=cl.auth(jid.getNode(),jidparams['password'])
+if not auth:
+    print 'could not authenticate!'
+    sys.exit()
 print 'authenticated using',auth
 
 #cl.SendInitPresence(requestRoster=0)   # you may need to uncomment this for old server
