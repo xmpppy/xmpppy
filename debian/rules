@@ -9,7 +9,8 @@
 export DH_COMPAT=5
 
 # python version for which a pkg will be build
-export PYVERSIONS=python2.3 python2.4
+PYVERSIONS= $(shell pyversions -r debian/control)
+export PYVERSIONS
 
 ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
 	CFLAGS += -g
@@ -53,8 +54,11 @@ install: build
 	dh_installdirs -v
 
 	# Add here commands to install the package into debian/python-xmpp
-	declare -x MODULESDIR=$(CURDIR)/debian/python2.3-xmpp/usr/lib/python2.3/site-packages/ ; make install
-	declare -x MODULESDIR=$(CURDIR)/debian/python2.4-xmpp/usr/lib/python2.4/site-packages/ ; make install
+	set -e; \
+	for v in $(PYVERSIONS); do \
+	  mkdir -p debian/python-xmpp/usr/lib/$$v/site-packages/xmpp; \
+	  declare -x MODULESDIR=$(CURDIR)/debian/python-xmpp/usr/lib/$$v/site-packages/ ; make install; \
+	done
 
 
 # Build architecture-independent files here.
@@ -71,8 +75,9 @@ binary-indep: build install
 	dh_installexamples -i
 	dh_installchangelogs -i ChangeLog
 	dh_link -i
-	dh_compress -i
+	dh_compress -i -X.py
 	dh_fixperms -i
+	dh_pycentral -i
 	dh_python -i
 	dh_installdeb -i
 	dh_shlibdeps -i

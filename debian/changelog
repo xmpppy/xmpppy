@@ -1,3 +1,25 @@
+python-xmpp (0.4-1) unstable; urgency=low
+
+  * New upstream release
+  * Tweaked package description. Closes: #381360.
+
+ -- Norman Rasmussen <norman@darkskies.za.net>  Thu,  5 Oct 2006 22:53:51 +0200
+
+python-xmpp (0.3.1-1.1) unstable; urgency=low
+
+  * NMU.
+  * Convert to updated Python policy. Closes: #373369.
+
+ -- Matthias Klose <doko@debian.org>  Thu,  6 Jul 2006 14:29:59 +0000
+
+python-xmpp (0.3.1-1) unstable; urgency=low
+
+  * New upstream release
+  * Added dependency to python-dns package.
+  * Sponsored upload by Cosimo Alfarano <kalfa@debian.org>
+
+ -- Alexey Nezhdanov <snakeru@users.sourceforge.net>  Sat, 25 Mar 2006 09:35:32 +0300
+
 python-xmpp (0.3-1) unstable; urgency=low
 
   * New upstream release

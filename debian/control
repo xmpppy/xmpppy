@@ -2,50 +2,22 @@ Source: python-xmpp
 Section: python
 Priority: optional
 Maintainer: Alexey Nezhdanov <snakeru@users.sourceforge.net>
-Build-Depends-Indep: debhelper (>> 5.0.0), python
+Build-Depends-Indep: debhelper (>= 5.0.37.2), python (>= 2.3.5-11), python-central (>= 0.5)
 Standards-Version: 3.6.2
+XS-Python-Version: all
 Uploaders: Cosimo Alfarano <kalfa@debian.org>
 
 Package: python-xmpp
 Architecture: all
-Depends: python (>= 2.3), python (<< 2.4), python2.3-xmpp
+Depends: ${python:Depends}
+Conflicts: python2.3-xmpp, python2.4-xmpp
+Replaces: python2.3-xmpp, python2.4-xmpp
+XB-Python-Version: ${python:Versions}
 Description: Python library for communication with XMPP (Jabber) servers
  This is a set of modules providing functionality for writing
- xmpp-compliant client or component in python.
+ xmpp-compliant clients, servers and/or components/transports in python.
  .
- This library was initially designed as "rework" of jabberpy library
- but lately become separate product.
- .
- Unlike jabberpy it is distributed under the terms of GPL.
- .
- This package is a dependency package, which depends on the default
- version of python-xmpp.
-
-Package: python2.3-xmpp
-Architecture: all
-Depends: python2.3, python-dns
-Description: Python library for communication with XMPP (Jabber) servers
- This is a set of modules providing functionality for writing
- xmpp-compliant client or component in python.
- .
- This library was initially designed as "rework" of jabberpy library
- but lately become separate product.
+ This library was initially designed as a "rework" of the jabberpy library
+ but has become a separate product.
  .
  Unlike jabberpy it is distributed under the terms of GPL.
- .
- This package provides modules for python 2.3
-
-Package: python2.4-xmpp
-Architecture: all
-Depends: python2.4, python-dns
-Description: Python library for communication with XMPP (Jabber) servers
- This is a set of modules providing functionality for writing
- xmpp-compliant client or component in python.
- .
- This library was initially designed as "rework" of jabberpy library
- but lately become separate product.
- .
- Unlike jabberpy it is distributed under the terms of GPL.
- .
- This package provides modules for python 2.4
-

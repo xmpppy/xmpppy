@@ -10,16 +10,16 @@ if sys.version < '2.2.3':
 
 # Set proper release version in source code also!!!
 setup(name='xmpppy',
-      version='0.3.1',
+      version='0.4.0',
       author='Alexey Nezhdanov',
       author_email='snakeru@users.sourceforge.net',
       url='http://xmpppy.sourceforge.net/',
       description='XMPP-IM-compliant library for jabber instant messenging.',
       long_description="""This library provides functionality for writing xmpp-compliant
-jabber clients and/or components.
+clients, servers and/or components/transports.
 
-It was initially designed as rework of jabberpy library but
-lately become separate product.
+It was initially designed as a \"rework\" of the jabberpy library but
+has become a separate product.
 
 Unlike jabberpy it is distributed under the terms of GPL.""",
       download_url='http://sourceforge.net/project/showfiles.php?group_id=97081&package_id=103821',
