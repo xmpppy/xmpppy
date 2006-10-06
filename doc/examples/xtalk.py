@@ -28,7 +28,7 @@ class Bot:
             sys.stderr.write('could not connect!\n')
             return False
         sys.stderr.write('connected with %s\n'%con)
-        auth=self.jabber.auth(jid.getNode(),jidparams['password'])
+        auth=self.jabber.auth(jid.getNode(),jidparams['password'],resource=jid.getResource())
         if not auth:
             sys.stderr.write('could not authenticate!\n')
             return False
@@ -38,7 +38,7 @@ class Bot:
 
 if __name__ == '__main__':
 
-    if len(sys.argv) < 1:
+    if len(sys.argv) < 2:
         print "Syntax: xtalk JID"
         sys.exit(0)
     
@@ -52,7 +52,7 @@ if __name__ == '__main__':
                 jidparams[key.lower()]=val
     for mandatory in ['jid','password']:
         if mandatory not in jidparams.keys():
-            open(os.environ['HOME']+'/.xtalk','w').write('#Uncomment fields before use and type in correct credentials.\n#JID=romeo@montague.net\n#PASSWORD=juliet\n')
+            open(os.environ['HOME']+'/.xtalk','w').write('#Uncomment fields before use and type in correct credentials.\n#JID=romeo@montague.net/resource (/resource is optional)\n#PASSWORD=juliet\n')
             print 'Please point ~/.xtalk config file to valid JID for sending messages.'
             sys.exit(0)
     
@@ -69,7 +69,6 @@ if __name__ == '__main__':
     
     socketlist = {cl.Connection._sock:'xmpp',sys.stdin:'stdio'}
     online = 1
-    bot.stdio_message('Hello World!')
 
     while online:
         (i , o, e) = select.select(socketlist.keys(),[],[],1)

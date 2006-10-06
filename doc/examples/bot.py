@@ -24,7 +24,7 @@ def hook2Handler(user,command,args,mess):
 
 i18n['en']['HOOK3']='Responce 3: static string'
 def hook3Handler(user,command,args,mess):
-    return "HOOK3"
+    return "HOOK3"*int(args)
 ########################### user handlers stop ###################################
 ############################ bot logic start #####################################
 i18n['en']["UNKNOWN COMMAND"]='Unknown command "%s". Try "help"'

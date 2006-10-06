@@ -17,7 +17,7 @@ if os.access(os.environ['HOME']+'/.xsend',os.R_OK):
             jidparams[key.lower()]=val
 for mandatory in ['jid','password']:
     if mandatory not in jidparams.keys():
-        open(os.environ['HOME']+'/.xsend','w').write('#Uncomment fields before use and type in correct credentials.\n#JID=romeo@montague.net\n#PASSWORD=juliet\n')
+        open(os.environ['HOME']+'/.xsend','w').write('#Uncomment fields before use and type in correct credentials.\n#JID=romeo@montague.net/resource (/resource is optional)\n#PASSWORD=juliet\n')
         print 'Please point ~/.xsend config file to valid JID for sending messages.'
         sys.exit(0)
 
@@ -29,7 +29,7 @@ if not con:
     print 'could not connect!'
     sys.exit()
 print 'connected with',con
-auth=cl.auth(jid.getNode(),jidparams['password'])
+auth=cl.auth(jid.getNode(),jidparams['password'],resource=jid.getResource())
 if not auth:
     print 'could not authenticate!'
     sys.exit()
