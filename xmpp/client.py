@@ -244,7 +244,7 @@ class Client(CommonClient):
 
 class Component(CommonClient):
     """ Component class. The only difference from CommonClient is ability to perform component authentication. """
-    def __init__(self,server,port=5347,typ=None,debug=['always', 'nodebuilder'],domains=None,sasl=0,bind=0,route=0):
+    def __init__(self,server,port=5347,typ=None,debug=['always', 'nodebuilder'],domains=None,sasl=0,bind=0,route=0,xcp=0):
         """ Init function for Components.
             As components use a different auth mechanism which includes the namespace of the component.
             Jabberd1.4 and Ejabberd use the default namespace then for all client messages.
@@ -257,6 +257,7 @@ class Component(CommonClient):
         self.sasl=sasl
         self.bind=bind
         self.route=route
+        self.xcp=xcp
         if domains:
             self.domains=domains
         else:
@@ -270,12 +271,12 @@ class Component(CommonClient):
             self.Namespace=auth.NS_COMPONENT_1
             self.Server=server[0]
         CommonClient.connect(self,server=server,proxy=proxy)
-        if self.connected and (self.typ=='jabberd2' or not self.typ and self.Dispatcher.Stream.features != None):
-                self.defaultNamespace=auth.NS_CLIENT
-                self.Dispatcher.RegisterNamespace(self.defaultNamespace)
-                self.Dispatcher.RegisterProtocol('iq',dispatcher.Iq)
-                self.Dispatcher.RegisterProtocol('message',dispatcher.Message)
-                self.Dispatcher.RegisterProtocol('presence',dispatcher.Presence)
+        if self.connected and (self.typ=='jabberd2' or not self.typ and self.Dispatcher.Stream.features != None) and (not self.xcp):
+            self.defaultNamespace=auth.NS_CLIENT
+            self.Dispatcher.RegisterNamespace(self.defaultNamespace)
+            self.Dispatcher.RegisterProtocol('iq',dispatcher.Iq)
+            self.Dispatcher.RegisterProtocol('message',dispatcher.Message)
+            self.Dispatcher.RegisterProtocol('presence',dispatcher.Presence)
         return self.connected
 
     def dobind(self, sasl):
