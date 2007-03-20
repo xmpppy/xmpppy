@@ -252,7 +252,7 @@ class Node:
         return self.setAttr(item,val)
     def __delitem__(self,item):
         """ Deletes node's attribute "item". """
-        return self.delAttr(item,val)
+        return self.delAttr(item)
     def __getattr__(self,attr):
         """ Reduce memory usage caused by T/NT classes - use memory only when needed. """
         if attr=='T':
