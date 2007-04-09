@@ -546,7 +546,7 @@ class DataField(Node):
     """ This class is used in the DataForm class to describe the single data item.
         If you are working with jabber:x:data (JEP-0004, JEP-0068, JEP-0122) 
         then you will need to work with instances of this class. """
-    def __init__(self,name=None,value=None,typ=None,required=0,desc=None,options=[],node=None):
+    def __init__(self,name=None,value=None,typ=None,required=0,label=None,desc=None,options=[],node=None):
         """ Create new data field of specified name,value and type.
             Also 'required','desc' and 'options' fields can be set.
             Alternatively other XML object can be passed in as the 'node' parameted to replicate it as a new datafiled.
@@ -558,6 +558,7 @@ class DataField(Node):
         if typ: self.setType(typ)
         elif not typ and not node: self.setType('text-single')
         if required: self.setRequired(required)
+        if label: self.setLabel(label)
         if desc: self.setDesc(desc)
         if options: self.setOptions(options)
     def setRequired(self,req=1):
@@ -569,6 +570,12 @@ class DataField(Node):
     def isRequired(self):
         """ Returns in this field a required one. """
         return self.getTag('required')
+    def setLabel(self,label):
+        """ Set the label of this field. """
+        self.setAttr('label',label)
+    def getLabel(self):
+        """ Return the label of this field. """
+        return self.getAttr('label')
     def setDesc(self,desc):
         """ Set the description of this field. """
         self.setTagData('desc',desc)
