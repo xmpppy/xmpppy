@@ -184,14 +184,19 @@ class Browser(PlugIn):
             Automatically determines the best handler to use and calls it
             to handle the request. Used internally.
         """
-        handler=self.getDiscoHandler(request.getQuerynode(),request.getTo())
+        node=request.getQuerynode()
+        if node:
+            nodestr=node
+        else:
+            nodestr='None'
+        handler=self.getDiscoHandler(node,request.getTo())
         if not handler:
-            self.DEBUG("No Handler for request with jid->%s node->%s ns->%s"%(request.getTo(),request.getQuerynode(),request.getQueryNS()),'error')
+            self.DEBUG("No Handler for request with jid->%s node->%s ns->%s"%(request.getTo().__str__().encode('utf8'),nodestr.encode('utf8'),request.getQueryNS().encode('utf8')),'error')
             conn.send(Error(request,ERR_ITEM_NOT_FOUND))
             raise NodeProcessed
-        self.DEBUG("Handling request with jid->%s node->%s ns->%s"%(request.getTo(),request.getQuerynode(),request.getQueryNS()),'ok')
+        self.DEBUG("Handling request with jid->%s node->%s ns->%s"%(request.getTo().__str__().encode('utf8'),nodestr.encode('utf8'),request.getQueryNS().encode('utf8')),'ok')
         rep=request.buildReply('result')
-        if request.getQuerynode(): rep.setQuerynode(request.getQuerynode())
+        if node: rep.setQuerynode(node)
         q=rep.getTag('query')
         if request.getQueryNS()==NS_DISCO_ITEMS:
             # handler must return list: [{jid,action,node,name}]
