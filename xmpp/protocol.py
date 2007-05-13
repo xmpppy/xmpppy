@@ -583,7 +583,7 @@ class Error(Protocol):
 
 class DataField(Node):
     """ This class is used in the DataForm class to describe the single data item.
-        If you are working with jabber:x:data (JEP-0004, JEP-0068, JEP-0122) 
+        If you are working with jabber:x:data (XEP-0004, XEP-0068, XEP-0122) 
         then you will need to work with instances of this class. """
     def __init__(self,name=None,value=None,typ=None,required=0,label=None,desc=None,options=[],node=None):
         """ Create new data field of specified name,value and type.
@@ -667,7 +667,7 @@ class DataField(Node):
 
 class DataForm(Node):
     """ DataForm class. Used for manipulating dataforms in XMPP.
-        Relevant JEPs: 0004, 0068, 0122.
+        Relevant XEPs: 0004, 0068, 0122.
         Can be used in disco, pub-sub and many other applications."""
     def __init__(self, typ=None, data=[], title=None, node=None):
         """

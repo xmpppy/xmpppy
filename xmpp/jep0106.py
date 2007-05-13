@@ -1,7 +1,7 @@
 
-# JID Escaping Jep-0106 for the xmpppy based transports written by Norman Rasmussen
+# JID Escaping XEP-0106 for the xmpppy based transports written by Norman Rasmussen
 
-"""This file is the JEP-0106 commands.
+"""This file is the XEP-0106 commands.
 
 Implemented commands as follows:
 
@@ -11,7 +11,7 @@ Implemented commands as follows:
 
 """
 
-jep0106mapping = [
+xep0106mapping = [
 	[' ' ,'20'],
 	['"' ,'22'],
 	['&' ,'26'],
@@ -24,13 +24,13 @@ jep0106mapping = [
 
 def JIDEncode(str):
 	str = str.replace('\\5c', '\\5c5c')
-	for each in jep0106mapping:
+	for each in xep0106mapping:
 		str = str.replace('\\' + each[1], '\\5c' + each[1])
-	for each in jep0106mapping:
+	for each in xep0106mapping:
 		str = str.replace(each[0], '\\' + each[1])
 	return str
     
 def JIDDecode(str):
-	for each in jep0106mapping:
+	for each in xep0106mapping:
 		str = str.replace('\\' + each[1], each[0])
 	return str.replace('\\5c', '\\')
