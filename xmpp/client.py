@@ -75,11 +75,13 @@ class PlugIn:
     def PlugOut(self):
         """ Unregister all our staff from main instance and detach from it. """
         self.DEBUG('Plugging %s out of %s.'%(self,self._owner),'stop')
+        ret = None
+        if self.__class__.__dict__.has_key('plugout'): ret = self.plugout()
         self._owner.debug_flags.remove(self.DBG_LINE)
         for method in self._exported_methods: del self._owner.__dict__[method.__name__]
         for method in self._old_owners_methods: self._owner.__dict__[method.__name__]=method
         del self._owner.__dict__[self.__class__.__name__]
-        if self.__class__.__dict__.has_key('plugout'): return self.plugout()
+        return ret
 
     def DEBUG(self,text,severity='info'):
         """ Feed a provided debug line to main instance's debug facility along with our ID string. """
@@ -145,9 +147,10 @@ class CommonClient:
     def reconnectAndReauth(self):
         """ Example of reconnection method. In fact, it can be used to batch connection and auth as well. """
         handlerssave=self.Dispatcher.dumpHandlers()
-        self.Dispatcher.PlugOut()
+        self._route=0
         if self.__dict__.has_key('NonSASL'): self.NonSASL.PlugOut()
         if self.__dict__.has_key('SASL'): self.SASL.PlugOut()
+        self.Dispatcher.PlugOut()
         if self.__dict__.has_key('TLS'): self.TLS.PlugOut()
         if self.__dict__.has_key('HTTPPROXYsocket'): self.HTTPPROXYsocket.PlugOut()
         if self.__dict__.has_key('TCPsocket'): self.TCPsocket.PlugOut()
