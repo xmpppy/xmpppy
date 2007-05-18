@@ -147,11 +147,13 @@ class CommonClient:
     def reconnectAndReauth(self):
         """ Example of reconnection method. In fact, it can be used to batch connection and auth as well. """
         handlerssave=self.Dispatcher.dumpHandlers()
+        if self.__dict__.has_key('ComponentBind'): self.ComponentBind.PlugOut()
+        if self.__dict__.has_key('Bind'): self.Bind.PlugOut()
         self._route=0
         if self.__dict__.has_key('NonSASL'): self.NonSASL.PlugOut()
         if self.__dict__.has_key('SASL'): self.SASL.PlugOut()
-        self.Dispatcher.PlugOut()
         if self.__dict__.has_key('TLS'): self.TLS.PlugOut()
+        self.Dispatcher.PlugOut()
         if self.__dict__.has_key('HTTPPROXYsocket'): self.HTTPPROXYsocket.PlugOut()
         if self.__dict__.has_key('TCPsocket'): self.TCPsocket.PlugOut()
         if not self.connect(server=self._Server,proxy=self._Proxy): return
