@@ -74,7 +74,7 @@ class Node:
         if type(payload) in (type(''),type(u'')): payload=[payload]
         for i in payload:
             if type(i)==type(self): self.addChild(node=i)
-            else: self.data.append(ustr(i))
+            else: self.addData(i)
 
     def __str__(self,fancy=0):
         """ Method used to dump node into textual representation.
@@ -93,7 +93,7 @@ class Node:
             for a in self.kids:
                 if not fancy and (len(self.data)-1)>=cnt: s=s+XMLescape(self.data[cnt])
                 elif (len(self.data)-1)>=cnt: s=s+XMLescape(self.data[cnt].strip())
-                s = s + a.__str__(fancy and fancy+1)
+                if a: s = s + a.__str__(fancy and fancy+1)
                 cnt=cnt+1
         if not fancy and (len(self.data)-1) >= cnt: s = s + XMLescape(self.data[cnt])
         elif (len(self.data)-1) >= cnt: s = s + XMLescape(self.data[cnt].strip())
@@ -109,12 +109,12 @@ class Node:
         """ Serialise node, dropping all tags and leaving CDATA intact.
             That is effectively kills all formatiing, leaving only text were contained in XML.
         """
-        s =""
+        s = ""
         cnt = 0
         if self.kids:
             for a in self.kids:
                 s=s+self.data[cnt]
-                s = s + mystr(a)
+                if a: s = s + a.getCDATA()
                 cnt=cnt+1
         if (len(self.data)-1) >= cnt: s = s + self.data[cnt]
         return s
@@ -129,10 +129,12 @@ class Node:
             node.parent = self
         else: newnode=Node(tag=name, parent=self, attrs=attrs, payload=payload)
         self.kids.append(newnode)
+        self.data.append(u'')
         return newnode
     def addData(self, data):
         """ Adds some CDATA to node. """
         self.data.append(ustr(data))
+        self.kids.append(None)
     def clearData(self):
         """ Removes all CDATA from the node. """
         self.data=[]
@@ -172,12 +174,9 @@ class Node:
             F.e. for "<node>text1<nodea/><nodeb/> text2</node>" will be returned list:
             ['text1', <nodea instance>, <nodeb instance>, ' text2']. """
         ret=[]
-        for i in range(len(self.kids)+len(self.data)+1):
-            try:
-                if self.data[i]: ret.append(self.data[i])
-            except IndexError: pass
-            try: ret.append(self.kids[i])
-            except IndexError: pass
+        for i in range(len(self.data)):
+            if self.data[i]: ret.append(self.data[i])
+            if self.kids[i]: ret.append(self.kids[i])
         return ret
     def getTag(self, name, attrs={}, namespace=None): 
         """ Filters all child nodes using specified arguments as filter.
@@ -196,6 +195,7 @@ class Node:
             Returns the list of nodes found. """
         nodes=[]
         for node in self.kids:
+            if not node: continue
             if namespace and namespace<>node.getNamespace(): continue
             if node.getName() == name:
                 for key in attrs.keys():
