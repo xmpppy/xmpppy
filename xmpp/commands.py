@@ -87,7 +87,7 @@ class Commands(PlugIn):
         elif self._handlers[''].has_key(node):
                 self._handlers[''][node]['execute'](conn,request)
         else:
-            conn.send(Error(requet,ERR_ITEM_NOT_FOUND))
+            conn.send(Error(request,ERR_ITEM_NOT_FOUND))
             raise NodeProcessed
 
     def _DiscoHandler(self,conn,request,typ):
