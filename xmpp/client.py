@@ -229,6 +229,8 @@ class Client(CommonClient):
             if self.Bind.Bind(resource):
                 self.connected+='+sasl'
                 return 'sasl'
+        else:
+            if self.__dict__.has_key('SASL'): self.SASL.PlugOut()
 
     def getRoster(self):
         """ Return the Roster instance, previously plugging it in and

@@ -120,10 +120,10 @@ class SASL(PlugIn):
 
     def plugout(self):
         """ Remove SASL handlers from owner's dispatcher. Used internally. """
-        self._owner.UnregisterHandler('features',self.FeaturesHandler,xmlns=NS_STREAMS)
-        self._owner.UnregisterHandler('challenge',self.SASLHandler,xmlns=NS_SASL)
-        self._owner.UnregisterHandler('failure',self.SASLHandler,xmlns=NS_SASL)
-        self._owner.UnregisterHandler('success',self.SASLHandler,xmlns=NS_SASL)
+        if self._owner.__dict__.has_key('features'): self._owner.UnregisterHandler('features',self.FeaturesHandler,xmlns=NS_STREAMS)
+        if self._owner.__dict__.has_key('challenge'): self._owner.UnregisterHandler('challenge',self.SASLHandler,xmlns=NS_SASL)
+        if self._owner.__dict__.has_key('failure'): self._owner.UnregisterHandler('failure',self.SASLHandler,xmlns=NS_SASL)
+        if self._owner.__dict__.has_key('success'): self._owner.UnregisterHandler('success',self.SASLHandler,xmlns=NS_SASL)
 
     def FeaturesHandler(self,conn,feats):
         """ Used to determine if server supports SASL auth. Used internally. """
