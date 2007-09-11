@@ -145,7 +145,7 @@ class Node:
         """ Deletes the "node" from the node's childs list, if "node" is an instance.
             Else deletes the first node that have specified name and (optionally) attributes. """
         if type(node)<>type(self): node=self.getTag(node,attrs)
-        self.kids.remove(node)
+        self.kids[self.kids.index(node)]=None
         return node
     def getAttrs(self):
         """ Returns all node's attributes as dictionary. """
@@ -174,9 +174,9 @@ class Node:
             F.e. for "<node>text1<nodea/><nodeb/> text2</node>" will be returned list:
             ['text1', <nodea instance>, <nodeb instance>, ' text2']. """
         ret=[]
-        for i in range(len(self.data)):
-            if self.data[i]: ret.append(self.data[i])
-            if self.kids[i]: ret.append(self.kids[i])
+        for i in range(max(len(self.data),len(self.kids))):
+            if i < len(self.data) and self.data[i]: ret.append(self.data[i])
+            if i < len(self.kids) and self.kids[i]: ret.append(self.kids[i])
         return ret
     def getTag(self, name, attrs={}, namespace=None): 
         """ Filters all child nodes using specified arguments as filter.
