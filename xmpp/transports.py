@@ -146,8 +146,10 @@ class TCPsocket(PlugIn):
         try: received = self._recv(BUFLEN)
         except socket.sslerror,e:
             self._seen_data=0
-            if e[0]==2: return ''
+            if e[0]==socket.SSL_ERROR_WANT_READ: return ''
+            if e[0]==socket.SSL_ERROR_WANT_WRITE: return ''
             self.DEBUG('Socket error while receiving data','error')
+            sys.exc_clear()
             self._owner.disconnected()
             raise IOError("Disconnected from server")
         except: received = ''
