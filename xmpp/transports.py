@@ -181,7 +181,8 @@ class TCPsocket(PlugIn):
             # Avoid printing messages that are empty keepalive packets.
             if raw_data.strip():
                 self.DEBUG(raw_data,'sent')
-                self._owner.Dispatcher.Event('', DATA_SENT, raw_data)
+                if hasattr(self._owner, 'Dispatcher'): # HTTPPROXYsocket will send data before we have a Dispatcher
+                    self._owner.Dispatcher.Event('', DATA_SENT, raw_data)
         except:
             self.DEBUG("Socket error while sending data",'error')
             self._owner.disconnected()
