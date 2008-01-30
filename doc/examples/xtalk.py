@@ -14,13 +14,13 @@ class Bot:
     def xmpp_message(self, con, event):
         type = event.getType()
         fromjid = event.getFrom().getStripped()
-        if type in ['message', 'chat', None] and fromjid == self.remotejid:
-            sys.stdout.write(event.getBody() + '\n')
+        body = event.getBody()
+        if type in ['message', 'chat', None] and fromjid == self.remotejid and body:
+            sys.stdout.write(body + '\n')
 
     def stdio_message(self, message):
         m = xmpp.protocol.Message(to=self.remotejid,body=message,typ='chat')
         self.jabber.send(m)
-        pass
 
     def xmpp_connect(self):
         con=self.jabber.connect()
