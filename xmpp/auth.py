@@ -173,11 +173,11 @@ class SASL(PlugIn):
         chal={}
         data=base64.decodestring(incoming_data)
         self.DEBUG('Got challenge:'+data,'ok')
-        for pair in re.findall('(\w+=(?:"[^"]+")|(?:[^,]+))',data):
-            key,value=pair.split('=', 1)
+        for pair in re.findall('(\w+\s*=\s*(?:(?:"[^"]+")|(?:[^,]+)))',data):
+            key,value=[x.strip() for x in pair.split('=', 1)]
             if value[:1]=='"' and value[-1:]=='"': value=value[1:-1]
             chal[key]=value
-        if chal.has_key('qop') and 'auth' in chal['qop'].split(','):
+        if chal.has_key('qop') and 'auth' in [x.strip() for x in chal['qop'].split(',')]:
             resp={}
             resp['username']=self.username
             resp['realm']=self._owner.Server
