@@ -57,7 +57,7 @@ if __name__ == '__main__':
             sys.exit(0)
     
     jid=xmpp.protocol.JID(jidparams['jid'])
-    cl=xmpp.Client(jid.getDomain(),debug=[])
+    cl=xmpp.Client(jid.getDomain())#,debug=[])
     
     bot=Bot(cl,tojid)
 
