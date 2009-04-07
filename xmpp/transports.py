@@ -70,7 +70,7 @@ class TCPsocket(PlugIn):
         PlugIn.__init__(self)
         self.DBG_LINE='socket'
         self._exported_methods=[self.send,self.disconnect]
-        self.server, self.use_srv = server, use_srv
+        self._server, self.use_srv = server, use_srv
 
     def srv_lookup(self, server):
         " SRV resolver. Takes server=(host, port) as argument. Returns new (host, port) pair "
@@ -110,8 +110,8 @@ class TCPsocket(PlugIn):
             Also registers self.disconnected method in the owner's dispatcher.
             Called internally. """
         if not self._server: self._server=(self._owner.Server,5222)
-        if self.use_srv: server=self.srv_lookup(self.server)
-        else: server=self.server
+        if self.use_srv: server=self.srv_lookup(self._server)
+        else: server=self._server
         if not self.connect(server): return
         self._owner.Connection=self
         self._owner.RegisterDisconnectHandler(self.disconnected)
