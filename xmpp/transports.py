@@ -43,8 +43,7 @@ except ImportError:
         import DNS # http://pydns.sf.net/
         HAVE_PYDNS = True
     except ImportError:
-        #TODO: use self.DEBUG()
-        sys.stderr.write("Could not load one of the supported DNS libraries (dnspython or pydns). SRV records will not be queried and you may need to set custom hostname/port for some servers to be accessible.\n")
+        pass
 
 DATA_RECEIVED='DATA RECEIVED'
 DATA_SENT='DATA SENT'
@@ -64,13 +63,18 @@ class TCPsocket(PlugIn):
     """ This class defines direct TCP connection method. """
     def __init__(self, server=None, use_srv=True):
         """ Cache connection point 'server'. 'server' is the tuple of (host, port)
-            absolutely the same as standard tcp socket uses. """
+            absolutely the same as standard tcp socket uses. However library will lookup for 
+            ('_xmpp-client._tcp.' + host) SRV record in DNS and connect to the found (if it is)
+            server instead
+        """
         PlugIn.__init__(self)
         self.DBG_LINE='socket'
         self._exported_methods=[self.send,self.disconnect]
+        self.server, self.use_srv = server, use_srv
 
-        # SRV resolver
-        if use_srv and (HAVE_DNSPYTHON or HAVE_PYDNS):
+    def srv_lookup(self, server):
+        " SRV resolver. Takes server=(host, port) as argument. Returns new (host, port) pair "
+        if HAVE_DNSPYTHON or HAVE_PYDNS:
             host, port = server
             possible_queries = ['_xmpp-client._tcp.' + host]
 
@@ -94,19 +98,21 @@ class TCPsocket(PlugIn):
                             port = int(port)
                             break
                 except:
-                    #TODO: use self.DEBUG()
-                    print 'An error occurred while looking up %s' % query
+                    self.DEBUG('An error occurred while looking up %s' % query, 'warn')
             server = (host, port)
+        else:
+            self.DEBUG("Could not load one of the supported DNS libraries (dnspython or pydns). SRV records will not be queried and you may need to set custom hostname/port for some servers to be accessible.\n",'warn')
         # end of SRV resolver
-
-        self._server = server
+        return server
 
     def plugin(self, owner):
         """ Fire up connection. Return non-empty string on success.
             Also registers self.disconnected method in the owner's dispatcher.
             Called internally. """
         if not self._server: self._server=(self._owner.Server,5222)
-        if not self.connect(self._server): return
+        if self.use_srv: server=self.srv_lookup(self.server)
+        else: server=self.server
+        if not self.connect(server): return
         self._owner.Connection=self
         self._owner.RegisterDisconnectHandler(self.disconnected)
         return 'ok'
@@ -119,7 +125,8 @@ class TCPsocket(PlugIn):
         return self._server[1]
 
     def connect(self,server=None):
-        """ Try to connect. Returns non-empty string on success. """
+        """ Try to connect to the given host/port. Does not lookup for SRV record.
+            Returns non-empty string on success. """
         try:
             if not server: server=self._server
             self._sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
