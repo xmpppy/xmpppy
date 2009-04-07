@@ -41,7 +41,7 @@ def _discover(disp,ns,jid,node=None,fb2b=0,fb2a=1):
     rep=disp.SendAndWaitForResponse(iq)
     if fb2b and not isResultNode(rep): rep=disp.SendAndWaitForResponse(Iq(to=jid,typ='get',queryNS=NS_BROWSE))   # Fallback to browse
     if fb2a and not isResultNode(rep): rep=disp.SendAndWaitForResponse(Iq(to=jid,typ='get',queryNS=NS_AGENTS))   # Fallback to agents
-    if isResultNode(rep): return rep.getQueryPayload()
+    if isResultNode(rep): return [n for n in rep.getQueryPayload() if isinstance(n, Node)]
     return []
 
 def discoverItems(disp,jid,node=None):
