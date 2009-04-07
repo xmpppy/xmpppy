@@ -668,14 +668,114 @@ class DataField(Node):
         """ Set 'var' attribute value of this field. """
         return self.setAttr('var',val)
 
+class DataReported(Node):
+    """ This class is used in the DataForm class to describe the 'reported data field' data items which are used in
+        'multiple item form results' (as described in XEP-0004).
+        Represents the fields that will be returned from a search. This information is useful when
+        you try to use the jabber:iq:search namespace to return dynamic form information.
+        """
+    def __init__(self,node=None):
+        """ Create new empty 'reported data' field. However, note that, according XEP-0004:
+            * It MUST contain one or more DataFields.
+            * Contained DataFields SHOULD possess a 'type' and 'label' attribute in addition to 'var' attribute
+            * Contained DataFields SHOULD NOT contain a <value/> element.
+            Alternatively other XML object can be passed in as the 'node' parameted to replicate it as a new
+            dataitem.
+        """
+        Node.__init__(self,'reported',node=node)
+        if node:
+            newkids=[]
+            for n in self.getChildren():
+                if    n.getName()=='field': newkids.append(DataField(node=n))
+                else: newkids.append(n)
+            self.kids=newkids
+    def getField(self,name):
+        """ Return the datafield object with name 'name' (if exists). """
+        return self.getTag('field',attrs={'var':name})
+    def setField(self,name,typ=None,label=None):
+        """ Create if nessessary or get the existing datafield object with name 'name' and return it.
+            If created, attributes 'type' and 'label' are applied to new datafield."""
+        f=self.getField(name)
+        if f: return f
+        return self.addChild(node=DataField(name,None,typ,0,label))
+    def asDict(self):
+        """ Represent dataitem as simple dictionary mapping of datafield names to their values."""
+        ret={}
+        for field in self.getTags('field'):
+            name=field.getAttr('var')
+            typ=field.getType()
+            if isinstance(typ,(str,unicode)) and typ[-6:]=='-multi':
+                val=[]
+                for i in field.getTags('value'): val.append(i.getData())
+            else: val=field.getTagData('value')
+            ret[name]=val
+        if self.getTag('instructions'): ret['instructions']=self.getInstructions()
+        return ret
+    def __getitem__(self,name):
+        """ Simple dictionary interface for getting datafields values by their names."""
+        item=self.getField(name)
+        if item: return item.getValue()
+        raise IndexError('No such field')
+    def __setitem__(self,name,val):
+        """ Simple dictionary interface for setting datafields values by their names."""
+        return self.setField(name).setValue(val)
+
+class DataItem(Node):
+    """ This class is used in the DataForm class to describe data items which are used in 'multiple
+        item form results' (as described in XEP-0004).
+        """
+    def __init__(self,node=None):
+        """ Create new empty data item. However, note that, according XEP-0004, DataItem MUST contain ALL
+            DataFields described in DataReported.
+            Alternatively other XML object can be passed in as the 'node' parameted to replicate it as a new
+            dataitem.
+            """
+        Node.__init__(self,'item',node=node)
+        if node:
+            newkids=[]
+            for n in self.getChildren():
+                if    n.getName()=='field': newkids.append(DataField(node=n))
+                else: newkids.append(n)
+            self.kids=newkids
+    def getField(self,name):
+        """ Return the datafield object with name 'name' (if exists). """
+        return self.getTag('field',attrs={'var':name})
+    def setField(self,name):
+        """ Create if nessessary or get the existing datafield object with name 'name' and return it. """
+        f=self.getField(name)
+        if f: return f
+        return self.addChild(node=DataField(name))
+    def asDict(self):
+        """ Represent dataitem as simple dictionary mapping of datafield names to their values."""
+        ret={}
+        for field in self.getTags('field'):
+            name=field.getAttr('var')
+            typ=field.getType()
+            if isinstance(typ,(str,unicode)) and typ[-6:]=='-multi':
+                val=[]
+                for i in field.getTags('value'): val.append(i.getData())
+            else: val=field.getTagData('value')
+            ret[name]=val
+        if self.getTag('instructions'): ret['instructions']=self.getInstructions()
+        return ret
+    def __getitem__(self,name):
+        """ Simple dictionary interface for getting datafields values by their names."""
+        item=self.getField(name)
+        if item: return item.getValue()
+        raise IndexError('No such field')
+    def __setitem__(self,name,val):
+        """ Simple dictionary interface for setting datafields values by their names."""
+        return self.setField(name).setValue(val)
+
 class DataForm(Node):
     """ DataForm class. Used for manipulating dataforms in XMPP.
         Relevant XEPs: 0004, 0068, 0122.
         Can be used in disco, pub-sub and many other applications."""
     def __init__(self, typ=None, data=[], title=None, node=None):
         """
-            Create new dataform of type 'typ'. 'data' is the list of DataField
-            instances that this dataform contains, 'title' - the title string.
+            Create new dataform of type 'typ'; 'data' is the list of DataReported,
+            DataItem and DataField instances that this dataform contains; 'title'
+            is the title string.
             You can specify the 'node' argument as the other node to be used as
             base for constructing this dataform.
 
@@ -690,7 +790,9 @@ class DataForm(Node):
         if node:
             newkids=[]
             for n in self.getChildren():
-                if n.getName()=='field': newkids.append(DataField(node=n))
+                if   n.getName()=='field': newkids.append(DataField(node=n))
+                elif n.getName()=='item': newkids.append(DataItem(node=n))
+                elif n.getName()=='reported': newkids.append(DataReported(node=n))
                 else: newkids.append(n)
             self.kids=newkids
         if typ: self.setType(typ)
@@ -703,6 +805,8 @@ class DataForm(Node):
         for child in data:
             if type(child) in [type(''),type(u'')]: self.addInstructions(child)
             elif child.__class__.__name__=='DataField': self.kids.append(child)
+            elif child.__class__.__name__=='DataItem': self.kids.append(child)
+            elif child.__class__.__name__=='DataReported': self.kids.append(child)
             else: self.kids.append(DataField(node=child))
     def getType(self):
         """ Return the type of dataform. """
