@@ -88,7 +88,7 @@ class TCPsocket(PlugIn):
                             break
                     elif HAVE_PYDNS:
                         # ensure we haven't cached an old configuration
-                        DNS.ParseResolvConf()
+                        DNS.DiscoverNameServers()
                         response = DNS.Request().req(query, qtype='SRV')
                         answers = response.answers
                         if len(answers) > 0:
