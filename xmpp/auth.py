@@ -23,7 +23,7 @@ from protocol import *
 from client import PlugIn
 import base64,random,dispatcher,re
 
-from hashlib import md5,sha
+from hashlib import md5,sha1
 def HH(some): return md5(some).hexdigest()
 def H(some): return md5(some).digest()
 def C(some): return ':'.join(some)
