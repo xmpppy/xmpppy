@@ -82,6 +82,8 @@ class TCPsocket(PlugIn):
                 try:
                     if HAVE_DNSPYTHON:
                         answers = [x for x in dns.resolver.query(query, 'SRV')]
+                        # Sort by priority, according to RFC 2782.
+                        answers.sort(answers, key=lambda a: a.priority)
                         if answers:
                             host = str(answers[0].target)
                             port = int(answers[0].port)
@@ -90,7 +92,8 @@ class TCPsocket(PlugIn):
                         # ensure we haven't cached an old configuration
                         DNS.DiscoverNameServers()
                         response = DNS.Request().req(query, qtype='SRV')
-                        answers = response.answers
+                        # Sort by priority, according to RFC 2782.
+                        answers = sorted(response.answers, key=lambda a: a['data'][0])
                         if len(answers) > 0:
                             # ignore the priority and weight for now
                             _, _, port, host = answers[0]['data']
