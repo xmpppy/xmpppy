@@ -518,10 +518,13 @@ class Iq(Protocol):
         if queryNS: self.setQueryNS(queryNS)
     def getQuery(self):
         """ Return the IQ's child element if it exists, None otherwise."""
-        try:
-            return self.getChildren()[0]
-        except IndexError:
-            return None
+        typ = self.getType()
+        query=None
+        for child in self.getChildren():
+            if ('error' != typ) or ('error' != child.getName()):
+                query=child
+                break
+        return query
     def getQueryNS(self):
         """ Return the namespace of the 'query' child element."""
         tag=self.getQuery()
