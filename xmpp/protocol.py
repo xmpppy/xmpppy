@@ -440,8 +440,8 @@ class Message(Protocol):
         self.setTagData('thread',val)
     def buildReply(self,text=None):
         """ Builds and returns another message object with specified text.
-            The to, from and thread properties of new message are pre-set as reply to this message. """
-        m=Message(to=self.getFrom(),frm=self.getTo(),body=text)
+            The to, from, thread and type properties of new message are pre-set as reply to this message. """
+        m=Message(to=self.getFrom(),frm=self.getTo(),body=text,typ=self.getType())
         th=self.getThread()
         if th: m.setThread(th)
         return m
