@@ -10,7 +10,7 @@ if sys.version < '2.2.3':
 
 # Set proper release version in source code also!!!
 setup(name='xmpppy',
-      version='0.4.0',
+      version='0.5.0rc1',
       author='Alexey Nezhdanov',
       author_email='snakeru@users.sourceforge.net',
       url='http://xmpppy.sourceforge.net/',
