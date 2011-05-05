@@ -156,8 +156,16 @@ class TCPsocket(PlugIn):
         try: received = self._recv(BUFLEN)
         except socket.sslerror,e:
             self._seen_data=0
-            if e[0]==socket.SSL_ERROR_WANT_READ: return ''
-            if e[0]==socket.SSL_ERROR_WANT_WRITE: return ''
+            if e[0]==socket.SSL_ERROR_WANT_READ:
+                sys.exc_clear()
+                self.DEBUG("SSL_WANT_READ while receiving data, try again please",'warn')
+                select.select([self._sock],[],[],1)
+                return ''
+            if e[0]==socket.SSL_ERROR_WANT_WRITE:
+                sys.exc_clear()
+                self.DEBUG("SSL_WANT_WRITE while receiving data, try again please",'warn')
+                select.select([],[self._sock],[],1)
+                return ''
             self.DEBUG('Socket error while receiving data','error')
             sys.exc_clear()
             self._owner.disconnected()
@@ -166,6 +174,22 @@ class TCPsocket(PlugIn):
 
         while self.pending_data(0):
             try: add = self._recv(BUFLEN)
+            except socket.sslerror,e:
+                self._seen_data=0
+                if e[0]==socket.SSL_ERROR_WANT_READ:
+                    sys.exc_clear()
+                    self.DEBUG("SSL_WANT_READ while receiving data, try again please",'warn')
+                    select.select([self._sock],[],[],1)
+                    return ''
+                if e[0]==socket.SSL_ERROR_WANT_WRITE:
+                    sys.exc_clear()
+                    self.DEBUG("SSL_WANT_WRITE while receiving data, try again please",'warn')
+                    select.select([],[self._sock],[],1)
+                    return ''
+                self.DEBUG('Socket error while receiving data','error')
+                sys.exc_clear()
+                self._owner.disconnected()
+                raise IOError("Disconnected from server")
             except: add=''
             received +=add
             if not add: break
@@ -181,13 +205,29 @@ class TCPsocket(PlugIn):
             raise IOError("Disconnected from server")
         return received
 
-    def send(self,raw_data):
+    def send(self,raw_data,retry_timeout=1):
         """ Writes raw outgoing data. Blocks until done.
             If supplied data is unicode string, encodes it to utf-8 before send."""
         if type(raw_data)==type(u''): raw_data = raw_data.encode('utf-8')
         elif type(raw_data)<>type(''): raw_data = ustr(raw_data).encode('utf-8')
         try:
-            self._send(raw_data)
+            sent = 0
+            while not sent:
+                try:
+                    self._send(raw_data)
+                    sent = 1
+                except socket.sslerror, e:
+                    if e[0]==socket.SSL_ERROR_WANT_READ:
+                        sys.exc_clear()
+                        self.DEBUG("SSL_WANT_READ while sending data, wating to retry",'warn')
+                        select.select([self._sock],[],[],retry_timeout)
+                        continue
+                    if e[0]==socket.SSL_ERROR_WANT_WRITE:
+                        sys.exc_clear()
+                        self.DEBUG("SSL_WANT_WRITE while sending data, waiting to retry",'warn')
+                        select.select([],[self._sock],[],retry_timeout)
+                        continue
+                    raise
             # Avoid printing messages that are empty keepalive packets.
             if raw_data.strip():
                 self.DEBUG(raw_data,'sent')
