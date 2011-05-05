@@ -1,4 +1,4 @@
-##   features.py 
+##   features.py
 ##
 ##   Copyright (C) 2003-2004 Alexey "Snake" Nezhdanov
 ##
@@ -79,7 +79,7 @@ def discoverInfo(disp,jid,node=None):
 def getRegInfo(disp,host,info={},sync=True):
     """ Gets registration form from remote host.
         You can pre-fill the info dictionary.
-        F.e. if you are requesting info on registering user joey than specify 
+        F.e. if you are requesting info on registering user joey than specify
         info as {'username':'joey'}. See JEP-0077 for details.
         'disp' must be connected dispatcher instance."""
     iq=Iq('get',NS_REGISTER,to=host)

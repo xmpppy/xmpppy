@@ -63,7 +63,7 @@ class TCPsocket(PlugIn):
     """ This class defines direct TCP connection method. """
     def __init__(self, server=None, use_srv=True):
         """ Cache connection point 'server'. 'server' is the tuple of (host, port)
-            absolutely the same as standard tcp socket uses. However library will lookup for 
+            absolutely the same as standard tcp socket uses. However library will lookup for
             ('_xmpp-client._tcp.' + host) SRV record in DNS and connect to the found (if it is)
             server instead
         """
@@ -138,7 +138,7 @@ class TCPsocket(PlugIn):
             self._recv=self._sock.recv
             self.DEBUG("Successfully connected to remote host %s"%`server`,'start')
             return 'ok'
-        except socket.error, (errno, strerror): 
+        except socket.error, (errno, strerror):
             self.DEBUG("Failed to connect to remote host %s: %s (%s)"%(`server`, strerror, errno),'error')
         except: pass
 

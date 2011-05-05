@@ -14,8 +14,8 @@ features - different stuff that didn't worths separating into modules
 browser - DISCO server framework. Allows to build dynamic disco tree.
 filetransfer - Currently contains only IBB stuff. Can be used for bot-to-bot transfers.
 
-Most of the classes that is defined in all these modules is an ancestors of 
-class PlugIn so they share a single set of methods allowing you to compile 
+Most of the classes that is defined in all these modules is an ancestors of
+class PlugIn so they share a single set of methods allowing you to compile
 a featured XMPP client. For every instance of PlugIn class the 'owner' is the class
 in what the plug was plugged. While plugging in such instance usually sets some
 methods of owner to it's own ones for easy access. All session specific info stored

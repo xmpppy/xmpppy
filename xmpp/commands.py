@@ -19,13 +19,13 @@
 There are 3 classes here, a command processor Commands like the Browser, and a command template plugin Command, and an example command.
 
 To use this module:
-    
+
     Instansiate the module with the parent transport and disco browser manager as parameters.
     'Plug in' commands using the command template.
     The command feature must be added to existing disco replies where neccessary.
-    
+
 What it supplies:
-    
+
     Automatic command registration with the disco browser manager.
     Automatic listing of commands in the public command list.
     A means of handling requests, by redirection though the command manager.
@@ -36,9 +36,9 @@ from client import PlugIn
 
 class Commands(PlugIn):
     """Commands is an ancestor of PlugIn and can be attached to any session.
-    
-    The commands class provides a lookup and browse mechnism. It follows the same priciple of the Browser class, for Service Discovery to provide the list of commands, it adds the 'list' disco type to your existing disco handler function. 
-    
+
+    The commands class provides a lookup and browse mechnism. It follows the same priciple of the Browser class, for Service Discovery to provide the list of commands, it adds the 'list' disco type to your existing disco handler function.
+
     How it works:
         The commands are added into the existing Browser on the correct nodes. When the command list is built the supplied discovery handler function needs to have a 'list' option in type. This then gets enumerated, all results returned as None are ignored.
         The command executed is then called using it's Execute method. All session management is handled by the command itself.
@@ -58,7 +58,7 @@ class Commands(PlugIn):
         owner.RegisterHandler('iq',self._CommandHandler,typ='set',ns=NS_COMMANDS)
         owner.RegisterHandler('iq',self._CommandHandler,typ='get',ns=NS_COMMANDS)
         self._browser.setDiscoHandler(self._DiscoHandler,node=NS_COMMANDS,jid='')
-        
+
     def plugout(self):
         """Removes handlers from the session"""
         # unPlug from the session and the disco manager
@@ -172,9 +172,9 @@ class Commands(PlugIn):
             return self._handlers[jid][name]
 
 class Command_Handler_Prototype(PlugIn):
-    """This is a prototype command handler, as each command uses a disco method 
-       and execute method you can implement it any way you like, however this is 
-       my first attempt at making a generic handler that you can hang process 
+    """This is a prototype command handler, as each command uses a disco method
+       and execute method you can implement it any way you like, however this is
+       my first attempt at making a generic handler that you can hang process
        stages on too. There is an example command below.
 
     The parameters are as follows:
@@ -182,7 +182,7 @@ class Command_Handler_Prototype(PlugIn):
     description : the natural language description
     discofeatures : the features supported by the command
     initial : the initial command in the from of {'execute':commandname}
-    
+
     All stages set the 'actions' dictionary for each session to represent the possible options available.
     """
     name = 'examplecommand'
@@ -261,7 +261,7 @@ class Command_Handler_Prototype(PlugIn):
             return self.discoinfo
 
 class TestCommand(Command_Handler_Prototype):
-    """ Example class. You should read source if you wish to understate how it works. 
+    """ Example class. You should read source if you wish to understate how it works.
         Generally, it presents a "master" that giudes user through to calculate something.
     """
     name = 'testcommand'
@@ -270,7 +270,7 @@ class TestCommand(Command_Handler_Prototype):
         """ Init internal constants. """
         Command_Handler_Prototype.__init__(self,jid)
         self.initial = {'execute':self.cmdFirstStage}
-    
+
     def cmdFirstStage(self,conn,request):
         """ Determine """
         # This is the only place this should be repeated as all other stages should have SessionIDs

@@ -43,7 +43,7 @@ SESSION_CLOSED     =5
 
 class Session:
     """
-    The Session class instance is used for storing all session-related info like 
+    The Session class instance is used for storing all session-related info like
     credentials, socket/xml stream/session state flags, roster items (in case of
     client type connection) etc.
     Session object have no means of discovering is any info is ready to be read.
@@ -332,7 +332,7 @@ class Session:
     def set_session_state(self,newstate):
         """ Change the session state.
             Session starts with SESSION_NOT_AUTHED state
-            and then comes through 
+            and then comes through
             SESSION_AUTHED, SESSION_BOUND, SESSION_OPENED and SESSION_CLOSED states.
         """
         if self._session_state<newstate:

@@ -204,7 +204,7 @@ class SASL(PlugIn):
             node=Node('response',attrs={'xmlns':NS_SASL},payload=[base64.encodestring(sasl_data[:-1]).replace('\r','').replace('\n','')])
             self._owner.send(node.__str__())
         elif chal.has_key('rspauth'): self._owner.send(Node('response',attrs={'xmlns':NS_SASL}).__str__())
-        else: 
+        else:
             self.startsasl='failure'
             self.DEBUG('Failed SASL authentification: unknown challenge','error')
         raise NodeProcessed

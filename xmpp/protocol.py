@@ -1,4 +1,4 @@
-##   protocol.py 
+##   protocol.py
 ##
 ##   Copyright (C) 2003-2005 Alexey "Snake" Nezhdanov
 ##
@@ -15,7 +15,7 @@
 # $Id$
 
 """
-Protocol module contains tools that is needed for processing of 
+Protocol module contains tools that is needed for processing of
 xmpp-related data structures.
 """
 
@@ -507,7 +507,7 @@ class Presence(Protocol):
         """Returns the status code of the presence (for groupchat)"""
         return self._muc_getItemAttr('status','code')
 
-class Iq(Protocol): 
+class Iq(Protocol):
     """ XMPP Iq object - get/set dialog mechanism. """
     def __init__(self, typ=None, queryNS=None, attrs={}, to=None, frm=None, payload=[], xmlns=NS_CLIENT, node=None):
         """ Create Iq object. You can specify type, query namespace
@@ -603,7 +603,7 @@ class Error(Protocol):
 
 class DataField(Node):
     """ This class is used in the DataForm class to describe the single data item.
-        If you are working with jabber:x:data (XEP-0004, XEP-0068, XEP-0122) 
+        If you are working with jabber:x:data (XEP-0004, XEP-0068, XEP-0122)
         then you will need to work with instances of this class. """
     def __init__(self,name=None,value=None,typ=None,required=0,label=None,desc=None,options=[],node=None):
         """ Create new data field of specified name,value and type.

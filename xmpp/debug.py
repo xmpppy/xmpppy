@@ -1,4 +1,4 @@
-##   debug.py 
+##   debug.py
 ##
 ##   Copyright (C) 2003 Jacob Lundqvist
 ##
@@ -22,7 +22,7 @@ Other modules can always define extra debug flags for local usage, as long as
 they make sure they append them to debug_flags
 
 Also its always a good thing to prefix local flags with something, to reduce risk
-of coliding flags. Nothing breaks if two flags would be identical, but it might 
+of coliding flags. Nothing breaks if two flags would be identical, but it might
 activate unintended debugging.
 
 flags can be numeric, but that makes analysing harder, on creation its
@@ -34,7 +34,7 @@ by the individual classes.
 
 For samples of usage, see samples subdir in distro source, and selftest
 in this code
-    
+
 """
 
 
@@ -80,12 +80,12 @@ DBG_CONNECTION = 'connection'    ; debug_flags.append( DBG_CONNECTION )
 
  The reason for having a double statement wis so we can validate params
  and catch all undefined debug flags
- 
+
  This gives us control over all used flags, and makes it easier to allow
  global debugging in your code, just do something like
- 
+
  foo = Debug( debug_flags )
- 
+
  group flags, that is a flag in it self containing multiple flags should be
  defined without the debug_flags.append() sequence, since the parts are already
  in the list, also they must of course be defined after the flags they depend on ;)
@@ -114,12 +114,12 @@ class NoDebug:
     colors={}
     def active_set( self, active_flags = None ):
         return 0
-    
+
 
 LINE_FEED = '\n'
 
 
-class Debug:      
+class Debug:
     def __init__( self,
                   #
                   # active_flags are those that will trigger output
@@ -138,7 +138,7 @@ class Debug:
                   prefix = 'DEBUG: ',
                   sufix = '\n',
                   #
-                  # If you want unix style timestamps, 
+                  # If you want unix style timestamps,
                   #  0 disables timestamps
                   #  1 before prefix, good when prefix is a string
                   #  2 after prefix, good when prefix is a color
@@ -148,8 +148,8 @@ class Debug:
                   # flag_show should normaly be of, but can be turned on to get a
                   # good view of what flags are actually used for calls,
                   # if it is not None, it should be a string
-                  # flags for current call will be displayed 
-                  # with flag_show as separator                  
+                  # flags for current call will be displayed
+                  # with flag_show as separator
                   # recomended values vould be '-' or ':', but any string goes
                   #
                   flag_show = None,
@@ -163,14 +163,14 @@ class Debug:
                   # default is to show welcome if any flags are active
                   welcome = -1
                   ):
-        
+
         self.debug_flags = []
         if welcome == -1:
             if active_flags and len(active_flags):
                 welcome = 1
             else:
                 welcome = 0
-            
+
         self._remove_dupe_flags()
         if log_file:
             if type( log_file ) is type(''):
@@ -183,7 +183,7 @@ class Debug:
                 self._fh = log_file
         else:
             self._fh = sys.stdout
-         
+
         if time_stamp not in (0,1,2):
             msg2 = '%s' % time_stamp
             raise Exception('Invalid time_stamp param', msg2)
@@ -204,7 +204,7 @@ class Debug:
             self.show('Debug created for %s%s' % (caller.f_code.co_filename,
                                                    mod_name ))
             self.show(' flags defined: %s' % ','.join( self.active ))
-            
+
         if type(flag_show) in (type(''), type(None)):
             self.flag_show = flag_show
         else:
@@ -212,7 +212,7 @@ class Debug:
             raise Exception('Invalid type for flag_show!', msg2)
 
 
-        
+
 
 
     def show( self, msg, flag = None, prefix = None, sufix = None,
@@ -221,18 +221,18 @@ class Debug:
         flag can be of folowing types:
             None - this msg will always be shown if any debugging is on
             flag - will be shown if flag is active
-            (flag1,flag2,,,) - will be shown if any of the given flags 
+            (flag1,flag2,,,) - will be shown if any of the given flags
                                are active
 
         if prefix / sufix are not given, default ones from init will be used
-        
+
         lf = -1 means strip linefeed if pressent
         lf = 1 means add linefeed if not pressent
         """
-        
+
         if self.validate_flags:
             self._validate_flag( flag )
-            
+
         if not self.is_active(flag):
             return
         if prefix:
@@ -256,7 +256,7 @@ class Debug:
                                  )
         else:
             output = pre
-            
+
         if self.flag_show:
             if flag:
                 output = '%s%s%s' % ( output, flag, self.flag_show )
@@ -286,8 +286,8 @@ class Debug:
                 s=s+c
             self._fh.write( '%s%s%s' % ( pre, s, suf ))
         self._fh.flush()
-            
-                
+
+
     def is_active( self, flag ):
         'If given flag(s) should generate output.'
 
@@ -304,7 +304,7 @@ class Debug:
                         return 1
         return 0
 
-    
+
     def active_set( self, active_flags = None ):
         "returns 1 if any flags where actually set, otherwise 0."
         r = 0
@@ -318,7 +318,7 @@ class Debug:
                 if t not in self.debug_flags:
                     sys.stderr.write('Invalid debugflag given: %s\n' % t )
                 ok_flags.append( t )
-                
+
             self.active = ok_flags
             r = 1
         else:
@@ -331,7 +331,7 @@ class Debug:
                 self.show( '*** please correct your param!' )
                 self.show( '*** due to this, full debuging is enabled' )
                 self.active = self.debug_flags
-            
+
             for f in flags:
                 s = f.strip()
                 ok_flags.append( s )
@@ -339,15 +339,15 @@ class Debug:
 
         self._remove_dupe_flags()
         return r
-    
+
     def active_get( self ):
         "returns currently active flags."
         return self.active
-    
-    
+
+
     def _as_one_list( self, items ):
         """ init param might contain nested lists, typically from group flags.
-        
+
         This code organises lst and remves dupes
         """
         if type( items ) <> type( [] ) and type( items ) <> type( () ):
@@ -356,15 +356,15 @@ class Debug:
         for l in items:
             if type( l ) == type([]):
                 lst2 = self._as_one_list( l )
-                for l2 in lst2: 
+                for l2 in lst2:
                     self._append_unique_str(r, l2 )
             elif l == None:
                 continue
             else:
                 self._append_unique_str(r, l )
         return r
-    
-    
+
+
     def _append_unique_str( self, lst, item ):
         """filter out any dupes."""
         if type(item) <> type(''):
@@ -374,7 +374,7 @@ class Debug:
             lst.append( item )
         return lst
 
-    
+
     def _validate_flag( self, flags ):
         'verify that flag is defined.'
         if flags:
@@ -385,7 +385,7 @@ class Debug:
 
     def _remove_dupe_flags( self ):
         """
-        if multiple instances of Debug is used in same app, 
+        if multiple instances of Debug is used in same app,
         some flags might be created multiple time, filter out dupes
         """
         unique_flags = []
@@ -403,12 +403,12 @@ class Debug:
         if not colors_enabled: prefixcolor=''
         elif self.colors.has_key(flag): prefixcolor=self.colors[flag]
         else: prefixcolor=color_none
-        
+
         if prefix=='error':
             _exception = sys.exc_info()
             if _exception[0]:
                 msg=msg+'\n'+''.join(traceback.format_exception(_exception[0], _exception[1], _exception[2])).rstrip()
-        
+
         prefix= self.prefix+prefixcolor+(flag+' '*12)[:12]+' '+(prefix+' '*6)[:6]
         self.show(msg, flag, prefix)
 

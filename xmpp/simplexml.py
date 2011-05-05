@@ -214,7 +214,7 @@ class Node(object):
             if i < len(self.data) and self.data[i]: ret.append(self.data[i])
             if i < len(self.kids) and self.kids[i]: ret.append(self.kids[i])
         return ret
-    def getTag(self, name, attrs={}, namespace=None): 
+    def getTag(self, name, attrs={}, namespace=None):
         """ Filters all child nodes using specified arguments as filter.
             Returns the first found or None if not found. """
         return self.getTags(name, attrs, namespace, one=1)
