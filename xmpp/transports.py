@@ -158,13 +158,11 @@ class TCPsocket(PlugIn):
             self._seen_data=0
             if e[0]==socket.SSL_ERROR_WANT_READ:
                 sys.exc_clear()
-                self.DEBUG("SSL_WANT_READ while receiving data, try again please",'warn')
-                select.select([self._sock],[],[],1)
+                self.DEBUG("SSL_WANT_READ while receiving data, asking for a retry",'warn')
                 return ''
             if e[0]==socket.SSL_ERROR_WANT_WRITE:
                 sys.exc_clear()
-                self.DEBUG("SSL_WANT_WRITE while receiving data, try again please",'warn')
-                select.select([],[self._sock],[],1)
+                self.DEBUG("SSL_WANT_WRITE while receiving data, asking for a retry",'warn')
                 return ''
             self.DEBUG('Socket error while receiving data','error')
             sys.exc_clear()
@@ -178,14 +176,12 @@ class TCPsocket(PlugIn):
                 self._seen_data=0
                 if e[0]==socket.SSL_ERROR_WANT_READ:
                     sys.exc_clear()
-                    self.DEBUG("SSL_WANT_READ while receiving data, try again please",'warn')
-                    select.select([self._sock],[],[],1)
-                    return ''
+                    self.DEBUG("SSL_WANT_READ while receiving data, ignoring",'warn')
+                    break
                 if e[0]==socket.SSL_ERROR_WANT_WRITE:
                     sys.exc_clear()
-                    self.DEBUG("SSL_WANT_WRITE while receiving data, try again please",'warn')
-                    select.select([],[self._sock],[],1)
-                    return ''
+                    self.DEBUG("SSL_WANT_WRITE while receiving data, ignoring",'warn')
+                    break
                 self.DEBUG('Socket error while receiving data','error')
                 sys.exc_clear()
                 self._owner.disconnected()
