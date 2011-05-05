@@ -186,7 +186,7 @@ class Debug:
          
         if time_stamp not in (0,1,2):
             msg2 = '%s' % time_stamp
-            raise 'Invalid time_stamp param', msg2
+            raise Exception('Invalid time_stamp param', msg2)
         self.prefix = prefix
         self.sufix = sufix
         self.time_stamp = time_stamp
@@ -209,7 +209,7 @@ class Debug:
             self.flag_show = flag_show
         else:
             msg2 = '%s' % type(flag_show )
-            raise 'Invalid type for flag_show!', msg2
+            raise Exception('Invalid type for flag_show!', msg2)
 
 
         
@@ -369,7 +369,7 @@ class Debug:
         """filter out any dupes."""
         if type(item) <> type(''):
             msg2 = '%s' % item
-            raise 'Invalid item type (should be string)',msg2
+            raise Exception('Invalid item type (should be string)',msg2)
         if item not in lst:
             lst.append( item )
         return lst
@@ -381,7 +381,7 @@ class Debug:
             for f in self._as_one_list( flags ):
                 if not f in self.debug_flags:
                     msg2 = '%s' % f
-                    raise 'Invalid debugflag given', msg2
+                    raise Exception('Invalid debugflag given', msg2)
 
     def _remove_dupe_flags( self ):
         """

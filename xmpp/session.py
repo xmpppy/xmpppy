@@ -314,12 +314,12 @@ class Session:
 
     def start_feature(self,f):
         """ Declare some feature as "negotiating now" to prevent other features from start negotiating. """
-        if self.feature_in_process: raise "Starting feature %s over %s !"%(f,self.feature_in_process)
+        if self.feature_in_process: raise Exception("Starting feature %s over %s !"%(f,self.feature_in_process))
         self.feature_in_process=f
 
     def stop_feature(self,f):
         """ Declare some feature as "negotiated" to allow other features start negotiating. """
-        if self.feature_in_process<>f: raise "Stopping feature %s instead of %s !"%(f,self.feature_in_process)
+        if self.feature_in_process<>f: raise Exception("Stopping feature %s instead of %s !"%(f,self.feature_in_process))
         self.feature_in_process=None
 
     def set_socket_state(self,newstate):
