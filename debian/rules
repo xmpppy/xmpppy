@@ -28,6 +28,7 @@ configure-stamp:
 
 
 build: build-stamp
+	make apidocs
 
 build-stamp: configure-stamp 
 	dh_testdir
