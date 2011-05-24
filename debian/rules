@@ -57,7 +57,7 @@ install: build
 	set -e; \
 	for v in $(PYVERSIONS); do \
 	  mkdir -p debian/python-xmpp/usr/lib/$$v/site-packages/xmpp; \
-	  declare -x MODULESDIR=$(CURDIR)/debian/python-xmpp/usr/lib/$$v/site-packages/ ; make install; \
+	  make install MODULESDIR=$(CURDIR)/debian/python-xmpp/usr/lib/$$v/site-packages/; \
 	done
 
 
