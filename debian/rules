@@ -74,7 +74,7 @@ binary-indep: build install
 	
 	dh_installdocs -i
 	dh_installexamples -i
-	dh_installchangelogs -i ChangeLog
+	#dh_installchangelogs -i ChangeLog
 	dh_link -i
 	dh_compress -i -X.py
 	dh_fixperms -i
