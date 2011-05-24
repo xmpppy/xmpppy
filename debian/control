@@ -12,6 +12,7 @@ Architecture: all
 Depends: ${python:Depends}
 Conflicts: python2.3-xmpp, python2.4-xmpp
 Replaces: python2.3-xmpp, python2.4-xmpp
+Recommends: python-dnspython
 XB-Python-Version: ${python:Versions}
 Description: Python library for communication with XMPP (Jabber) servers
  This is a set of modules providing functionality for writing
