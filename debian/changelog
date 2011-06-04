@@ -1,3 +1,9 @@
+python-xmpp (0.5.0-rc1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Gabriel Ebner <gebner@2b7e.org>  Tue, 24 May 2011 22:42:11 +0200
+
 python-xmpp (0.4-1) unstable; urgency=low
 
   * New upstream release

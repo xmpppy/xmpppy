@@ -2,7 +2,7 @@ Source: python-xmpp
 Section: python
 Priority: optional
 Maintainer: Alexey Nezhdanov <snakeru@users.sourceforge.net>
-Build-Depends-Indep: debhelper (>= 5.0.37.2), python (>= 2.3.5-11), python-central (>= 0.5)
+Build-Depends-Indep: debhelper (>= 5.0.37.2), python (>= 2.3.5-11), python-central (>= 0.5), python-epydoc
 Standards-Version: 3.6.2
 XS-Python-Version: all
 Uploaders: Cosimo Alfarano <kalfa@debian.org>
@@ -12,6 +12,7 @@ Architecture: all
 Depends: ${python:Depends}
 Conflicts: python2.3-xmpp, python2.4-xmpp
 Replaces: python2.3-xmpp, python2.4-xmpp
+Recommends: python-dnspython
 XB-Python-Version: ${python:Versions}
 Description: Python library for communication with XMPP (Jabber) servers
  This is a set of modules providing functionality for writing

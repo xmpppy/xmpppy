@@ -130,17 +130,22 @@ class TCPsocket(PlugIn):
     def connect(self,server=None):
         """ Try to connect to the given host/port. Does not lookup for SRV record.
             Returns non-empty string on success. """
-        try:
-            if not server: server=self._server
-            self._sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._sock.connect((server[0], int(server[1])))
-            self._send=self._sock.sendall
-            self._recv=self._sock.recv
-            self.DEBUG("Successfully connected to remote host %s"%`server`,'start')
-            return 'ok'
-        except socket.error, (errno, strerror):
-            self.DEBUG("Failed to connect to remote host %s: %s (%s)"%(`server`, strerror, errno),'error')
-        except: pass
+	if not server: server=self._server
+	try:
+	    for res in socket.getaddrinfo(server[0], int(server[1]), 0, socket.SOCK_STREAM):
+		af, socktype, proto, canonname, sa = res
+		try:
+		    self._sock = socket.socket(af, socktype, proto)
+		    self._sock.connect(sa)
+		    self._send=self._sock.sendall
+		    self._recv=self._sock.recv
+		    self.DEBUG("Successfully connected to remote host %s"%`server`,'start')
+		    return 'ok'
+		except socket.error, (errno, strerror):
+		    if self._sock is not None: self._sock.close()
+	    self.DEBUG("Failed to connect to remote host %s: %s (%s)"%(`server`, strerror, errno),'error')
+	except socket.gaierror, (errno, strerror):
+	    self.DEBUG("Failed to lookup remote host %s: %s (%s)"%(`server`, strerror, errno),'error')
 
     def plugout(self):
         """ Disconnect from the remote server and unregister self.disconnected method from
