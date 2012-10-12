@@ -83,7 +83,7 @@ class TCPsocket(PlugIn):
                     if HAVE_DNSPYTHON:
                         answers = [x for x in dns.resolver.query(query, 'SRV')]
                         # Sort by priority, according to RFC 2782.
-                        answers.sort(answers, key=lambda a: a.priority)
+                        answers.sort(key=lambda a: a.priority)
                         if answers:
                             host = str(answers[0].target)
                             port = int(answers[0].port)
