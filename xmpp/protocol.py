@@ -561,7 +561,6 @@ class Iq(Protocol):
         """ Builds and returns another Iq object of specified type.
             The to, from and query child node of new Iq are pre-set as reply to this Iq. """
         iq=Iq(typ,to=self.getFrom(),frm=self.getTo(),attrs={'id':self.getID()})
-        iq.setQuery(self.getQuery().getName()).setNamespace(self.getQueryNS())
         return iq
 
 class ErrorNode(Node):
