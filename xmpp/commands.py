@@ -72,7 +72,7 @@ class Commands(PlugIn):
         # We must:
         #   Pass on command execution to command handler
         #   (Do we need to keep session details here, or can that be done in the command?)
-        jid = str(request.getTo())
+        jid = unicode(request.getTo())
         try:
             node = request.getTagAttr('command','node')
         except:
@@ -103,7 +103,7 @@ class Commands(PlugIn):
             #   To make this code easy to write we add an 'list' disco type, it returns a tuple or 'none' if not advertised
             list = []
             items = []
-            jid = str(request.getTo())
+            jid = unicode(request.getTo())
             # Get specific jid based results
             if self._handlers.has_key(jid):
                 for each in self._handlers[jid].keys():
