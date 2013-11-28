@@ -19,8 +19,8 @@ Protocol module contains tools that is needed for processing of
 xmpp-related data structures.
 """
 
-from simplexml import Node, ustr
 import time
+from simplexml import Node, ustr
 
 NS_ACTIVITY = 'http://jabber.org/protocol/activity'                  # XEP-0108
 NS_ADDRESS = 'http://jabber.org/protocol/address'                   # XEP-0033
@@ -421,11 +421,14 @@ class Protocol(Node):
         if frm: attrs['from'] = frm
         if typ: attrs['type'] = typ
         Node.__init__(self, tag=name, attrs=attrs, payload=payload, node=node)
-        if not node and xmlns: self.setNamespace(xmlns)
-        if self['to']: self.setTo(self['to'])
-        if self['from']: self.setFrom(self['from'])
-        if node and type(self) == type(node) and self.__class__ == node.__class__ and self.attrs.has_key('id'): del
-        self.attrs['id']
+        if not node and xmlns:
+            self.setNamespace(xmlns)
+        if self['to']:
+            self.setTo(self['to'])
+        if self['from']:
+            self.setFrom(self['from'])
+        if node and type(self) is type(node) and 'id' in self.attrs:
+            del self.attrs['id']
         self.timestamp = None
         for x in self.getTags('x', namespace=NS_DELAY):
             try:

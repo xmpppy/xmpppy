@@ -54,7 +54,7 @@ DBG_CLIENT = 'client'
 DBG_COMPONENT = 'component'
 
 
-class PlugIn:
+class PlugIn(object):
     """ Common xmpppy plugins infrastructure: plugging in/out, debugging. """
 
     def __init__(self):

@@ -12,9 +12,7 @@
 ##   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ##   GNU Lesser General Public License for more details.
 
-_version_ = '1.4.0'
-
-"""\
+"""
 
 Generic debug class
 
@@ -37,17 +35,16 @@ in this code
 
 """
 
-import sys
-import traceback
-import time
+_version_ = '1.4.0'
+
 import os
-
+import sys
+import time
 import types
+import traceback
 
-if os.environ.has_key('TERM'):
-    colors_enabled = True
-else:
-    colors_enabled = False
+
+colors_enabled = 'TERM' in os.environ
 
 color_none = chr(27) + "[0m"
 color_black = chr(27) + "[30m"

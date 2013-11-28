@@ -13,8 +13,6 @@
 ##   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ##   GNU General Public License for more details.
 
-__version__ = "$Id"
-
 """
 When your handler is called it is getting the session instance as the first argument.
 This is the difference from xmpppy 0.1 where you got the "Client" instance.
@@ -23,7 +21,9 @@ one client for each connection. Is is specifically important when you are
 writing the server.
 """
 
-from protocol import *
+__version__ = "$Id"
+
+from .protocol import *
 
 # Transport-level flags
 SOCKET_UNCONNECTED = 0

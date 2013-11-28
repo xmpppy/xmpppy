@@ -31,8 +31,8 @@ What it supplies:
     A means of handling requests, by redirection though the command manager.
 """
 
-from protocol import *
-from client import PlugIn
+from .protocol import *
+from .client import PlugIn
 
 
 class Commands(PlugIn):

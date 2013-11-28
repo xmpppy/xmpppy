@@ -19,8 +19,8 @@ Simple roster implementation. Can be used though for different tasks like
 mass-renaming of contacts.
 """
 
-from protocol import *
-from client import PlugIn
+from .protocol import *
+from .client import PlugIn
 
 
 class Roster(PlugIn):

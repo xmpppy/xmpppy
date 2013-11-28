@@ -19,12 +19,14 @@ Provides library with all Non-SASL and SASL authentication mechanisms.
 Can be used both for client and transport authentication.
 """
 
-from protocol import *
-from client import PlugIn
-import base64, random, dispatcher, re
-
+import re
+import base64
+import random
 from hashlib import md5, sha1
 
+from . import dispatcher
+from .protocol import *
+from .client import PlugIn
 
 HH = lambda some: md5(some).hexdigest()
 H = lambda some: md5(some).digest()

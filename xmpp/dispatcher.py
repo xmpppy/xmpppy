@@ -21,9 +21,12 @@ Contains one tunable attribute: DefaultTimeout (25 seconds by default). It defin
 Dispatcher.SendAndWaitForResponce method will wait for reply stanza before giving up.
 """
 
-import simplexml, time, sys
-from protocol import *
-from client import PlugIn
+import sys
+import time
+import simplexml
+
+from .protocol import *
+from .client import PlugIn
 
 DefaultTimeout = 25
 ID = 0
@@ -241,7 +244,8 @@ class Dispatcher(PlugIn):
             1) "realm" - scope of event. Usually a namespace.
             2) "event" - the event itself. F.e. "SUCESSFULL SEND".
             3) data that comes along with event. Depends on event."""
-        if self._eventHandler: self._eventHandler(realm, event, data)
+        if self._eventHandler:
+            self._eventHandler(realm, event, data)
 
     def dispatch(self, stanza, session=None, direct=0):
         """ Main procedure that performs XMPP stanza recognition and calling apppropriate handlers for it.
