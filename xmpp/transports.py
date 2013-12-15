@@ -28,6 +28,7 @@ Also exception 'error' is defined to allow capture of this module specific excep
 """
 
 import socket,select,base64,dispatcher,sys
+import simplexml
 from simplexml import ustr
 from client import PlugIn
 from protocol import *
@@ -396,12 +397,16 @@ class Bosh(PlugIn):
     def __init__(self, server=None, port=None, path=None, use_srv=True):
         PlugIn.__init__(self)
         self.DBG_LINE = 'bosh'
-        self._exported_methods = [self.send, self.receive, self.disconnect,]
+        self._exported_methods = [
+            self.send, self.receive, self.disconnect,
+            self.StreamInit,
+        ]
         self._server = server
         self._port = port
         self._path = path
         self.use_srv = use_srv
         self._respobjs = {}
+        self.Sid = None
 
     def srv_lookup(self, server):
         pass
@@ -468,6 +473,8 @@ class Bosh(PlugIn):
                 self.connect(self._server, self._port)
             if hasattr(self._owner, 'Dispatcher'):
                 self._owner.Dispatcher.Event('', DATA_RECEIVED, data)
+            #if self.Sid:
+            #    return ''.join(str(i) for i in Node(node=data).getChildren())
             return data
 
     def addbody(self, raw_data):
@@ -517,3 +524,54 @@ class Bosh(PlugIn):
     def pending_data(self, timeout=0):
         return select.select(self._respobjs.keys(), [], [], timeout,)[0]
 
+    def StreamInit(self, dispatcher):
+        """ Send an initial stream header. """
+        dispatcher._owner.debug_flags.append(simplexml.DBG_NODEBUILDER)
+        Stream = dispatcher.Stream = simplexml.NodeBuilder()
+        Stream._dispatch_depth=2
+        Stream.dispatch = dispatcher.dispatch
+        Stream.DEBUG=self._owner.DEBUG
+        Stream.features=None
+        Stream.stream_header_received=self._check_stream_start_bosh
+        SASL = getattr(dispatcher._owner, 'SASL',  None)
+        if SASL and SASL.startsasl == 'success':
+            self._metastream = Node('body')
+            self._metastream.setAttr('xmpp:restart', 'true')
+            self._metastream.setAttr('xmlns:xmpp', 'urn:xmpp:xbosh')
+        else:
+            self._metastream=Node('body')
+            self._metastream.setNamespace(NS_HTTP_BIND)
+            self._metastream.setAttr('hold', '1')
+            self._metastream.setAttr('ver', '1.6')
+            self._metastream.setAttr('xmpp:version', '1.0')
+            self._metastream.setAttr('to', self._owner.Server)
+            self._metastream.setAttr('wait', '60')
+            self._metastream.setAttr('xmlns:xmpp', 'urn:xmpp:xbosh')
+        self._owner.send(str(self._metastream))
+
+    def _check_stream_start_bosh(self, ns, tag, attrs):
+        if tag != 'body':
+            return
+        if ns != NS_HTTP_BIND:
+            raise ValueError(
+                'Expected namespace {0} got {1}'.format(
+                    NS_HTTP_BIND, ns,
+                )
+            )
+        if tag != 'body':
+            raise ValueError(
+                'Expected body tag got'.format(tag)
+            )
+        #if 'xmlns:stream' not in attrs or attrs['xmlns:stream'] != NS_STREAMS:
+        #    raise ValueError('xmlns:stream not in attrs: {0}'.format(str(attrs)))
+        # TODO: If no <stream:features/> element is included in the
+        # connection manager's session creation response, then the client
+        # SHOULD send empty request elements until it receives a response
+        # containing a <stream:features/> element. This could be
+        # accoplished by using SendAndWaitForResponse intsead of send.
+        if 'sid' in attrs and not self._owner.Sid:
+            self._owner.Sid = attrs['sid']
+        if 'authid' in attrs and not self._owner.AuthId:
+            self._owner.AuthId = attrs['authid']
+        if self._owner.connected == 'bosh+sasl':
+            print 'METHHH'

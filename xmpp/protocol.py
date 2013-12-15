@@ -205,7 +205,7 @@ del ns,errname,errpool,err,cond,code,typ,text
 
 def isResultNode(node):
     """ Returns true if the node is a positive reply. """
-    return node and node.getType()=='result'
+    return node and node.getAttr('type')=='result'
 def isErrorNode(node):
     """ Returns true if the node is a negative reply. """
     return node and node.getType()=='error'

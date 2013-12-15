@@ -25,8 +25,8 @@ import simplexml,time,sys
 from protocol import *
 from client import PlugIn
 import auth
-import transports
 
+DBG_NODEBUILDER = simplexml.DBG_NODEBUILDER
 DefaultTimeout=25
 ID=0
 
@@ -86,6 +86,14 @@ class Dispatcher(PlugIn):
         self.Stream.destroy()
 
     def StreamInit(self):
+        if not DBG_NODEBUILDER in self._owner.debug_flags:
+            self._owner.debug_flags.append(DBG_NODEBUILDER)
+        if getattr(self._owner, 'StreamInit', None):
+            self._owner.StreamInit(self)
+        else:
+            self._StreamInit()
+
+    def _StreamInit(self):
         """ Send an initial stream header. """
         self.Stream=simplexml.NodeBuilder()
         self.Stream._dispatch_depth=2
@@ -123,28 +131,6 @@ class Dispatcher(PlugIn):
         if ns<>NS_STREAMS or tag<>'stream':
             raise ValueError('Incorrect stream start: (%s,%s). Terminating.'%(tag,ns))
 
-    def _check_stream_start_bosh(self, ns, tag, attrs):
-        if ns != NS_HTTP_BIND:
-            raise ValueError(
-                'Expected namespace {0} got {1}'.format(
-                    NS_HTTP_BIND, ns,
-                )
-            )
-        if tag != 'body':
-            raise ValueError(
-                'Expected body tag got'.format(tag)
-            )
-        #if 'xmlns:stream' not in attrs or attrs['xmlns:stream'] != NS_STREAMS:
-        #    raise ValueError('xmlns:stream not in attrs: {0}'.format(str(attrs)))
-        # TODO: If no <stream:features/> element is included in the
-        # connection manager's session creation response, then the client
-        # SHOULD send empty request elements until it receives a response
-        # containing a <stream:features/> element. This could be
-        # accoplished by using SendAndWaitForResponse intsead of send.
-        if 'sid' in attrs and not self._owner.Sid:
-            self._owner.Sid = attrs['sid']
-        if 'authid' in attrs and not self._owner.AuthId:
-            self._owner.AuthId = attrs['authid']
 
     def Process(self, timeout=0):
         """ Check incoming stream for data waiting. If "timeout" is positive - block for as max. this time.
@@ -162,8 +148,6 @@ class Dispatcher(PlugIn):
         if self._owner.Connection.pending_data(timeout):
             try: 
                 data=self._owner.Connection.receive()
-            except transports.DataNotReady:
-                return '0'
             except IOError: return
             if self._owner.connected.startswith('bosh'):
                 stream = self.Stream
@@ -396,7 +380,7 @@ class Dispatcher(PlugIn):
             self._owner.send(stanza)
             resp = self._owner.receive()
             node = Node(node=resp)
-        return resp
+        return node
 
     def SendAndCallForResponse(self, stanza, func, args={}):
         """ Put stanza on the wire and call back when recipient replies.

@@ -248,6 +248,8 @@ class Bind(PlugIn):
         if resource: resource=[Node('resource',payload=[resource])]
         else: resource=[]
         resp=self._owner.SendAndWaitForResponse(Protocol('iq',typ='set',payload=[Node('bind',attrs={'xmlns':NS_BIND},payload=resource)]))
+        if self._owner.connected.startswith('bosh'):
+            resp = Node(node=resp).getChildren()[0]
         if isResultNode(resp):
             self.bound.append(resp.getTag('bind').getTagData('jid'))
             self.DEBUG('Successfully bound %s.'%self.bound[-1],'ok')
