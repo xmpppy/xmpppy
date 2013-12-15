@@ -426,17 +426,8 @@ class Bosh(PlugIn):
         pass
 
     def plugin(self, owner):
-        if not self._server:
-            self._server = self._owner.Server
-        if not self._port:
-            self._port = self._owner.Port
-        if self.use_srv:
-            # TODO
-            server = self._owner.Server
-            port = self._port
-        else:
-            server = self._server
-            port = self._port
+        # XXX Provide resonable defaults if non were given, lookup service
+        # records from DNS TXT records (see srv_lookup)
         if not self.connect(self._http_host, self._http_port):
             return
         self._owner.Connection=self
