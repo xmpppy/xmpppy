@@ -389,8 +389,6 @@ POST='POST'
 class Bosh(PlugIn):
     headers = {
         'Content-Type': 'text/xml; charset=utf-8',
-# TODO: Impliment gzip
-#        'Accept-Encoding': 'gzip, deflate',
         'Connection': 'Keep-Alive',
     }
 
@@ -517,6 +515,8 @@ class Bosh(PlugIn):
             raw_data = raw_data.split('>',1)[1]
             raw_data = '%s/>'%str(raw_data)[:-1]
             stream = Node(node=raw_data)
+            # XXX This hasn't been tested with old-style auth. Will
+            # probably need to detec that and handle similarly.
             SASL = getattr(self._owner, 'SASL',  None)
             if SASL and SASL.startsasl == 'success':
                 body = Node('body')
