@@ -51,7 +51,6 @@ def connect(username, password, resource,  server='', port='', bosh='', use_srv=
     port = port or 5522
     con = xmpp.Client(server, port)
     con.connect(transport=transport)
-    print username, password, resource
     con.auth(username, password, resource)
     return con
 
@@ -70,8 +69,6 @@ def step(conn):
 
 def main(conn):
     while step(conn): pass
-
-    print tpl.format(*args)
 
 if __name__ == '__main__':
     args = sys.argv[1:]
