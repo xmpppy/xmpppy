@@ -519,7 +519,6 @@ class Bosh(PlugIn):
             stream = Node(node=raw_data)
             SASL = getattr(self._owner, 'SASL',  None)
             if SASL and SASL.startsasl == 'success':
-                print '***meh'
                 body = Node('body')
                 body.setAttr('xmpp:restart', 'true')
                 body.setAttr('xmlns:xmpp', 'urn:xmpp:xbosh')
