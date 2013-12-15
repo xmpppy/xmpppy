@@ -23,7 +23,6 @@ These classes can be used for simple applications "AS IS" though.
 
 import socket
 import debug
-import random
 Debug=debug
 Debug.DEBUGGING_IS_ON=1
 Debug.Debug.colors['socket']=debug.color_dark_gray
@@ -162,11 +161,13 @@ class CommonClient:
         self.Dispatcher.restoreHandlers(handlerssave)
         return self.connected
 
-    def connect(self,server=None,proxy=None,ssl=None,use_srv=None):
+    def connect(self,server=None,proxy=None,ssl=None,use_srv=None,transport=None):
         """ Make a tcp/ip connection, protect it with tls/ssl if possible and start XMPP stream.
             Returns None or 'tcp' or 'tls', depending on the result."""
         if not server: server=(self.Server,self.Port)
-        if proxy: sock=transports.HTTPPROXYsocket(proxy,server,use_srv)
+        if transport:
+            sock=transport
+        elif proxy: sock=transports.HTTPPROXYsocket(proxy,server,use_srv)
         else: sock=transports.TCPsocket(server,use_srv)
         connected=sock.PlugIn(self)
         if not connected:
@@ -189,7 +190,7 @@ class CommonClient:
 
 class Client(CommonClient):
     """ Example client class, based on CommonClient. """
-    def connect(self,server=None,proxy=None,secure=None,use_srv=True):
+    def connect(self,server=None,proxy=None,secure=None,use_srv=True, transport=None):
         """ Connect to jabber server. If you want to specify different ip/port to connect to you can
             pass it as tuple as first parameter. If there is HTTP proxy between you and server
             specify it's address and credentials (if needed) in the second argument.
@@ -198,7 +199,7 @@ class Client(CommonClient):
             If you want to disable tls/ssl support completely, set it to 0.
             Example: connect(('192.168.5.5',5222),{'host':'proxy.my.net','port':8080,'user':'me','password':'secret'})
             Returns '' or 'tcp' or 'tls', depending on the result."""
-        if not CommonClient.connect(self,server,proxy,secure,use_srv) or secure<>None and not secure: return self.connected
+        if not CommonClient.connect(self,server,proxy,secure,use_srv,transport) or secure<>None and not secure: return self.connected
         transports.TLS().PlugIn(self)
         if not self.Dispatcher.Stream._document_attrs.has_key('version') or not self.Dispatcher.Stream._document_attrs['version']=='1.0': return self.connected
         while not self.Dispatcher.Stream.features and self.Process(1): pass      # If we get version 1.0 stream the features tag MUST BE presented
@@ -325,117 +326,3 @@ class Component(CommonClient):
         except:
             self.DEBUG(self.DBG,"Failed to authenticate %s"%name,'error')
 
-class BoshClient(CommonClient):
-
-    def __init__(self, server, port=80, path='/xmpp', debug=['always', 'nodebuilder']):
-        if self.__class__.__name__ == 'BoshClient':
-            self.Namespace = 'jabber:client'
-            self.DBG = DBG_CLIENT
-        elif self.__class__.__name__ == 'Component':
-            self.Namespace = dispatcher.NS_COMPONENT_ACCEPT
-            self.DBG = DBG_COMPONENT
-        self.defaultNamespace = self.Namespace
-        self.disconnect_handlers = []
-        self.Server = server
-        self.Port = 80
-        self.Path = path
-        self.User = None
-        if debug and type(debug) != list:
-            debug=['always', 'nodebuilder']
-        self._DEBUG = Debug.Debug(debug)
-        self.DEBUG = self._DEBUG.Show
-        self.debug_flags = self._DEBUG.debug_flags
-        self.debug_flags.append(self.DBG)
-        self._owner = self
-        self._registered_name = None
-        self.RegisterDisconnectHandler(self.DisconnectHandler)
-        self.connected = ''
-        self._route = 0
-        self._rid = 0
-        self.Sid = None
-        self.AuthId = None
-
-    @property
-    def Rid(self):
-        if not self._rid:
-            self._rid = random.randint(0, 10000000)
-        else:
-            self._rid += 1
-        return str(self._rid)
-
-    def auth(self, user, password, resource='xmpppy', sasl=1):
-        """ Authenticate connnection and bind resource. If resource is not provided
-            random one or library name used. """
-        self._User = user
-        self._Password = password
-        self._Resource = resource
-        while not self.Dispatcher.Stream._document_attrs and self.Process(1):
-            pass
-        if (
-            self.Dispatcher.Stream._document_attrs.has_key('version') and
-            self.Dispatcher.Stream._document_attrs['version']=='1.0'
-            ):
-            while not self.Dispatcher.Stream.features and self.Process(1):
-                pass      # If we get version 1.0 stream the features tag MUST BE presented
-        if sasl:
-            auth.SASL(user,password).PlugIn(self)
-        if not sasl or self.SASL.startsasl=='not-supported':
-            if not resource: resource='xmpppy'
-            if auth.NonSASL(user,password,resource).PlugIn(self):
-                self.connected+='+old_auth'
-                return 'old_auth'
-            return
-        self.SASL.auth()
-        while self.SASL.startsasl=='in-process' and self.Process(1):
-            pass
-        if self.SASL.startsasl=='success':
-            auth.Bind().PlugIn(self)
-            while self.Bind.bound is None and self.Process(1):
-                pass
-            if self.Bind.Bind(resource):
-                self.connected+='+sasl'
-                return 'sasl'
-        else:
-            if self.__dict__.has_key('SASL'):
-                self.SASL.PlugOut()
-
-    def getRoster(self):
-        """ Return the Roster instance, previously plugging it in and
-            requesting roster from server if needed. """
-        if not self.__dict__.has_key('Roster'):
-            roster.Roster().PlugIn(self)
-        return self.Roster.getRoster()
-
-    def sendInitPresence(self,requestRoster=1):
-        """ Send roster request and initial <presence/>.
-            You can disable the first by setting requestRoster argument to 0. """
-        self.sendPresence(requestRoster=requestRoster)
-
-    def sendPresence(self,jid=None,typ=None,requestRoster=0):
-        """ Send some specific presence state.
-            Can also request roster from server if according agrument is set."""
-        if requestRoster:
-            roster.Roster().PlugIn(self)
-        self.send(dispatcher.Presence(to=jid, typ=typ))
-
-    def connect(self, server=None, port=None, path=None, use_srv=False):
-        server = server or self.Server
-        port = port or self.Port
-        path = path or self.Path
-        sock = transports.Bosh(server, port, path, use_srv)
-        connected = sock.PlugIn(self)
-        if not connected:
-            sock.PlugOut()
-            return
-        self.connected='bosh'
-        dispatcher.Dispatcher().PlugIn(self)
-        while self.Dispatcher.Stream._document_attrs is None:
-            if not self.Process(1):
-                return
-        if (
-            self.Dispatcher.Stream._document_attrs.has_key('version') and
-            self.Dispatcher.Stream._document_attrs['version']=='1.0'
-            ):
-            while not self.Dispatcher.Stream.features and self.Process(1):
-                pass      # If we get version 1.0 stream the features tag MUST BE presented
-        return self.connected

@@ -28,12 +28,12 @@ Also exception 'error' is defined to allow capture of this module specific excep
 """
 
 import socket,select,base64,dispatcher,sys
-import simplexml
 from simplexml import ustr
 from client import PlugIn
 from protocol import *
 from httplib import HTTPConnection
-import errno
+from errno import ECONNREFUSED
+import random
 
 # determine which DNS resolution library is available
 HAVE_DNSPYTHON = False
@@ -406,6 +406,7 @@ class Bosh(PlugIn):
         self.use_srv = use_srv
         self._respobjs = {}
         self.Sid = None
+        self._rid = 0
 
     def srv_lookup(self, server):
         pass
@@ -433,7 +434,7 @@ class Bosh(PlugIn):
             self._conn = HTTPConnection(server, port, timeout=15000)
             self._conn.connect()
         except socket.error as e:
-            if e.errno == errno.ECONNREFUSED: # Connection refused
+            if e.errno == ECONNREFUSED: # Connection refused
                 self._conn.close()
                 msg = "Failed to connect to remote host {0}: {1} ({2})"
                 self.DEBUG(msg.format('server', e.strerror, e.errno), 'error')
@@ -470,14 +471,13 @@ class Bosh(PlugIn):
                 self.connect(self._server, self._port)
             if hasattr(self._owner, 'Dispatcher'):
                 self._owner.Dispatcher.Event('', DATA_RECEIVED, data)
-            if not self._owner.Sid or self.restart:
-                node = Node(node=data)
+            node = Node(node=data)
+            if not self.Sid or self.restart:
                 if self.restart:
                     self.restart = False
                 else:
-                    self._owner.Sid = node.getAttr('sid')
-                    self._owner.AuthId = node.getAttr('authid')
-                assert self._owner.Sid
+                    self.Sid = node.getAttr('sid')
+                    self.AuthId = node.getAttr('authid')
                 stream=Node('stream:stream', payload=node.getChildren())
                 stream.setNamespace(self._owner.Namespace)
                 stream.setAttr('version','1.0')
@@ -485,7 +485,11 @@ class Bosh(PlugIn):
                 stream.setAttr('from', self._owner.Server)
                 data = "<?xml version='1.0'?>%s"%str(stream)
                 return data[:-len('</stream:stream>')]
-            return ''.join(str(i) for i in Node(node=data).getChildren())
+            if node.getChildren():
+                return ''.join(str(i) for i in node.getChildren())
+            else:
+                self.send('')
+        return ''
 
     def addbody(self, raw_data):
         if Node(node=raw_data).getName() != 'body':
@@ -501,9 +505,9 @@ class Bosh(PlugIn):
         body.setNamespace('http://jabber.org/protocol/httpbind')
         body.setAttr('content', 'text/xml; charset=utf-8')
         body.setAttr('xml:lang', 'en')
-        body.setAttr('rid', self._owner.Rid)
-        if self._owner.Sid:
-            body.setAttr('sid', self._owner.Sid)
+        body.setAttr('rid', self.Rid)
+        if self.Sid:
+            body.setAttr('sid', self.Sid)
         return str(body)
 
     def send(self, raw_data, retry_timeout=1):
@@ -557,3 +561,14 @@ class Bosh(PlugIn):
 
     def pending_data(self, timeout=0):
         return select.select(self._respobjs.keys(), [], [], timeout,)[0]
+
+    @property
+    def Rid(self):
+        if not self._rid:
+            self._rid = random.randint(0, 10000000)
+        else:
+            self._rid += 1
+        return str(self._rid)
+
+    def getPort(self):
+        return self._port
