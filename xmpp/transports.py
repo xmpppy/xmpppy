@@ -460,7 +460,6 @@ class Bosh(PlugIn):
             conn.close()
 
     def Connection(self):
-        print 'wtf', self._http_host, self._http_port
         conn = HTTPConnection(self._http_host, self._http_port)
         conn.connect()
         return conn
