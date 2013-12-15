@@ -34,6 +34,8 @@ from protocol import *
 from httplib import HTTPConnection
 from errno import ECONNREFUSED
 import random
+from urllib2 import urlparse
+urlparse = urlparse.urlparse
 
 # determine which DNS resolution library is available
 HAVE_DNSPYTHON = False
@@ -392,21 +394,37 @@ class Bosh(PlugIn):
         'Connection': 'Keep-Alive',
     }
 
-    def __init__(self, server=None, port=None, path=None, use_srv=True):
+    def __init__(self, endpoint, server=None, port=None, use_srv=True):
         PlugIn.__init__(self)
         self.DBG_LINE = 'bosh'
         self._exported_methods = [
             self.send, self.receive, self.disconnect,
         ]
-        self._server = server
+        url = urlparse(endpoint)
+        self._http_host = url.hostname
+        self._http_path = url.path
+        if url.port:
+            self._http_port = url.port
+        elif url.scheme == 'https':
+            self._http_port = 443
+        else:
+            self._http_port = 80
+        self._https = url.scheme == 'https'
+        if not server:
+            self._server = url.hostname
+        else:
+            self._server = server
         self._port = port
-        self._path = path
         self.use_srv = use_srv
         self._respobjs = {}
         self.Sid = None
         self._rid = 0
+        print 'wtf', endpoint
+        print 'wtf', self._http_host
 
     def srv_lookup(self, server):
+        # XXX Lookup TXT records to determine BOSH endpoint:
+        # _xmppconnect IN TXT "_xmpp-client-xbosh=https://bosh.jabber.org:5280/bind"
         pass
 
     def plugin(self, owner):
@@ -421,28 +439,31 @@ class Bosh(PlugIn):
         else:
             server = self._server
             port = self._port
-        if not self.connect(server, port):
+        if not self.connect(self._http_host, self._http_port):
             return
         self._owner.Connection=self
         self._owner.RegisterDisconnectHandler(self.disconnect)
         return 'ok'
 
     def connect(self, server=None, port=None):
+        conn = HTTPConnection(server, port)
         try:
-            self._conn = HTTPConnection(server, port, timeout=15000)
-            self._conn.connect()
+            conn.connect()
         except socket.error as e:
             if e.errno == ECONNREFUSED: # Connection refused
-                self._conn.close()
                 msg = "Failed to connect to remote host {0}: {1} ({2})"
                 self.DEBUG(msg.format('server', e.strerror, e.errno), 'error')
+                return
             else:
                 raise
         else:
             return 'ok'
+        finally:
+            conn.close()
 
     def Connection(self):
-        conn = HTTPConnection(self._server, self._port)
+        print 'wtf', self._http_host, self._http_port
+        conn = HTTPConnection(self._http_host, self._http_port)
         conn.connect()
         return conn
 
@@ -540,11 +561,11 @@ class Bosh(PlugIn):
         elif type(raw_data) != type(''):
             raw_data = ustr(raw_data).encode('utf-8')
         headers = dict(self.headers)
-        headers['Host'] = self._server
+        headers['Host'] = self._http_host
         headers['Content-Length'] = len(raw_data)
         conn = self.Connection()
         self.DEBUG(raw_data, 'sent')
-        conn.request(POST, self._path, raw_data, self.headers)
+        conn.request(POST, self._http_path, raw_data, self.headers)
         respobj = conn.response_class(
                 conn.sock, strict=conn.strict, method=conn._method,
         )
