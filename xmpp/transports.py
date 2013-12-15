@@ -31,6 +31,8 @@ import socket,select,base64,dispatcher,sys
 from simplexml import ustr
 from client import PlugIn
 from protocol import *
+from httplib import HTTPConnection
+import errno
 
 # determine which DNS resolution library is available
 HAVE_DNSPYTHON = False
@@ -381,3 +383,137 @@ class TLS(PlugIn):
         self._startSSL()
         self._owner.Dispatcher.PlugOut()
         dispatcher.Dispatcher().PlugIn(self._owner)
+
+POST='POST'
+class Bosh(PlugIn):
+    headers = {
+        'Content-Type': 'text/xml; charset=utf-8',
+# TODO: Impliment gzip
+#        'Accept-Encoding': 'gzip, deflate',
+        'Connection': 'Keep-Alive',
+    }
+
+    def __init__(self, server=None, port=None, path=None, use_srv=True):
+        PlugIn.__init__(self)
+        self.DBG_LINE = 'bosh'
+        self._exported_methods = [self.send, self.receive, self.disconnect,]
+        self._server = server
+        self._port = port
+        self._path = path
+        self.use_srv = use_srv
+        self._respobjs = {}
+
+    def srv_lookup(self, server):
+        pass
+
+    def plugin(self, owner):
+        if not self._server:
+            self._server = self._owner.Server
+        if not self._port:
+            self._port = self._owner.Port
+        if self.use_srv:
+            # TODO
+            server = self._owner.Server
+            port = self._port
+        else:
+            server = self._server
+            port = self._port
+        if not self.connect(server, port):
+            return
+        self._owner.Connection=self
+        self._owner.RegisterDisconnectHandler(self.disconnect)
+        return 'ok'
+
+    def connect(self, server=None, port=None):
+        try:
+            self._conn = HTTPConnection(server, port, timeout=15000)
+            self._conn.connect()
+        except socket.error as e:
+            if e.errno == errno.ECONNREFUSED: # Connection refused
+                self._conn.close()
+                msg = "Failed to connect to remote host {0}: {1} ({2})"
+                self.DEBUG(msg.format('server', e.strerror, e.errno), 'error')
+            else:
+                raise
+        else:
+            return 'ok'
+
+    def Connection(self):
+        conn = HTTPConnection(self._server, self._port)
+        conn.connect()
+        return conn
+
+    def plugout(self):
+        self._conn.close()
+        if 'Connection' in self._owner.__dict__:
+            del(self._owner.Connection)
+            self._owner.UnregisterDisconnectHandler(self.disconnected)
+
+    def receive(self):
+        for sock in self.pending_data():
+            res = self._respobjs.pop(sock)
+            res.begin()
+            if 200 <= res.status < 300:
+                data = res.read()
+                self.DEBUG(data, 'got')
+                self.DEBUG(str(res.getheaders()), 'got')
+            else:
+                data = ''
+                self.DEBUG(str(res.status), 'got')
+                self.DEBUG(str(res.getheaders()), 'got')
+                raise Exception('Invalid response')
+            if res.will_close:
+                self.DEBUG('making new http/1.0 connection.', 'warn')
+                self._conn.close()
+                self.connect(self._server, self._port)
+            if hasattr(self._owner, 'Dispatcher'):
+                self._owner.Dispatcher.Event('', DATA_RECEIVED, data)
+            return data
+
+    def addbody(self, raw_data):
+        if Node(node=raw_data).getName() != 'body':
+            if raw_data:
+                if type(raw_data) == type('') or type(raw_data) == type(u''):
+                    raw_data = Node(node=raw_data)
+                raw_data = [raw_data]
+            else:
+                raw_data = []
+            body = Node('body', payload=raw_data)
+        else:
+            body = Node(node=raw_data)
+        body.setNamespace('http://jabber.org/protocol/httpbind')
+        body.setAttr('content', 'text/xml; charset=utf-8')
+        body.setAttr('xml:lang', 'en')
+        body.setAttr('rid', self._owner.Rid)
+        if self._owner.Sid:
+            body.setAttr('sid', self._owner.Sid)
+        return str(body)
+
+    def send(self, raw_data, retry_timeout=1):
+        raw_data = self.addbody(raw_data)
+        if type(raw_data) == type(u''):
+            raw_data = raw_data.encode('utf-8')
+        elif type(raw_data) != type(''):
+            raw_data = ustr(raw_data).encode('utf-8')
+        headers = dict(self.headers)
+        headers['Host'] = self._server
+        headers['Content-Length'] = len(raw_data)
+        conn = self.Connection()
+        self.DEBUG(raw_data, 'sent')
+        conn.request(POST, self._path, raw_data, self.headers)
+        respobj = conn.response_class(
+                conn.sock, strict=conn.strict, method=conn._method,
+        )
+        self._respobjs[conn.sock] = respobj
+        if hasattr(self._owner, 'Dispatcher') and raw_data.strip():
+            self._owner.Dispatcher.Event('', DATA_SENT, raw_data)
+
+    def disconnect(self):
+        self._conn.close()
+
+    def disconnected(self):
+        pass
+
+    def pending_data(self, timeout=0):
+        return select.select(self._respobjs.keys(), [], [], timeout,)[0]
+
