@@ -102,7 +102,12 @@ class SASL(PlugIn):
         self.password=password
 
     def plugin(self,owner):
-        if not self._owner.Dispatcher.Stream._document_attrs.has_key('version'): self.startsasl='not-supported'
+        # XXX This is not elegant, would be better off handled at the parser
+        # level. Ie. The parser should know xmpp: is the namespace fo the
+        # "Stream's" document.
+        version = 'version' in self._owner.Dispatcher.Stream._document_attrs
+        version = version or 'xmpp:version' in self._owner.Dispatcher.Stream._document_attrs
+        if not version: self.startsasl='not-supported'
         elif self._owner.Dispatcher.Stream.features:
             try: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
             except NodeProcessed: pass
