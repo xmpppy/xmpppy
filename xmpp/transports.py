@@ -455,6 +455,7 @@ class Bosh(PlugIn):
             self._owner.UnregisterDisconnectHandler(self.disconnected)
 
     def receive(self):
+        resp = ''
         for sock in self.pending_data():
             res = self._respobjs.pop(sock)
             res.begin()
@@ -462,16 +463,11 @@ class Bosh(PlugIn):
                 data = res.read()
                 self.DEBUG(data, 'got')
             else:
-                data = ''
                 self.DEBUG(str(res.status), 'got')
                 raise Exception('Invalid response')
-            if res.will_close:
-                self.DEBUG('making new http/1.0 connection.', 'warn')
-                self._conn.close()
-                self.connect(self._server, self._port)
-            if hasattr(self._owner, 'Dispatcher'):
-                self._owner.Dispatcher.Event('', DATA_RECEIVED, data)
             node = Node(node=data)
+            if  node.getName() != 'body':
+                raise ValueError('Invalid BOSH response')
             if not self.Sid or self.restart:
                 if self.restart:
                     self.restart = False
@@ -484,12 +480,16 @@ class Bosh(PlugIn):
                 stream.setAttr('xmlns:stream', NS_STREAMS)
                 stream.setAttr('from', self._owner.Server)
                 data = "<?xml version='1.0'?>%s"%str(stream)
-                return data[:-len('</stream:stream>')]
+                resp = data[:-len('</stream:stream>')]
+                break
             if node.getChildren():
-                return ''.join(str(i) for i in node.getChildren())
+                resp = ''.join(str(i) for i in node.getChildren())
+                break
             else:
                 self.send('')
-        return ''
+        if resp:
+            self._owner.Dispatcher.Event('', DATA_RECEIVED, resp)
+        return resp
 
     def addbody(self, raw_data):
         if Node(node=raw_data).getName() != 'body':
