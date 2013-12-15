@@ -399,7 +399,6 @@ class Bosh(PlugIn):
         self.DBG_LINE = 'bosh'
         self._exported_methods = [
             self.send, self.receive, self.disconnect,
-            self.StreamInit,
         ]
         self._server = server
         self._port = port
@@ -461,11 +460,9 @@ class Bosh(PlugIn):
             if 200 <= res.status < 300:
                 data = res.read()
                 self.DEBUG(data, 'got')
-                self.DEBUG(str(res.getheaders()), 'got')
             else:
                 data = ''
                 self.DEBUG(str(res.status), 'got')
-                self.DEBUG(str(res.getheaders()), 'got')
                 raise Exception('Invalid response')
             if res.will_close:
                 self.DEBUG('making new http/1.0 connection.', 'warn')
@@ -473,9 +470,22 @@ class Bosh(PlugIn):
                 self.connect(self._server, self._port)
             if hasattr(self._owner, 'Dispatcher'):
                 self._owner.Dispatcher.Event('', DATA_RECEIVED, data)
-            #if self.Sid:
-            #    return ''.join(str(i) for i in Node(node=data).getChildren())
-            return data
+            if not self._owner.Sid or self.restart:
+                node = Node(node=data)
+                if self.restart:
+                    self.restart = False
+                else:
+                    self._owner.Sid = node.getAttr('sid')
+                    self._owner.AuthId = node.getAttr('authid')
+                assert self._owner.Sid
+                stream=Node('stream:stream', payload=node.getChildren())
+                stream.setNamespace(self._owner.Namespace)
+                stream.setAttr('version','1.0')
+                stream.setAttr('xmlns:stream', NS_STREAMS)
+                stream.setAttr('from', self._owner.Server)
+                data = "<?xml version='1.0'?>%s"%str(stream)
+                return data[:-len('</stream:stream>')]
+            return ''.join(str(i) for i in Node(node=data).getChildren())
 
     def addbody(self, raw_data):
         if Node(node=raw_data).getName() != 'body':
@@ -497,6 +507,30 @@ class Bosh(PlugIn):
         return str(body)
 
     def send(self, raw_data, retry_timeout=1):
+        if type(raw_data) != type('') or type(raw_data) != type(u''):
+            raw_data = str(raw_data)
+        if raw_data.startswith("<?xml version='1.0'?><stream"):
+            raw_data = raw_data.split('>',1)[1]
+            raw_data = '%s/>'%str(raw_data)[:-1]
+            stream = Node(node=raw_data)
+            SASL = getattr(self._owner, 'SASL',  None)
+            if SASL and SASL.startsasl == 'success':
+                print '***meh'
+                body = Node('body')
+                body.setAttr('xmpp:restart', 'true')
+                body.setAttr('xmlns:xmpp', 'urn:xmpp:xbosh')
+                self.restart = True
+            else:
+                self.restart = False
+                body=Node('body')
+                body.setNamespace(NS_HTTP_BIND)
+                body.setAttr('hold', '1')
+                body.setAttr('ver', '1.6')
+                body.setAttr('xmpp:version', stream.getAttr('version'))
+                body.setAttr('to', stream.getAttr('to'))
+                body.setAttr('wait', '60')
+                body.setAttr('xmlns:xmpp', 'urn:xmpp:xbosh')
+            raw_data = str(body)
         raw_data = self.addbody(raw_data)
         if type(raw_data) == type(u''):
             raw_data = raw_data.encode('utf-8')
@@ -523,55 +557,3 @@ class Bosh(PlugIn):
 
     def pending_data(self, timeout=0):
         return select.select(self._respobjs.keys(), [], [], timeout,)[0]
-
-    def StreamInit(self, dispatcher):
-        """ Send an initial stream header. """
-        dispatcher._owner.debug_flags.append(simplexml.DBG_NODEBUILDER)
-        Stream = dispatcher.Stream = simplexml.NodeBuilder()
-        Stream._dispatch_depth=2
-        Stream.dispatch = dispatcher.dispatch
-        Stream.DEBUG=self._owner.DEBUG
-        Stream.features=None
-        Stream.stream_header_received=self._check_stream_start_bosh
-        SASL = getattr(dispatcher._owner, 'SASL',  None)
-        if SASL and SASL.startsasl == 'success':
-            self._metastream = Node('body')
-            self._metastream.setAttr('xmpp:restart', 'true')
-            self._metastream.setAttr('xmlns:xmpp', 'urn:xmpp:xbosh')
-        else:
-            self._metastream=Node('body')
-            self._metastream.setNamespace(NS_HTTP_BIND)
-            self._metastream.setAttr('hold', '1')
-            self._metastream.setAttr('ver', '1.6')
-            self._metastream.setAttr('xmpp:version', '1.0')
-            self._metastream.setAttr('to', self._owner.Server)
-            self._metastream.setAttr('wait', '60')
-            self._metastream.setAttr('xmlns:xmpp', 'urn:xmpp:xbosh')
-        self._owner.send(str(self._metastream))
-
-    def _check_stream_start_bosh(self, ns, tag, attrs):
-        if tag != 'body':
-            return
-        if ns != NS_HTTP_BIND:
-            raise ValueError(
-                'Expected namespace {0} got {1}'.format(
-                    NS_HTTP_BIND, ns,
-                )
-            )
-        if tag != 'body':
-            raise ValueError(
-                'Expected body tag got'.format(tag)
-            )
-        #if 'xmlns:stream' not in attrs or attrs['xmlns:stream'] != NS_STREAMS:
-        #    raise ValueError('xmlns:stream not in attrs: {0}'.format(str(attrs)))
-        # TODO: If no <stream:features/> element is included in the
-        # connection manager's session creation response, then the client
-        # SHOULD send empty request elements until it receives a response
-        # containing a <stream:features/> element. This could be
-        # accoplished by using SendAndWaitForResponse intsead of send.
-        if 'sid' in attrs and not self._owner.Sid:
-            self._owner.Sid = attrs['sid']
-        if 'authid' in attrs and not self._owner.AuthId:
-            self._owner.AuthId = attrs['authid']
-        if self._owner.connected == 'bosh+sasl':
-            print 'METHHH'

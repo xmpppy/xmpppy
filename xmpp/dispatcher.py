@@ -24,9 +24,7 @@ Dispatcher.SendAndWaitForResponce method will wait for reply stanza before givin
 import simplexml,time,sys
 from protocol import *
 from client import PlugIn
-import auth
 
-DBG_NODEBUILDER = simplexml.DBG_NODEBUILDER
 DefaultTimeout=25
 ID=0
 
@@ -86,51 +84,24 @@ class Dispatcher(PlugIn):
         self.Stream.destroy()
 
     def StreamInit(self):
-        if not DBG_NODEBUILDER in self._owner.debug_flags:
-            self._owner.debug_flags.append(DBG_NODEBUILDER)
-        if getattr(self._owner, 'StreamInit', None):
-            self._owner.StreamInit(self)
-        else:
-            self._StreamInit()
-
-    def _StreamInit(self):
         """ Send an initial stream header. """
         self.Stream=simplexml.NodeBuilder()
         self.Stream._dispatch_depth=2
         self.Stream.dispatch=self.dispatch
+        self.Stream.stream_header_received=self._check_stream_start
         self._owner.debug_flags.append(simplexml.DBG_NODEBUILDER)
         self.Stream.DEBUG=self._owner.DEBUG
         self.Stream.features=None
-        if self._owner.connected.startswith('bosh'):
-            self.Stream.stream_header_received=self._check_stream_start_bosh
-            SASL = getattr(self._owner, 'SASL',  None)
-            if SASL and SASL.startsasl == 'success':
-                self._metastream = Node('body')
-                self._metastream.setAttr('xmpp:restart', 'true')
-                self._metastream.setAttr('xmlns:xmpp', 'urn:xmpp:xbosh')
-            else:
-                self._metastream=Node('body')
-                self._metastream.setNamespace(NS_HTTP_BIND)
-                self._metastream.setAttr('hold', '1')
-                self._metastream.setAttr('ver', '1.6')
-                self._metastream.setAttr('xmpp:version', '1.0')
-                self._metastream.setAttr('to', self._owner.Server)
-                self._metastream.setAttr('wait', '60')
-                self._metastream.setAttr('xmlns:xmpp', 'urn:xmpp:xbosh')
-            self._owner.send(str(self._metastream))
-        else:
-            self.Stream.stream_header_received=self._check_stream_start
-            self._metastream=Node('stream:stream')
-            self._metastream.setNamespace(self._owner.Namespace)
-            self._metastream.setAttr('version','1.0')
-            self._metastream.setAttr('xmlns:stream',NS_STREAMS)
-            self._metastream.setAttr('to',self._owner.Server)
-            self._owner.send("<?xml version='1.0'?>%s>"%str(self._metastream)[:-2])
+        self._metastream=Node('stream:stream')
+        self._metastream.setNamespace(self._owner.Namespace)
+        self._metastream.setAttr('version','1.0')
+        self._metastream.setAttr('xmlns:stream',NS_STREAMS)
+        self._metastream.setAttr('to',self._owner.Server)
+        self._owner.send("<?xml version='1.0'?>%s>"%str(self._metastream)[:-2])
 
     def _check_stream_start(self,ns,tag,attrs):
         if ns<>NS_STREAMS or tag<>'stream':
             raise ValueError('Incorrect stream start: (%s,%s). Terminating.'%(tag,ns))
-
 
     def Process(self, timeout=0):
         """ Check incoming stream for data waiting. If "timeout" is positive - block for as max. this time.
@@ -146,16 +117,8 @@ class Dispatcher(PlugIn):
             _pendingException = self._pendingExceptions.pop()
             raise _pendingException[0], _pendingException[1], _pendingException[2]
         if self._owner.Connection.pending_data(timeout):
-            try: 
-                data=self._owner.Connection.receive()
+            try: data=self._owner.Connection.receive()
             except IOError: return
-            if self._owner.connected.startswith('bosh'):
-                stream = self.Stream
-                self.Stream=simplexml.NodeBuilder()
-                self.Stream.DEBUG=stream.DEBUG
-                self.Stream.stream_header_received=stream.stream_header_received
-                self.Stream._dispatch_depth=2
-                self.Stream.dispatch=self.dispatch
             self.Stream.Parse(data)
             if len(self._pendingExceptions) > 0:
                 _pendingException = self._pendingExceptions.pop()
@@ -266,11 +229,9 @@ class Dispatcher(PlugIn):
             3) data that comes along with event. Depends on event."""
         if self._eventHandler: self._eventHandler(realm,event,data)
 
-    def dispatch(self, stanza, session=None, direct=0):
-        """
-        Main procedure that performs XMPP stanza recognition and calling
-        apppropriate handlers for it.  Called internally.
-        """
+    def dispatch(self,stanza,session=None,direct=0):
+        """ Main procedure that performs XMPP stanza recognition and calling apppropriate handlers for it.
+            Called internally. """
         if not session: session=self
         session.Stream._mini_dom=None
         name=stanza.getName()
@@ -373,14 +334,7 @@ class Dispatcher(PlugIn):
 
     def SendAndWaitForResponse(self, stanza, timeout=DefaultTimeout):
         """ Put stanza on the wire and wait for recipient's response to it. """
-        if self._owner.connected != 'bosh':
-            return self.WaitForResponse(self.send(stanza),timeout)
-        node = None
-        while not node or not node.getChildren():
-            self._owner.send(stanza)
-            resp = self._owner.receive()
-            node = Node(node=resp)
-        return node
+        return self.WaitForResponse(self.send(stanza),timeout)
 
     def SendAndCallForResponse(self, stanza, func, args={}):
         """ Put stanza on the wire and call back when recipient replies.
@@ -390,8 +344,6 @@ class Dispatcher(PlugIn):
     def send(self,stanza):
         """ Serialise stanza and put it on the wire. Assign an unique ID to it before send.
             Returns assigned ID."""
-        if self._owner.connected == 'bosh':
-            return self._owner_send(stanza)
         if type(stanza) in [type(''), type(u'')]: return self._owner_send(stanza)
         if not isinstance(stanza,Protocol): _ID=None
         elif not stanza.getID():

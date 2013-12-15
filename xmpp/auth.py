@@ -102,12 +102,7 @@ class SASL(PlugIn):
         self.password=password
 
     def plugin(self,owner):
-        # XXX This is not elegant, would be better off handled at the parser
-        # level. Ie. The parser should know xmpp: is the namespace fo the
-        # "Stream's" document.
-        version = 'version' in self._owner.Dispatcher.Stream._document_attrs
-        version = version or 'xmpp:version' in self._owner.Dispatcher.Stream._document_attrs
-        if not version: self.startsasl='not-supported'
+        if not self._owner.Dispatcher.Stream._document_attrs.has_key('version'): self.startsasl='not-supported'
         elif self._owner.Dispatcher.Stream.features:
             try: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
             except NodeProcessed: pass
@@ -248,8 +243,6 @@ class Bind(PlugIn):
         if resource: resource=[Node('resource',payload=[resource])]
         else: resource=[]
         resp=self._owner.SendAndWaitForResponse(Protocol('iq',typ='set',payload=[Node('bind',attrs={'xmlns':NS_BIND},payload=resource)]))
-        if self._owner.connected.startswith('bosh'):
-            resp = Node(node=resp).getChildren()[0]
         if isResultNode(resp):
             self.bound.append(resp.getTag('bind').getTagData('jid'))
             self.DEBUG('Successfully bound %s.'%self.bound[-1],'ok')
