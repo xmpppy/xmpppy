@@ -419,8 +419,6 @@ class Bosh(PlugIn):
         self._respobjs = {}
         self.Sid = None
         self._rid = 0
-        print 'wtf', endpoint
-        print 'wtf', self._http_host
 
     def srv_lookup(self, server):
         # XXX Lookup TXT records to determine BOSH endpoint:
