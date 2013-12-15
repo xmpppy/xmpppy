@@ -39,6 +39,10 @@ def showhelp(*args):
     print tpl.format(*args)
 
 def connect(username, password, resource,  server='', port='', bosh='', use_srv=False):
+    """
+    The only thing of much substance here, this connect method demostrates how
+    to create an xmpp client using the BOSH transport.
+    """
     transport = None
     url = urlparse.urlparse(bosh)
     if bosh:
