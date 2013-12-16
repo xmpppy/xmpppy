@@ -456,7 +456,8 @@ class Bosh(PlugIn):
         return conn
 
     def plugout(self):
-        self._conn.close()
+        for soc in self._respobjs:
+            soc.close()
         if 'Connection' in self._owner.__dict__:
             del(self._owner.Connection)
             self._owner.UnregisterDisconnectHandler(self.disconnected)
