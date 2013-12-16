@@ -11,25 +11,25 @@ def showhelp(*args):
     tpl = """
  Simple BOSH Bot Example
 
-   bosh.py username passowrd endpoint [Options] -r|--resource <rsc>
+   bosh.py USERNAME PASSWORD ENDPOINT [Options] -r|--resource RESOURCE
 
  Required Arguments:
 
-   username    A Username to authenticate with.
+   USERNAME    A Username to authenticate with.
 
                Current: {0}
 
-   password    A passowd to authenticate with.
+   PASSWORD    A passowd to authenticate with.
 
                Current: {1}
 
-   endpoint    The BOSH endpoint Url.
+   ENDPOINT    The BOSH endpoint Url.
 
                Current: {2}
 
  Options:
 
-  -r|--resource    Set the resource name <rsc> that will be used
+  -r|--resource RESOURCE  Set the resource name that will be used
 
                    Current: {3}
 
@@ -40,7 +40,7 @@ def showhelp(*args):
 
 def connect(username, password, resource,  server='', port='', bosh='', use_srv=False):
     """
-    The only thing of much substance here, this connect method demostrates how
+    The only thing of much substance here, this connect method demonstrates how
     to create an xmpp client using the BOSH transport.
     """
     transport = None
@@ -93,15 +93,15 @@ if __name__ == '__main__':
                 password = arg
             elif len(pos) == 2:
                 endpoint = arg
-            pos.push(arg)
+            pos.append(arg)
             continue
     if help:
         showhelp(username, password, endpoint, resource)
         sys.exit(0)
-    assert username and passowrd and endpoint, \
+    assert username and password and endpoint, \
         'username, password, and endpoint required'
     username, password, endpoint = pos
-    c = connect(username, password, resource, server, port, 'http://xmpp.h4.cx/xmpp')
+    c = connect(username, password, resource, bosh=endpoint)
     c.RegisterHandler('message', message)
     c.sendInitPresence()
     main(c)
