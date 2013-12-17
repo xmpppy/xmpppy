@@ -75,11 +75,11 @@ def main(conn):
 if __name__ == '__main__':
     args = sys.argv[1:]
     resource = 'simplebot'
-    pos = []
     help = False
     username = ''
     password = ''
     endpoint = ''
+    positionals = []
     while args:
         arg = args.pop(0)
         if arg in ['-r', '--resource']:
@@ -89,20 +89,19 @@ if __name__ == '__main__':
             help = True
             continue
         if not arg.startswith('-'):
-            if len(pos) == 0:
+            if len(positionals) == 0:
                 username = arg
-            elif len(pos) == 1:
+            elif len(positionals) == 1:
                 password = arg
-            elif len(pos) == 2:
+            elif len(positionals) == 2:
                 endpoint = arg
-            pos.append(arg)
+            positionals.append(arg)
             continue
     if help:
         showhelp(username, password, endpoint, resource)
         sys.exit(0)
     assert username and password and endpoint, \
         'username, password, and endpoint required'
-    username, password, endpoint = pos
     c = connect(username, password, resource, bosh=endpoint)
     c.RegisterHandler('message', message)
     c.sendInitPresence()

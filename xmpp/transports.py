@@ -31,9 +31,11 @@ import socket,select,base64,dispatcher,sys
 from simplexml import ustr
 from client import PlugIn
 from protocol import *
-from httplib import HTTPConnection, _CS_IDLE, BadStatusLine
+from httplib import HTTPConnection, HTTPSConnection, _CS_IDLE, BadStatusLine
 from errno import ECONNREFUSED
 import random
+import gzip
+from StringIO import StringIO
 from urllib2 import urlparse
 urlparse = urlparse.urlparse
 
@@ -389,8 +391,15 @@ class TLS(PlugIn):
 
 POST='POST'
 class Bosh(PlugIn):
+
+    connection_cls = {
+        'http': HTTPConnection,
+        'https': HTTPSConnection,
+    }
+
     headers = {
         'Content-Type': 'text/xml; charset=utf-8',
+        'Accept-Encoding': 'gzip, deflate',
         'Connection': 'Keep-Alive',
     }
 
@@ -410,7 +419,7 @@ class Bosh(PlugIn):
             self._http_port = 443
         else:
             self._http_port = 80
-        self._https = url.scheme == 'https'
+        self._http_proto = url.scheme
         if not server:
             self._server = url.hostname
         else:
@@ -443,8 +452,8 @@ class Bosh(PlugIn):
         self._owner.RegisterDisconnectHandler(self.disconnect)
         return 'ok'
 
-    def connect(self, server=None, port=None):
-        conn = self._connect(server, port)
+    def connect(self, server=None, port=None, timeout=3, conopts={}):
+        conn = self._connect(server, port, timeout, conopts)
         if conn:
             if self.PIPELINE:
                 self._pipeline == conn
@@ -452,10 +461,11 @@ class Bosh(PlugIn):
                 conn.close()
             return 'ok'
 
-    def _connect(self, server=None, port=None, timeout=3):
+    def _connect(self, server=None, port=None, timeout=3, conopts={}):
         endat = time.time() + timeout
         while True:
-            conn = HTTPConnection(server, port)
+            cls = self.connection_cls[self._http_proto]
+            conn = cls(server, port, **conopts)
             try:
                 conn.connect()
             except socket.error as e:
@@ -481,7 +491,7 @@ class Bosh(PlugIn):
                     self._http_host, self._http_port
                 )
             return self._pipeline
-        conn = HTTPConnection(self._http_host, self._http_port)
+        conn = self._connect(self._http_host, self._http_port)
         conn.connect()
         return conn
 
@@ -504,7 +514,6 @@ class Bosh(PlugIn):
         if self.PIPELINE:
             res, data = self._respobjs.pop(0)
         else:
-            sock = self.pending_data()[0]
             res, data = self._respobjs.pop(sock)
         try:
             res.begin()
@@ -523,7 +532,15 @@ class Bosh(PlugIn):
                 # status line.
                 raise
         if 200 <= res.status < 300:
-            data = res.read()
+            headers = dict(res.getheaders())
+            if headers.get('content-encoding', None) == 'gzip':
+                a = StringIO()
+                a.write(res.read())
+                a.seek(0)
+                gz = gzip.GzipFile(fileobj=a)
+                data = gz.read()
+            else:
+                data = res.read()
             self.DEBUG(data, 'got')
         else:
             msg = "Recieved a non 200 status: %s" % res.status
