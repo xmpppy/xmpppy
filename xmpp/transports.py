@@ -429,7 +429,6 @@ class Bosh(PlugIn):
         else:
             self._respobjs = {}
 
-
     def srv_lookup(self, server):
         # XXX Lookup TXT records to determine BOSH endpoint:
         # _xmppconnect IN TXT "_xmpp-client-xbosh=https://bosh.jabber.org:5280/bind"
@@ -475,7 +474,7 @@ class Bosh(PlugIn):
                 break
         return conn
 
-    def Connection(self):
+    def Connection(self, reset=False):
         if self.PIPELINE:
             if not self._pipeline or not self._pipeline.sock:
                 self._pipeline = self._connect(
@@ -485,6 +484,13 @@ class Bosh(PlugIn):
         conn = HTTPConnection(self._http_host, self._http_port)
         conn.connect()
         return conn
+
+    def refreshpipeline(I):
+        if self._pipeline and self._pipeline.sock:
+            self._pipeline.sock.shutdown()
+            self._pipeline.sock.close()
+        self._pipeline = None
+        self.Connect()
 
     def plugout(self):
         for soc in self._respobjs:
@@ -507,11 +513,9 @@ class Bosh(PlugIn):
             if len(resp) == 0:
                 # The TCP Connection has been dropped, Resend the
                 # request.
-                self._pipeline = None
-                self.Connection()
+                self.refreshpipeline()
                 node = Node(node=data)
-                self._rid = int(node.getAttr('rid')) - 1
-                self.rs += 1
+                self.Rid = node.getAttr('rid')
                 self.send(data)
                 return resp
             else:
@@ -616,7 +620,7 @@ class Bosh(PlugIn):
             body.setAttr('sid', self.Sid)
         return str(body)
 
-    def send(self, raw_data, retry_timeout=1):
+    def send(self, raw_data):
         if type(raw_data) != type('') or type(raw_data) != type(u''):
             raw_data = str(raw_data)
         bosh_data = self.xmlstream_to_bosh(raw_data)
@@ -639,13 +643,21 @@ class Bosh(PlugIn):
             self._respobjs[conn.sock] = (respobj, bosh_data)
         if hasattr(self._owner, 'Dispatcher') and bosh_data.strip():
             self._owner.Dispatcher.Event('', DATA_SENT, bosh_data)
+        return True
 
     def disconnect(self):
-        if self._pipeline and self._pipeline.sock:
-            self._pipeline.close()
+        self.DEBUG("Closing socket", 'stop')
+        if self.PIPELINE:
+            if self._pipeline and self._pipeline.sock:
+                self._pipeline.sock.shutdown()
+                self._pipeline.close()
+        else:
+            for sock in self._respobjs:
+                sock.shutdown()
+                sock.close()
 
     def disconnected(self):
-        pass
+        self.DEBUG("BOSH transport operation failed", 'error')
 
     def pending_data(self, timeout=0):
         pending = False
@@ -673,12 +685,25 @@ class Bosh(PlugIn):
 
     @property
     def Rid(self):
+        """
+        An auto incrementing response id.
+        """
         if not self._rid:
             self._rid = random.randint(0, 10000000)
         else:
             self._rid += 1
         return str(self._rid)
 
+    @Rid.setter
+    def Rid(self, i):
+        """
+        Set the Rid's next value
+        """
+        self._rid = int(i) - 1
+
     def getPort(self):
+        """
+        Return the port of the backend server (behind the endpoint).
+        """
         return self._port
 
