@@ -591,7 +591,7 @@ class Bosh(PlugIn):
         if stream.startswith("<?xml version='1.0'?><stream"):
             # This is the begining of an xml stream. This is expected to
             # happen two times through out the lifetime of the bosh
-            # connection. When we first open the connection and once
+            # session. When we first open the session and once
             # after authentication.
 
             # Sanitize stream tag so that it is suitable for parsing.
