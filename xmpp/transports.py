@@ -31,7 +31,7 @@ import socket,select,base64,dispatcher,sys
 from simplexml import ustr
 from client import PlugIn
 from protocol import *
-from httplib import HTTPConnection
+from httplib import HTTPConnection, _CS_IDLE, BadStatusLine
 from errno import ECONNREFUSED
 import random
 from urllib2 import urlparse
@@ -394,7 +394,8 @@ class Bosh(PlugIn):
         'Connection': 'Keep-Alive',
     }
 
-    def __init__(self, endpoint, server=None, port=None, use_srv=True):
+    def __init__(self, endpoint, server=None, port=None, use_srv=True, wait=80,
+            hold=4, requests=5, PIPELINE=True):
         PlugIn.__init__(self)
         self.DBG_LINE = 'bosh'
         self._exported_methods = [
@@ -416,9 +417,18 @@ class Bosh(PlugIn):
             self._server = server
         self._port = port
         self.use_srv = use_srv
-        self._respobjs = {}
         self.Sid = None
         self._rid = 0
+        self.wait = 80
+        self.hold = hold
+        self.requests = requests
+        self._pipeline = None
+        self.PIPELINE = PIPELINE
+        if self.PIPELINE:
+            self._respobjs = []
+        else:
+            self._respobjs = {}
+
 
     def srv_lookup(self, server):
         # XXX Lookup TXT records to determine BOSH endpoint:
@@ -435,22 +445,43 @@ class Bosh(PlugIn):
         return 'ok'
 
     def connect(self, server=None, port=None):
-        conn = HTTPConnection(server, port)
-        try:
-            conn.connect()
-        except socket.error as e:
-            if e.errno == ECONNREFUSED: # Connection refused
-                msg = "Failed to connect to remote host {0}: {1} ({2})"
-                self.DEBUG(msg.format('server', e.strerror, e.errno), 'error')
-                return
+        conn = self._connect(server, port)
+        if conn:
+            if self.PIPELINE:
+                self._pipeline == conn
             else:
-                raise
-        else:
+                conn.close()
             return 'ok'
-        finally:
-            conn.close()
+
+    def _connect(self, server=None, port=None, timeout=3):
+        endat = time.time() + timeout
+        while True:
+            conn = HTTPConnection(server, port)
+            try:
+                conn.connect()
+            except socket.error as e:
+                if e.errno == ECONNREFUSED: # Connection refused
+                    if time.time() > endat:
+                        msg = "Failed to connect to remote host %s: %s (%s)" % (
+                            'server', e.strerror, e.errno,
+                        )
+                        self.DEBUG(msg, 'error')
+                        raise
+                else:
+                    conn.close()
+                    raise
+                time.sleep(.5)
+            else:
+                break
+        return conn
 
     def Connection(self):
+        if self.PIPELINE:
+            if not self._pipeline or not self._pipeline.sock:
+                self._pipeline = self._connect(
+                    self._http_host, self._http_port
+                )
+            return self._pipeline
         conn = HTTPConnection(self._http_host, self._http_port)
         conn.connect()
         return conn
@@ -464,52 +495,119 @@ class Bosh(PlugIn):
 
     def receive(self):
         resp = ''
-        for sock in self.pending_data():
-            res = self._respobjs.pop(sock)
+        if self.PIPELINE:
+            res, data = self._respobjs.pop(0)
+        else:
+            sock = self.pending_data()[0]
+            res, data = self._respobjs.pop(sock)
+        try:
             res.begin()
-            if 200 <= res.status < 300:
-                data = res.read()
-                self.DEBUG(data, 'got')
+        except BadStatusLine:
+            resp = sock.recv(1024)
+            if len(resp) == 0:
+                # The TCP Connection has been dropped, Resend the
+                # request.
+                self._pipeline = None
+                self.Connection()
+                node = Node(node=data)
+                self._rid = int(node.getAttr('rid')) - 1
+                self.rs += 1
+                self.send(data)
+                return resp
             else:
-                self.DEBUG(str(res.status), 'got')
-                raise Exception('Invalid response')
-            node = Node(node=data)
-            if  node.getName() != 'body':
-                raise ValueError('Invalid BOSH response')
-            if not self.Sid or self.restart:
-                if self.restart:
-                    self.restart = False
-                else:
-                    self.Sid = node.getAttr('sid')
-                    self.AuthId = node.getAttr('authid')
-                stream=Node('stream:stream', payload=node.getChildren())
-                stream.setNamespace(self._owner.Namespace)
-                stream.setAttr('version','1.0')
-                stream.setAttr('xmlns:stream', NS_STREAMS)
-                stream.setAttr('from', self._owner.Server)
-                data = "<?xml version='1.0'?>%s"%str(stream)
-                resp = data[:-len('</stream:stream>')]
-                break
-            if node.getChildren():
-                resp = ''.join(str(i) for i in node.getChildren())
-                break
-            else:
-                self.send('')
+                # The server sent some data but it was a legit bad
+                # status line.
+                raise
+        if 200 <= res.status < 300:
+            data = res.read()
+            self.DEBUG(data, 'got')
+        else:
+            msg = "Recieved a non 200 status: %s" % res.status
+            self.DEBUG(msg, 'warn')
+            raise Exception("Disconnected from server")
+        node = Node(node=data)
+        if  node.getName() != 'body':
+            raise IOError("Disconnected from server")
+        if node.getAttr('type') == 'terminate':
+            msg = "Connection manager terminated stream: %s" % (
+                node.getAttr('condition')
+            )
+            self.DEBUG(msg, 'info')
+            raise IOError("Disconnected from server")
+        resp = self.bosh_to_xmlstream(node)
         if resp:
             self._owner.Dispatcher.Event('', DATA_RECEIVED, resp)
+        else:
+            self.send(data)
         return resp
 
-    def addbody(self, raw_data):
-        if Node(node=raw_data).getName() != 'body':
-            if raw_data:
-                if type(raw_data) == type('') or type(raw_data) == type(u''):
-                    raw_data = Node(node=raw_data)
-                raw_data = [raw_data]
+    def bosh_to_xmlstream(self, node):
+        if not self.Sid or self.restart:
+            # Expect a stream features elemnt that needs to be opened by a
+            # stream element.
+            if self.restart:
+                self.restart = False
             else:
-                raw_data = []
-            body = Node('body', payload=raw_data)
+                self.Sid = node.getAttr('sid')
+                self.AuthId = node.getAttr('authid')
+                self.wait = int(node.getAttr('wait') or self.wait)
+                self.hold = int(node.getAttr('hold') or self.hold)
+                self.requests = int(node.getAttr('requests') or self.requests)
+            stream=Node('stream:stream', payload=node.getChildren())
+            stream.setNamespace(self._owner.Namespace)
+            stream.setAttr('version','1.0')
+            stream.setAttr('xmlns:stream', NS_STREAMS)
+            stream.setAttr('from', self._owner.Server)
+            data = str(stream)[:-len('</stream:stream>')]
+            resp = "<?xml version='1.0'?>%s"%str(data)
+        elif node.getChildren():
+            resp = ''.join(str(i) for i in node.getChildren())
         else:
-            body = Node(node=raw_data)
+            resp = ''
+        return resp
+
+    def xmlstream_to_bosh(self, stream):
+        if stream.startswith("<?xml version='1.0'?><stream"):
+            # This is the begining of an xml stream. This is expected to
+            # happen two times through out the lifetime of the bosh
+            # connection. When we first open the connection and once
+            # after authentication.
+
+            # Sanitize stream tag so that it is suitable for parsing.
+            stream = stream.split('>',1)[1]
+            stream = '%s/>'%str(stream)[:-1]
+            stream = Node(node=stream)
+            # XXX This hasn't been tested with old-style auth. Will
+            # probably need to detec that and handle similarly.
+            SASL = getattr(self._owner, 'SASL',  None)
+            if SASL and SASL.startsasl == 'success':
+                # Send restart after authentication.
+                body = Node('body')
+                body.setAttr('xmpp:restart', 'true')
+                body.setAttr('xmlns:xmpp', 'urn:xmpp:xbosh')
+                self.restart = True
+            else:
+                # Opening a new BOSH session.
+                self.restart = False
+                body=Node('body')
+                body.setNamespace(NS_HTTP_BIND)
+                body.setAttr('hold', self.hold)
+                body.setAttr('wait', self.wait)
+                # XXX Ack support
+                #body.setAttr('ack', '1')
+                body.setAttr('ver', '1.6')
+                body.setAttr('xmpp:version', stream.getAttr('version'))
+                body.setAttr('to', stream.getAttr('to'))
+                body.setAttr('xmlns:xmpp', 'urn:xmpp:xbosh')
+        else:
+            # We are mid stream, wrap the xml stanza in a BOSH body wrapper
+            if stream:
+                if type(stream) == type('') or type(stream) == type(u''):
+                    stream = Node(node=stream)
+                stream = [stream]
+            else:
+                stream = []
+            body = Node('body', payload=stream)
         body.setNamespace('http://jabber.org/protocol/httpbind')
         body.setAttr('content', 'text/xml; charset=utf-8')
         body.setAttr('xml:lang', 'en')
@@ -521,55 +619,57 @@ class Bosh(PlugIn):
     def send(self, raw_data, retry_timeout=1):
         if type(raw_data) != type('') or type(raw_data) != type(u''):
             raw_data = str(raw_data)
-        if raw_data.startswith("<?xml version='1.0'?><stream"):
-            raw_data = raw_data.split('>',1)[1]
-            raw_data = '%s/>'%str(raw_data)[:-1]
-            stream = Node(node=raw_data)
-            # XXX This hasn't been tested with old-style auth. Will
-            # probably need to detec that and handle similarly.
-            SASL = getattr(self._owner, 'SASL',  None)
-            if SASL and SASL.startsasl == 'success':
-                body = Node('body')
-                body.setAttr('xmpp:restart', 'true')
-                body.setAttr('xmlns:xmpp', 'urn:xmpp:xbosh')
-                self.restart = True
-            else:
-                self.restart = False
-                body=Node('body')
-                body.setNamespace(NS_HTTP_BIND)
-                body.setAttr('hold', '1')
-                body.setAttr('ver', '1.6')
-                body.setAttr('xmpp:version', stream.getAttr('version'))
-                body.setAttr('to', stream.getAttr('to'))
-                body.setAttr('wait', '60')
-                body.setAttr('xmlns:xmpp', 'urn:xmpp:xbosh')
-            raw_data = str(body)
-        raw_data = self.addbody(raw_data)
-        if type(raw_data) == type(u''):
-            raw_data = raw_data.encode('utf-8')
-        elif type(raw_data) != type(''):
-            raw_data = ustr(raw_data).encode('utf-8')
+        bosh_data = self.xmlstream_to_bosh(raw_data)
         headers = dict(self.headers)
         headers['Host'] = self._http_host
-        headers['Content-Length'] = len(raw_data)
+        headers['Content-Length'] = len(bosh_data)
         conn = self.Connection()
-        self.DEBUG(raw_data, 'sent')
-        conn.request(POST, self._http_path, raw_data, self.headers)
+        if self.PIPELINE:
+            conn._HTTPConnection__state = _CS_IDLE
+        self.DEBUG(bosh_data, 'sent')
+        conn.request(POST, self._http_path, bosh_data, self.headers)
         respobj = conn.response_class(
                 conn.sock, strict=conn.strict, method=conn._method,
         )
-        self._respobjs[conn.sock] = respobj
-        if hasattr(self._owner, 'Dispatcher') and raw_data.strip():
-            self._owner.Dispatcher.Event('', DATA_SENT, raw_data)
+        if self.PIPELINE:
+            self._respobjs.append(
+                (respobj, bosh_data)
+            )
+        else:
+            self._respobjs[conn.sock] = (respobj, bosh_data)
+        if hasattr(self._owner, 'Dispatcher') and bosh_data.strip():
+            self._owner.Dispatcher.Event('', DATA_SENT, bosh_data)
 
     def disconnect(self):
-        self._conn.close()
+        if self._pipeline and self._pipeline.sock:
+            self._pipeline.close()
 
     def disconnected(self):
         pass
 
     def pending_data(self, timeout=0):
-        return select.select(self._respobjs.keys(), [], [], timeout,)[0]
+        pending = False
+        if self.PIPELINE:
+            if not self._pipeline or not self._pipeline.sock:
+                return
+            pending = select.select([self._pipeline.sock], [], [], timeout)[0]
+        else:
+            pending = select.select(self._respobjs.keys(), [], [], timeout,)[0]
+        if not pending and self.accepts_more_requests():
+            self.send('')
+        return pending
+
+    def accepts_more_requests(self):
+        if not self.authenticated():
+            return False
+        if self.PIPELINE:
+            return len(self._respobjs) < self.hold
+        if len(self._respobjs) >= self.requests - 1:
+            return False
+        return len(self._respobjs) < self.hold
+
+    def authenticated(self):
+        return self._owner and '+' in self._owner.connected
 
     @property
     def Rid(self):
@@ -581,3 +681,4 @@ class Bosh(PlugIn):
 
     def getPort(self):
         return self._port
+
