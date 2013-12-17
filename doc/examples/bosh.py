@@ -63,8 +63,6 @@ def step(conn):
         i = conn.Process(1)
         if not i:
             return 1
-        if len(c.Connection._respobjs) < c.Connection.hold:
-            conn.send('')
     except KeyboardInterrupt:
         return 0
     return 1
