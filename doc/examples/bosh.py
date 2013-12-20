@@ -46,7 +46,7 @@ def connect(username, password, resource,  server='', port='', bosh='', use_srv=
     transport = None
     url = urlparse.urlparse(bosh)
     if bosh:
-        transport = Bosh(bosh, use_srv)
+        transport = Bosh(bosh, server=server, port=port, use_srv=use_srv)
     server = server or url.hostname
     port = port or 5522
     con = xmpp.Client(server, port)

@@ -390,6 +390,10 @@ class TLS(PlugIn):
         dispatcher.Dispatcher().PlugIn(self._owner)
 
 POST='POST'
+OK = 200
+BAD_REQUEST = 400
+FORBIDDEN = 403
+NOT_FOUND = 404
 class Bosh(PlugIn):
 
     connection_cls = {
@@ -397,14 +401,13 @@ class Bosh(PlugIn):
         'https': HTTPSConnection,
     }
 
-    headers = {
+    default_headers = {
         'Content-Type': 'text/xml; charset=utf-8',
-        'Accept-Encoding': 'gzip, deflate',
         'Connection': 'Keep-Alive',
     }
 
     def __init__(self, endpoint, server=None, port=None, use_srv=True, wait=80,
-            hold=4, requests=5, PIPELINE=True):
+            hold=4, requests=5, headers=None, PIPELINE=True, GZIP=True):
         PlugIn.__init__(self)
         self.DBG_LINE = 'bosh'
         self._exported_methods = [
@@ -420,10 +423,7 @@ class Bosh(PlugIn):
         else:
             self._http_port = 80
         self._http_proto = url.scheme
-        if not server:
-            self._server = url.hostname
-        else:
-            self._server = server
+        self._server = server
         self._port = port
         self.use_srv = use_srv
         self.Sid = None
@@ -437,6 +437,8 @@ class Bosh(PlugIn):
             self._respobjs = []
         else:
             self._respobjs = {}
+        self.headers = headers or self.default_headers
+        self.GZIP = GZIP
 
     def srv_lookup(self, server):
         # XXX Lookup TXT records to determine BOSH endpoint:
@@ -531,7 +533,8 @@ class Bosh(PlugIn):
                 # The server sent some data but it was a legit bad
                 # status line.
                 raise
-        if 200 <= res.status < 300:
+        if res.status == OK:
+            # Response to valid client request.
             headers = dict(res.getheaders())
             if headers.get('content-encoding', None) == 'gzip':
                 a = StringIO()
@@ -542,12 +545,31 @@ class Bosh(PlugIn):
             else:
                 data = res.read()
             self.DEBUG(data, 'got')
+        elif res.status == BAD_REQUEST:
+            # Inform client that the format of an HTTP header or binding
+            # element is unacceptable.
+            self.DEBUG("The server did not undertand the request")
+            raise Exception("Disconnected from server", 'error')
+        elif res.status == FORBIDDEN:
+            # Inform the client that it bas borken the session rules
+            # (polling too frequently, requesting too frequently, too
+            # many simultanious requests.
+            self.DEBUG("Forbidden due to policy-violation", 'error')
+            raise Exception("Disconnected from server")
+        elif res.status == NOTFOUND:
+            # Inform the client that (1) 'sid' is not valide, (2) 'stream' is
+            # not valid, (3) 'rid' is larger than the upper limit of the
+            # expected window, (4) connection manager is unable to resend
+            # respons (5) 'key' sequence if invalid.
+            self.DEBUG("Invalid/Corrupt Stream", 'error')
+            raise Exception("Disconnected from server")
         else:
-            msg = "Recieved a non 200 status: %s" % res.status
-            self.DEBUG(msg, 'warn')
+            msg = "Recieved status not defined in XEP-1204: %s" % res.status
+            self.DEBUG(msg, 'error')
             raise Exception("Disconnected from server")
         node = Node(node=data)
         if  node.getName() != 'body':
+            self.DEBUG("The server sent an invalid BOSH payload", 'error')
             raise IOError("Disconnected from server")
         if node.getAttr('type') == 'terminate':
             msg = "Connection manager terminated stream: %s" % (
@@ -589,7 +611,7 @@ class Bosh(PlugIn):
 
     def xmlstream_to_bosh(self, stream):
         if stream.startswith("<?xml version='1.0'?><stream"):
-            # This is the begining of an xml stream. This is expected to
+            # The begining of an xml stream. This is expected to
             # happen two times through out the lifetime of the bosh
             # session. When we first open the session and once
             # after authentication.
@@ -614,14 +636,19 @@ class Bosh(PlugIn):
                 body.setNamespace(NS_HTTP_BIND)
                 body.setAttr('hold', self.hold)
                 body.setAttr('wait', self.wait)
-                # XXX Ack support
-                #body.setAttr('ack', '1')
                 body.setAttr('ver', '1.6')
                 body.setAttr('xmpp:version', stream.getAttr('version'))
                 body.setAttr('to', stream.getAttr('to'))
                 body.setAttr('xmlns:xmpp', 'urn:xmpp:xbosh')
+                # XXX Ack support for request acknowledgements.
+                if self._server != self._http_host:
+                    if self._port:
+                        route = '%s:%s' % self._server, self._port
+                    else:
+                        route = self._server
+                    body.setAttr('route', route)
         else:
-            # We are mid stream, wrap the xml stanza in a BOSH body wrapper
+            # Mid stream, wrap the xml stanza in a BOSH body wrapper
             if stream:
                 if type(stream) == type('') or type(stream) == type(u''):
                     stream = Node(node=stream)
@@ -637,18 +664,21 @@ class Bosh(PlugIn):
             body.setAttr('sid', self.Sid)
         return str(body)
 
-    def send(self, raw_data):
+    def send(self, raw_data, headers={}):
         if type(raw_data) != type('') or type(raw_data) != type(u''):
             raw_data = str(raw_data)
         bosh_data = self.xmlstream_to_bosh(raw_data)
-        headers = dict(self.headers)
-        headers['Host'] = self._http_host
-        headers['Content-Length'] = len(bosh_data)
+        default = dict(self.headers)
+        default['Host'] = self._http_host
+        default['Content-Length'] = len(bosh_data)
+        if self.GZIP:
+            default['Accept-Encoding'] = 'gzip, deflate'
+        headers = dict(default, **headers) 
         conn = self.Connection()
         if self.PIPELINE:
             conn._HTTPConnection__state = _CS_IDLE
         self.DEBUG(bosh_data, 'sent')
-        conn.request(POST, self._http_path, bosh_data, self.headers)
+        conn.request(POST, self._http_path, bosh_data, headers)
         respobj = conn.response_class(
                 conn.sock, strict=conn.strict, method=conn._method,
         )
