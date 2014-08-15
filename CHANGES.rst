@@ -9,6 +9,8 @@ in progress
 - Fixed ``receive`` when message is empty. Thanks, @soul4code.
 - Fixed memory leak by removing stanza once callback called.
   Thanks, @CyrilPeponnet.
+- Fixed memory leak by avoiding circular reference by weak referencing kid's parent.
+  Thanks, @CyrilPeponnet.
 
 2025-08-09 0.7.2
 ================
