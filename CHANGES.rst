@@ -5,6 +5,8 @@ xmpppy changelog
 
 in progress
 ===========
+- Fixed memory leak by avoiding circular reference by weak referencing kid's parent.
+  Thanks, @CyrilPeponnet.
 
 2026-02-08 0.7.3
 ================
