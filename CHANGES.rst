@@ -7,6 +7,8 @@ in progress
 ===========
 - Fixed ``wait`` and ``route`` parameters for Bosh transport. Thanks, @soul4code.
 - Fixed ``receive`` when message is empty. Thanks, @soul4code.
+- Fixed memory leak by removing stanza once callback called.
+  Thanks, @CyrilPeponnet.
 
 2025-08-09 0.7.2
 ================
