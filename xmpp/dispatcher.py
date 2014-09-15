@@ -289,6 +289,7 @@ class Dispatcher(PlugIn):
             user=0
             if type(session._expected[ID])==type(()):
                 cb,args=session._expected[ID]
+                del session._expected[ID]
                 session.DEBUG("Expected stanza arrived. Callback %s(%s) found!"%(cb,args),'ok')
                 try: cb(session,stanza,**args)
                 except Exception, typ:
