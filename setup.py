@@ -1,6 +1,7 @@
 #!/usr/bin/python
-# -*- coding: koi8-r -*-
-from distutils.core import setup,sys
+# -*- coding: utf-8 -*-
+
+from distutils.core import setup, sys
 import os
 
 if sys.version < '2.2.3':
@@ -10,9 +11,9 @@ if sys.version < '2.2.3':
 
 # Set proper release version in source code also!!!
 setup(name='xmpppy',
-      version='0.5.1a1',
-      author='Alexey Nezhdanov',
-      author_email='snakeru@users.sourceforge.net',
+      version='0.5.1a1-boyxuper',
+      author='boyxuper',
+      author_email='boyxuper@gmail.com',
       url='http://xmpppy.sourceforge.net/',
       description='XMPP-IM-compliant library for jabber instant messenging.',
       long_description="""This library provides functionality for writing xmpp-compliant
