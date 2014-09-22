@@ -11,10 +11,10 @@ if sys.version < '2.2.3':
 
 # Set proper release version in source code also!!!
 setup(name='xmpppy',
-      version='0.5.1a1-boyxuper',
-      author='boyxuper',
-      author_email='boyxuper@gmail.com',
-      url='http://xmpppy.sourceforge.net/',
+      version='0.5.2',
+      author='CyrilPeponnet',
+      author_email='cyril@peponnet.fr',
+      url='https://github.com/ArchipelProject/xmpppy',
       description='XMPP-IM-compliant library for jabber instant messenging.',
       long_description="""This library provides functionality for writing xmpp-compliant
 clients, servers and/or components/transports.

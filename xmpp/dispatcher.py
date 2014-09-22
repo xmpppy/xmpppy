@@ -1,4 +1,4 @@
-##   transports.py
+##   dispatcher.py
 ##
 ##   Copyright (C) 2003-2005 Alexey "Snake" Nezhdanov
 ##
@@ -23,14 +23,15 @@ Dispatcher.SendAndWaitForResponce method will wait for reply stanza before givin
 
 import sys
 import time
+import random
 import simplexml
 
-from .protocol import *
-from .client import PlugIn
+from protocol import *
+from client import PlugIn
 
 DefaultTimeout = 25
 ID = 0
-
+SALT = random.randint(1,100000)
 
 class Dispatcher(PlugIn):
     """ Ancestor of PlugIn class. Handles XMPP stream, i.e. aware of stream headers.
@@ -302,7 +303,6 @@ class Dispatcher(PlugIn):
         for key in list:
             if key: chain = chain + self.handlers[xmlns][name][key]
 
-        output = ''
         if session._expected.has_key(ID):
             user = 0
             if type(session._expected[ID]) == type(()):
@@ -371,12 +371,11 @@ class Dispatcher(PlugIn):
         elif not stanza.getID():
             global ID
             ID += 1
-            _ID = `ID`
+            _ID = "%s_#%s#-%s" % (self._owner.User, SALT, `ID`)
             stanza.setID(_ID)
         else:
             _ID = stanza.getID()
-        if self._owner._registered_name and not stanza.getAttr('from'): stanza.setAttr('from',
-                                                                                       self._owner._registered_name)
+        if self._owner._registered_name and not stanza.getAttr('from'): stanza.setAttr('from', self._owner._registered_name)
         if self._owner._route and stanza.getName() != 'bind':
             to = self._owner.Server
             if stanza.getTo() and stanza.getTo().getDomain():

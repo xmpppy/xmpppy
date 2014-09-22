@@ -4,7 +4,6 @@ Adapt and integrate Commands module.
 Ensure that all docstrings are in place.
 Add SI to filetransfer
 Evaluate about namespace separation in dispatcher.
-S&D memory leak (cvs diff -r 1.26 -r 1.25 simplexml.py | patch && apt-get install python2.2 && /usr/sbin/jabber-irc)
 
 Regenerate documentation
 Add client mode detection to Browser class.

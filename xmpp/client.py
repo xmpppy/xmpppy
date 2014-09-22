@@ -24,8 +24,6 @@ These classes can be used for simple applications "AS IS" though.
 import socket
 import debug
 
-from . import transports, dispatcher, auth, roster
-
 Debug = debug
 Debug.DEBUGGING_IS_ON = 1
 Debug.Debug.colors['socket'] = debug.color_dark_gray
@@ -92,7 +90,7 @@ class PlugIn(object):
         """ Feed a provided debug line to main instance's debug facility along with our ID string. """
         self._owner.DEBUG(self.DBG_LINE, text, severity)
 
-
+import transports, dispatcher, auth, roster
 class CommonClient(object):
     """ Base for Client and Component classes."""
 
@@ -288,7 +286,6 @@ class Client(CommonClient):
             Can also request roster from server if according agrument is set."""
         if requestRoster: roster.Roster().PlugIn(self)
         self.send(dispatcher.Presence(to=jid, typ=typ))
-
 
 class Component(CommonClient):
     """ Component class. The only difference from CommonClient is ability to perform component authentication. """

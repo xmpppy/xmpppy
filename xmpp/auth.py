@@ -24,9 +24,9 @@ import base64
 import random
 from hashlib import md5, sha1
 
-from . import dispatcher
-from .protocol import *
-from .client import PlugIn
+import dispatcher
+from protocol import *
+from client import PlugIn
 
 HH = lambda some: md5(some).hexdigest()
 H = lambda some: md5(some).digest()

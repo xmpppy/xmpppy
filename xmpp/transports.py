@@ -32,10 +32,10 @@ import base64
 import select
 import socket
 
-from . import dispatcher
-from .protocol import *
-from .client import PlugIn
-from .simplexml import ustr
+import dispatcher
+from protocol import *
+from client import PlugIn
+from simplexml import ustr
 
 # determine which DNS resolution library is available
 HAVE_DNSPYTHON = False

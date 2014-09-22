@@ -22,8 +22,8 @@ Note that this is just a transport for data. You have to negotiate data transfer
 
 import base64
 
-from .protocol import *
-from .dispatcher import PlugIn
+from protocol import *
+from dispatcher import PlugIn
 
 
 class IBB(PlugIn):

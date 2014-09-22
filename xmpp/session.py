@@ -1,5 +1,4 @@
-##
-##   XMPP server
+##   session.py
 ##
 ##   Copyright (C) 2004 Alexey "Snake" Nezhdanov
 ##
@@ -23,7 +22,7 @@ writing the server.
 
 __version__ = "$Id"
 
-from .protocol import *
+from protocol import *
 
 # Transport-level flags
 SOCKET_UNCONNECTED = 0
