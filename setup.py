@@ -10,19 +10,18 @@ if sys.version < '2.2.3':
 
 # Set proper release version in source code also!!!
 setup(name='xmpppy',
-      version='0.5.1a1',
-      author='Alexey Nezhdanov',
-      author_email='snakeru@users.sourceforge.net',
-      url='http://xmpppy.sourceforge.net/',
+      version='0.5.2',
+      author='Cyril Peponnet',
+      author_email='cyril@peponnet.fr',
+      url='https://github.com/ArchipelProject/xmpppy',
       description='XMPP-IM-compliant library for jabber instant messenging.',
       long_description="""This library provides functionality for writing xmpp-compliant
 clients, servers and/or components/transports.
 
 It was initially designed as a \"rework\" of the jabberpy library but
-has become a separate product.
-
-Unlike jabberpy it is distributed under the terms of GPL.""",
-      download_url='http://sourceforge.net/project/showfiles.php?group_id=97081&package_id=103821',
+has become a separate product no longer maintened by the previous author.
+This is distributed under the terms of GPL.""",
+      download_url='https://github.com/ArchipelProject/xmpppy/releases',
       packages=['xmpp'],
       license="GPL",
       platforms="All",
@@ -33,7 +32,7 @@ Unlike jabberpy it is distributed under the terms of GPL.""",
           'Operating System :: OS Independent',
           'Programming Language :: Python',
           'Natural Language :: English',
-          'Development Status :: 4 - Beta',
+          'Development Status :: 5 - Production/Stable ',
           'Intended Audience :: Developers',
         ],
      )
