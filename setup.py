@@ -22,6 +22,7 @@ It was initially designed as a \"rework\" of the jabberpy library but
 has become a separate product no longer maintened by the previous author.
 This is distributed under the terms of GPL.""",
       download_url='https://github.com/ArchipelProject/xmpppy/releases',
+      package_dir={'xmpp': ''},
       packages=['xmpp'],
       license="GPL",
       platforms="All",
