@@ -1,11 +1,6 @@
 .*.swp
 *-stamp
-/debian/files
-/debian/python-xmpp.debhelper.log
-/debian/*.debhelper
-/debian/python-xmpp.substvars
-/debian/python-xmpp/
-/doc/apidocs/
+/doc
 *.pyc
-/examples
 /html
+/build

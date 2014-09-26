@@ -1,4 +1,4 @@
-##   transports.py
+##   dispatcher.py
 ##
 ##   Copyright (C) 2003-2005 Alexey "Snake" Nezhdanov
 ##
@@ -21,12 +21,13 @@ Contains one tunable attribute: DefaultTimeout (25 seconds by default). It defin
 Dispatcher.SendAndWaitForResponce method will wait for reply stanza before giving up.
 """
 
-import simplexml,time,sys
+import simplexml,time,sys,random
 from protocol import *
 from client import PlugIn
 
 DefaultTimeout=25
 ID=0
+SALT=random.randint(1,100000)
 
 class Dispatcher(PlugIn):
     """ Ancestor of PlugIn class. Handles XMPP stream, i.e. aware of stream headers.
@@ -289,6 +290,7 @@ class Dispatcher(PlugIn):
             user=0
             if type(session._expected[ID])==type(()):
                 cb,args=session._expected[ID]
+                del session._expected[ID]
                 session.DEBUG("Expected stanza arrived. Callback %s(%s) found!"%(cb,args),'ok')
                 try: cb(session,stanza,**args)
                 except Exception, typ:
@@ -349,7 +351,7 @@ class Dispatcher(PlugIn):
         elif not stanza.getID():
             global ID
             ID+=1
-            _ID=`ID`
+            _ID="%s_#%s#-%s" % (self._owner.User, SALT, `ID`)
             stanza.setID(_ID)
         else: _ID=stanza.getID()
         if self._owner._registered_name and not stanza.getAttr('from'): stanza.setAttr('from',self._owner._registered_name)

@@ -167,7 +167,7 @@ class Session:
                 self._dispatch(Error(stanza,failreason),trusted=1)                      # Infinite loops in case of S2S connection...
             self.deliver_queue_map,self.deliver_key_queue,self.stanza_queue={},[],[]
             return
-        elif self._session_state>=SESSION_AUTHED:       # FIXME! Должен быть какой-то другой флаг.
+        elif self._session_state>=SESSION_AUTHED:       # FIXME!
             #### LOCK_QUEUE
             for stanza in self.stanza_queue:
                 txt=stanza.__str__().encode('utf-8')
@@ -183,7 +183,7 @@ class Session:
         if self.sendbuffer:
             try:
                 # LOCK_QUEUE
-                sent=self._send(self.sendbuffer)    # Блокирующая штучка!
+                sent=self._send(self.sendbuffer)
             except:
                 # UNLOCK_QUEUE
                 self.set_socket_state(SOCKET_DEAD)
