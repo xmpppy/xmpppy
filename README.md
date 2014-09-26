@@ -14,6 +14,7 @@ Documentation exists in three formats.
 ### Installation
 
 Here you have several options:
+  * run pip install git+https://github.com/ArchipelProject/xmpppy
   * run 'python setup.py install' from xmpppy distribution as root.
   * if you don't like python installator - just copy xmpp directory into python's site-packages directory (this is what setup.py does).
   * If you have no intention to install library system-wide (or just have no privileges to do it) you can copy xmpp directory just in your application's directory. Example:
