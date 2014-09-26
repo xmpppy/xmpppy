@@ -7,9 +7,9 @@ This library has been written to be [RFC3920](https://datatracker.ietf.org/doc/r
 ### Documentation
 
 Documentation exists in three formats.
-* The first is the examples that written to show xmpppy in action you can find in the example directory
+* The first is the examples that written to show xmpppy in action you can find in the wiki
 * The second is the wiki pages where describing the idea of library and the ways the goals are achieved.
-* Third is the docstrings. Using epydoc (epydoc -o doc/api --name xmpppy --inheritance listed --graph all xmpp)
+* Third is the docstrings. Using epydoc (epydoc -o doc/api --name xmpppy --inheritance listed --graph all xmpp) and located here: http://archipelproject.github.io/xmpppy/
 
 ### Installation
 
