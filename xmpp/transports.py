@@ -277,10 +277,10 @@ class HTTPPROXYsocket(TCPsocket):
             connection to the target server. Returns non-empty sting on success. """
         if not TCPsocket.connect(self,(self._proxy['host'],self._proxy['port'])): return
         self.DEBUG("Proxy server contacted, performing authentification",'start')
-        connector = ['CONNECT %s:%s HTTP/1.0'%self._server,
+        connector = ['CONNECT %s:%s HTTP/1.0'%dupe,
             'Proxy-Connection: Keep-Alive',
             'Pragma: no-cache',
-            'Host: %s:%s'%self._server,
+            'Host: %s:%s'%dupe,
             'User-Agent: HTTPPROXYsocket/v0.1']
         if self._proxy.has_key('user') and self._proxy.has_key('password'):
             credentials = '%s:%s'%(self._proxy['user'],self._proxy['password'])
