@@ -271,16 +271,17 @@ class HTTPPROXYsocket(TCPsocket):
         owner.debug_flags.append(DBG_CONNECT_PROXY)
         return TCPsocket.plugin(self,owner)
 
-    def connect(self,dupe=None):
+    def connect(self,server=None):
         """ Starts connection. Connects to proxy, supplies login and password to it
             (if were specified while creating instance). Instructs proxy to make
             connection to the target server. Returns non-empty sting on success. """
         if not TCPsocket.connect(self,(self._proxy['host'],self._proxy['port'])): return
         self.DEBUG("Proxy server contacted, performing authentification",'start')
-        connector = ['CONNECT %s:%s HTTP/1.0'%self._server,
+        if not server: server=self._server
+        connector = ['CONNECT %s:%s HTTP/1.0'%server,
             'Proxy-Connection: Keep-Alive',
             'Pragma: no-cache',
-            'Host: %s:%s'%self._server,
+            'Host: %s:%s'%server,
             'User-Agent: HTTPPROXYsocket/v0.1']
         if self._proxy.has_key('user') and self._proxy.has_key('password'):
             credentials = '%s:%s'%(self._proxy['user'],self._proxy['password'])
