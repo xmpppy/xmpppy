@@ -161,11 +161,13 @@ class CommonClient:
         self.Dispatcher.restoreHandlers(handlerssave)
         return self.connected
 
-    def connect(self,server=None,proxy=None,ssl=None,use_srv=None):
+    def connect(self,server=None,proxy=None,ssl=None,use_srv=None,transport=None):
         """ Make a tcp/ip connection, protect it with tls/ssl if possible and start XMPP stream.
             Returns None or 'tcp' or 'tls', depending on the result."""
         if not server: server=(self.Server,self.Port)
-        if proxy: sock=transports.HTTPPROXYsocket(proxy,server,use_srv)
+        if transport:
+            sock=transport
+        elif proxy: sock=transports.HTTPPROXYsocket(proxy,server,use_srv)
         else: sock=transports.TCPsocket(server,use_srv)
         connected=sock.PlugIn(self)
         if not connected:
@@ -188,7 +190,7 @@ class CommonClient:
 
 class Client(CommonClient):
     """ Example client class, based on CommonClient. """
-    def connect(self,server=None,proxy=None,secure=None,use_srv=True):
+    def connect(self,server=None,proxy=None,secure=None,use_srv=True, transport=None):
         """ Connect to jabber server. If you want to specify different ip/port to connect to you can
             pass it as tuple as first parameter. If there is HTTP proxy between you and server
             specify it's address and credentials (if needed) in the second argument.
@@ -197,7 +199,7 @@ class Client(CommonClient):
             If you want to disable tls/ssl support completely, set it to 0.
             Example: connect(('192.168.5.5',5222),{'host':'proxy.my.net','port':8080,'user':'me','password':'secret'})
             Returns '' or 'tcp' or 'tls', depending on the result."""
-        if not CommonClient.connect(self,server,proxy,secure,use_srv) or secure<>None and not secure: return self.connected
+        if not CommonClient.connect(self,server,proxy,secure,use_srv,transport) or secure<>None and not secure: return self.connected
         transports.TLS().PlugIn(self)
         if not self.Dispatcher.Stream._document_attrs.has_key('version') or not self.Dispatcher.Stream._document_attrs['version']=='1.0': return self.connected
         while not self.Dispatcher.Stream.features and self.Process(1): pass      # If we get version 1.0 stream the features tag MUST BE presented
@@ -323,3 +325,4 @@ class Component(CommonClient):
                 raise auth.NotAuthorized(self.SASL.startsasl)
         except:
             self.DEBUG(self.DBG,"Failed to authenticate %s"%name,'error')
+
