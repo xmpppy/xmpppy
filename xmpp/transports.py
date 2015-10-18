@@ -427,7 +427,7 @@ class Bosh(PlugIn):
         self.use_srv = use_srv
         self.Sid = None
         self._rid = 0
-        self.wait = 80
+        self.wait = wait
         self.hold = hold
         self.requests = requests
         self._pipeline = None
@@ -645,7 +645,8 @@ class Bosh(PlugIn):
                         route = '%s:%s' % self._server, self._port
                     else:
                         route = self._server
-                    body.setAttr('route', route)
+                    if route:
+                        body.setAttr('route', route)
         else:
             # Mid stream, wrap the xml stanza in a BOSH body wrapper
             if stream:
