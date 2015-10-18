@@ -5,6 +5,7 @@ xmpppy changelog
 
 in progress
 ===========
+- Fixed ``wait`` and ``route`` parameters for Bosh transport. Thanks, @soul4code.
 
 2025-08-09 0.7.2
 ================
