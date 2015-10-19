@@ -1,16 +1,16 @@
-##   transports.py
-##
-##   Copyright (C) 2003-2004 Alexey "Snake" Nezhdanov
-##
-##   This program is free software; you can redistribute it and/or modify
-##   it under the terms of the GNU General Public License as published by
-##   the Free Software Foundation; either version 2, or (at your option)
-##   any later version.
-##
-##   This program is distributed in the hope that it will be useful,
-##   but WITHOUT ANY WARRANTY; without even the implied warranty of
-##   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##   GNU General Public License for more details.
+# #   transports.py
+# #
+# #   Copyright (C) 2003-2004 Alexey "Snake" Nezhdanov
+# #
+# #   This program is free software; you can redistribute it and/or modify
+# #   it under the terms of the GNU General Public License as published by
+# #   the Free Software Foundation; either version 2, or (at your option)
+# #   any later version.
+# #
+# #   This program is distributed in the hope that it will be useful,
+# #   but WITHOUT ANY WARRANTY; without even the implied warranty of
+# #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# #   GNU General Public License for more details.
 
 # $Id$
 
@@ -27,7 +27,7 @@ Transports are stackable so you - f.e. TLS use HTPPROXYsocket or TCPsocket as mo
 Also exception 'error' is defined to allow capture of this module specific exceptions.
 """
 
-import socket,select,base64,dispatcher,sys
+import socket, select, base64, dispatcher, sys
 from simplexml import ustr
 from client import PlugIn
 from protocol import *
@@ -43,29 +43,29 @@ urlparse = urlparse.urlparse
 HAVE_DNSPYTHON = False
 HAVE_PYDNS = False
 try:
-    import dns.resolver # http://dnspython.org/
+    import dns.resolver  # http://dnspython.org/
     HAVE_DNSPYTHON = True
 except ImportError:
     try:
-        import DNS # http://pydns.sf.net/
+        import DNS  # http://pydns.sf.net/
         HAVE_PYDNS = True
     except ImportError:
         pass
 
-DATA_RECEIVED='DATA RECEIVED'
-DATA_SENT='DATA SENT'
+DATA_RECEIVED = 'DATA RECEIVED'
+DATA_SENT = 'DATA SENT'
 
 class error:
     """An exception to be raised in case of low-level errors in methods of 'transports' module."""
-    def __init__(self,comment):
+    def __init__(self, comment):
         """Cache the descriptive string"""
-        self._comment=comment
+        self._comment = comment
 
     def __str__(self):
         """Serialise exception into pre-cached descriptive string."""
         return self._comment
 
-BUFLEN=1024
+BUFLEN = 1024
 class TCPsocket(PlugIn):
     """ This class defines direct TCP connection method. """
     def __init__(self, server=None, use_srv=True):
@@ -75,8 +75,8 @@ class TCPsocket(PlugIn):
             server instead
         """
         PlugIn.__init__(self)
-        self.DBG_LINE='socket'
-        self._exported_methods=[self.send,self.disconnect]
+        self.DBG_LINE = 'socket'
+        self._exported_methods = [self.send, self.disconnect]
         self._server, self.use_srv = server, use_srv
 
     def srv_lookup(self, server):
@@ -111,7 +111,7 @@ class TCPsocket(PlugIn):
                     self.DEBUG('An error occurred while looking up %s' % query, 'warn')
             server = (host, port)
         else:
-            self.DEBUG("Could not load one of the supported DNS libraries (dnspython or pydns). SRV records will not be queried and you may need to set custom hostname/port for some servers to be accessible.\n",'warn')
+            self.DEBUG("Could not load one of the supported DNS libraries (dnspython or pydns). SRV records will not be queried and you may need to set custom hostname/port for some servers to be accessible.\n", 'warn')
         # end of SRV resolver
         return server
 
@@ -119,11 +119,11 @@ class TCPsocket(PlugIn):
         """ Fire up connection. Return non-empty string on success.
             Also registers self.disconnected method in the owner's dispatcher.
             Called internally. """
-        if not self._server: self._server=(self._owner.Server,5222)
-        if self.use_srv: server=self.srv_lookup(self._server)
-        else: server=self._server
+        if not self._server: self._server = (self._owner.Server, 5222)
+        if self.use_srv: server = self.srv_lookup(self._server)
+        else: server = self._server
         if not self.connect(server): return
-        self._owner.Connection=self
+        self._owner.Connection = self
         self._owner.RegisterDisconnectHandler(self.disconnected)
         return 'ok'
 
@@ -134,25 +134,25 @@ class TCPsocket(PlugIn):
         """ Return the 'port' value that is connection is [will be] made to."""
         return self._server[1]
 
-    def connect(self,server=None):
+    def connect(self, server=None):
         """ Try to connect to the given host/port. Does not lookup for SRV record.
             Returns non-empty string on success. """
-        if not server: server=self._server
+        if not server: server = self._server
         try:
             for res in socket.getaddrinfo(server[0], int(server[1]), 0, socket.SOCK_STREAM):
                 af, socktype, proto, canonname, sa = res
                 try:
                     self._sock = socket.socket(af, socktype, proto)
                     self._sock.connect(sa)
-                    self._send=self._sock.sendall
-                    self._recv=self._sock.recv
-                    self.DEBUG("Successfully connected to remote host %s"%`server`,'start')
+                    self._send = self._sock.sendall
+                    self._recv = self._sock.recv
+                    self.DEBUG("Successfully connected to remote host %s" % `server`, 'start')
                     return 'ok'
                 except socket.error, (errno, strerror):
                     if self._sock is not None: self._sock.close()
-            self.DEBUG("Failed to connect to remote host %s: %s (%s)"%(`server`, strerror, errno),'error')
+            self.DEBUG("Failed to connect to remote host %s: %s (%s)" % (`server`, strerror, errno), 'error')
         except socket.gaierror, (errno, strerror):
-            self.DEBUG("Failed to lookup remote host %s: %s (%s)"%(`server`, strerror, errno),'error')
+            self.DEBUG("Failed to lookup remote host %s: %s (%s)" % (`server`, strerror, errno), 'error')
 
     def plugout(self):
         """ Disconnect from the remote server and unregister self.disconnected method from
@@ -166,17 +166,17 @@ class TCPsocket(PlugIn):
         """ Reads all pending incoming data.
             In case of disconnection calls owner's disconnected() method and then raises IOError exception."""
         try: received = self._recv(BUFLEN)
-        except socket.sslerror,e:
-            self._seen_data=0
-            if e[0]==socket.SSL_ERROR_WANT_READ:
+        except socket.sslerror, e:
+            self._seen_data = 0
+            if e[0] == socket.SSL_ERROR_WANT_READ:
                 sys.exc_clear()
-                self.DEBUG("SSL_WANT_READ while receiving data, asking for a retry",'warn')
+                self.DEBUG("SSL_WANT_READ while receiving data, asking for a retry", 'warn')
                 return ''
-            if e[0]==socket.SSL_ERROR_WANT_WRITE:
+            if e[0] == socket.SSL_ERROR_WANT_WRITE:
                 sys.exc_clear()
-                self.DEBUG("SSL_WANT_WRITE while receiving data, asking for a retry",'warn')
+                self.DEBUG("SSL_WANT_WRITE while receiving data, asking for a retry", 'warn')
                 return ''
-            self.DEBUG('Socket error while receiving data','error')
+            self.DEBUG('Socket error while receiving data', 'error')
             sys.exc_clear()
             self._owner.disconnected()
             raise IOError("Disconnected from server")
@@ -184,40 +184,40 @@ class TCPsocket(PlugIn):
 
         while self.pending_data(0):
             try: add = self._recv(BUFLEN)
-            except socket.sslerror,e:
-                self._seen_data=0
-                if e[0]==socket.SSL_ERROR_WANT_READ:
+            except socket.sslerror, e:
+                self._seen_data = 0
+                if e[0] == socket.SSL_ERROR_WANT_READ:
                     sys.exc_clear()
-                    self.DEBUG("SSL_WANT_READ while receiving data, ignoring",'warn')
+                    self.DEBUG("SSL_WANT_READ while receiving data, ignoring", 'warn')
                     break
-                if e[0]==socket.SSL_ERROR_WANT_WRITE:
+                if e[0] == socket.SSL_ERROR_WANT_WRITE:
                     sys.exc_clear()
-                    self.DEBUG("SSL_WANT_WRITE while receiving data, ignoring",'warn')
+                    self.DEBUG("SSL_WANT_WRITE while receiving data, ignoring", 'warn')
                     break
-                self.DEBUG('Socket error while receiving data','error')
+                self.DEBUG('Socket error while receiving data', 'error')
                 sys.exc_clear()
                 self._owner.disconnected()
                 raise IOError("Disconnected from server")
-            except: add=''
-            received +=add
+            except: add = ''
+            received += add
             if not add: break
 
-        if len(received): # length of 0 means disconnect
-            self._seen_data=1
-            self.DEBUG(received,'got')
+        if len(received):  # length of 0 means disconnect
+            self._seen_data = 1
+            self.DEBUG(received, 'got')
             if hasattr(self._owner, 'Dispatcher'):
                 self._owner.Dispatcher.Event('', DATA_RECEIVED, received)
         else:
-            self.DEBUG('Socket error while receiving data','error')
+            self.DEBUG('Socket error while receiving data', 'error')
             self._owner.disconnected()
             raise IOError("Disconnected from server")
         return received
 
-    def send(self,raw_data,retry_timeout=1):
+    def send(self, raw_data, retry_timeout=1):
         """ Writes raw outgoing data. Blocks until done.
             If supplied data is unicode string, encodes it to utf-8 before send."""
-        if type(raw_data)==type(u''): raw_data = raw_data.encode('utf-8')
-        elif type(raw_data)<>type(''): raw_data = ustr(raw_data).encode('utf-8')
+        if type(raw_data) == type(u''): raw_data = raw_data.encode('utf-8')
+        elif type(raw_data) <> type(''): raw_data = ustr(raw_data).encode('utf-8')
         try:
             sent = 0
             while not sent:
@@ -225,170 +225,170 @@ class TCPsocket(PlugIn):
                     self._send(raw_data)
                     sent = 1
                 except socket.sslerror, e:
-                    if e[0]==socket.SSL_ERROR_WANT_READ:
+                    if e[0] == socket.SSL_ERROR_WANT_READ:
                         sys.exc_clear()
-                        self.DEBUG("SSL_WANT_READ while sending data, wating to retry",'warn')
-                        select.select([self._sock],[],[],retry_timeout)
+                        self.DEBUG("SSL_WANT_READ while sending data, wating to retry", 'warn')
+                        select.select([self._sock], [], [], retry_timeout)
                         continue
-                    if e[0]==socket.SSL_ERROR_WANT_WRITE:
+                    if e[0] == socket.SSL_ERROR_WANT_WRITE:
                         sys.exc_clear()
-                        self.DEBUG("SSL_WANT_WRITE while sending data, waiting to retry",'warn')
-                        select.select([],[self._sock],[],retry_timeout)
+                        self.DEBUG("SSL_WANT_WRITE while sending data, waiting to retry", 'warn')
+                        select.select([], [self._sock], [], retry_timeout)
                         continue
                     raise
             # Avoid printing messages that are empty keepalive packets.
             if raw_data.strip():
-                self.DEBUG(raw_data,'sent')
-                if hasattr(self._owner, 'Dispatcher'): # HTTPPROXYsocket will send data before we have a Dispatcher
+                self.DEBUG(raw_data, 'sent')
+                if hasattr(self._owner, 'Dispatcher'):  # HTTPPROXYsocket will send data before we have a Dispatcher
                     self._owner.Dispatcher.Event('', DATA_SENT, raw_data)
         except:
-            self.DEBUG("Socket error while sending data",'error')
+            self.DEBUG("Socket error while sending data", 'error')
             self._owner.disconnected()
 
-    def pending_data(self,timeout=0):
+    def pending_data(self, timeout=0):
         """ Returns true if there is a data ready to be read. """
-        return select.select([self._sock],[],[],timeout)[0]
+        return select.select([self._sock], [], [], timeout)[0]
 
     def disconnect(self):
         """ Closes the socket. """
-        self.DEBUG("Closing socket",'stop')
+        self.DEBUG("Closing socket", 'stop')
         self._sock.close()
 
     def disconnected(self):
         """ Called when a Network Error or disconnection occurs.
             Designed to be overidden. """
-        self.DEBUG("Socket operation failed",'error')
+        self.DEBUG("Socket operation failed", 'error')
 
-DBG_CONNECT_PROXY='CONNECTproxy'
+DBG_CONNECT_PROXY = 'CONNECTproxy'
 class HTTPPROXYsocket(TCPsocket):
     """ HTTP (CONNECT) proxy connection class. Uses TCPsocket as the base class
         redefines only connect method. Allows to use HTTP proxies like squid with
         (optionally) simple authentication (using login and password). """
-    def __init__(self,proxy,server,use_srv=True):
+    def __init__(self, proxy, server, use_srv=True):
         """ Caches proxy and target addresses.
             'proxy' argument is a dictionary with mandatory keys 'host' and 'port' (proxy address)
             and optional keys 'user' and 'password' to use for authentication.
             'server' argument is a tuple of host and port - just like TCPsocket uses. """
-        TCPsocket.__init__(self,server,use_srv)
-        self.DBG_LINE=DBG_CONNECT_PROXY
-        self._proxy=proxy
+        TCPsocket.__init__(self, server, use_srv)
+        self.DBG_LINE = DBG_CONNECT_PROXY
+        self._proxy = proxy
 
     def plugin(self, owner):
         """ Starts connection. Used interally. Returns non-empty string on success."""
         owner.debug_flags.append(DBG_CONNECT_PROXY)
-        return TCPsocket.plugin(self,owner)
+        return TCPsocket.plugin(self, owner)
 
-    def connect(self,server=None):
+    def connect(self, server=None):
         """ Starts connection. Connects to proxy, supplies login and password to it
             (if were specified while creating instance). Instructs proxy to make
             connection to the target server. Returns non-empty sting on success. """
-        if not TCPsocket.connect(self,(self._proxy['host'],self._proxy['port'])): return
-        self.DEBUG("Proxy server contacted, performing authentification",'start')
-        if not server: server=self._server
-        connector = ['CONNECT %s:%s HTTP/1.0'%server,
+        if not TCPsocket.connect(self, (self._proxy['host'], self._proxy['port'])): return
+        self.DEBUG("Proxy server contacted, performing authentification", 'start')
+        if not server: server = self._server
+        connector = ['CONNECT %s:%s HTTP/1.0' % server,
             'Proxy-Connection: Keep-Alive',
             'Pragma: no-cache',
-            'Host: %s:%s'%server,
+            'Host: %s:%s' % server,
             'User-Agent: HTTPPROXYsocket/v0.1']
         if self._proxy.has_key('user') and self._proxy.has_key('password'):
-            credentials = '%s:%s'%(self._proxy['user'],self._proxy['password'])
+            credentials = '%s:%s' % (self._proxy['user'], self._proxy['password'])
             credentials = base64.encodestring(credentials).strip()
-            connector.append('Proxy-Authorization: Basic '+credentials)
+            connector.append('Proxy-Authorization: Basic ' + credentials)
         connector.append('\r\n')
         self.send('\r\n'.join(connector))
-        try: reply = self.receive().replace('\r','')
+        try: reply = self.receive().replace('\r', '')
         except IOError:
-            self.DEBUG('Proxy suddenly disconnected','error')
+            self.DEBUG('Proxy suddenly disconnected', 'error')
             self._owner.disconnected()
             return
-        try: proto,code,desc=reply.split('\n')[0].split(' ',2)
+        try: proto, code, desc = reply.split('\n')[0].split(' ', 2)
         except: raise error('Invalid proxy reply')
-        if code<>'200':
-            self.DEBUG('Invalid proxy reply: %s %s %s'%(proto,code,desc),'error')
+        if code <> '200':
+            self.DEBUG('Invalid proxy reply: %s %s %s' % (proto, code, desc), 'error')
             self._owner.disconnected()
             return
         while reply.find('\n\n') == -1:
-            try: reply += self.receive().replace('\r','')
+            try: reply += self.receive().replace('\r', '')
             except IOError:
-                self.DEBUG('Proxy suddenly disconnected','error')
+                self.DEBUG('Proxy suddenly disconnected', 'error')
                 self._owner.disconnected()
                 return
-        self.DEBUG("Authentification successfull. Jabber server contacted.",'ok')
+        self.DEBUG("Authentification successfull. Jabber server contacted.", 'ok')
         return 'ok'
 
-    def DEBUG(self,text,severity):
+    def DEBUG(self, text, severity):
         """Overwrites DEBUG tag to allow debug output be presented as "CONNECTproxy"."""
-        return self._owner.DEBUG(DBG_CONNECT_PROXY,text,severity)
+        return self._owner.DEBUG(DBG_CONNECT_PROXY, text, severity)
 
 class TLS(PlugIn):
     """ TLS connection used to encrypts already estabilished tcp connection."""
-    def PlugIn(self,owner,now=0):
+    def PlugIn(self, owner, now=0):
         """ If the 'now' argument is true then starts using encryption immidiatedly.
             If 'now' in false then starts encryption as soon as TLS feature is
             declared by the server (if it were already declared - it is ok).
         """
         if owner.__dict__.has_key('TLS'): return  # Already enabled.
-        PlugIn.PlugIn(self,owner)
-        DBG_LINE='TLS'
+        PlugIn.PlugIn(self, owner)
+        DBG_LINE = 'TLS'
         if now: return self._startSSL()
         if self._owner.Dispatcher.Stream.features:
-            try: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
+            try: self.FeaturesHandler(self._owner.Dispatcher, self._owner.Dispatcher.Stream.features)
             except NodeProcessed: pass
-        else: self._owner.RegisterHandlerOnce('features',self.FeaturesHandler,xmlns=NS_STREAMS)
-        self.starttls=None
+        else: self._owner.RegisterHandlerOnce('features', self.FeaturesHandler, xmlns=NS_STREAMS)
+        self.starttls = None
 
-    def plugout(self,now=0):
+    def plugout(self, now=0):
         """ Unregisters TLS handler's from owner's dispatcher. Take note that encription
             can not be stopped once started. You can only break the connection and start over."""
-        self._owner.UnregisterHandler('features',self.FeaturesHandler,xmlns=NS_STREAMS)
-        self._owner.UnregisterHandler('proceed',self.StartTLSHandler,xmlns=NS_TLS)
-        self._owner.UnregisterHandler('failure',self.StartTLSHandler,xmlns=NS_TLS)
+        self._owner.UnregisterHandler('features', self.FeaturesHandler, xmlns=NS_STREAMS)
+        self._owner.UnregisterHandler('proceed', self.StartTLSHandler, xmlns=NS_TLS)
+        self._owner.UnregisterHandler('failure', self.StartTLSHandler, xmlns=NS_TLS)
 
     def FeaturesHandler(self, conn, feats):
         """ Used to analyse server <features/> tag for TLS support.
             If TLS is supported starts the encryption negotiation. Used internally"""
-        if not feats.getTag('starttls',namespace=NS_TLS):
-            self.DEBUG("TLS unsupported by remote server.",'warn')
+        if not feats.getTag('starttls', namespace=NS_TLS):
+            self.DEBUG("TLS unsupported by remote server.", 'warn')
             return
-        self.DEBUG("TLS supported by remote server. Requesting TLS start.",'ok')
-        self._owner.RegisterHandlerOnce('proceed',self.StartTLSHandler,xmlns=NS_TLS)
-        self._owner.RegisterHandlerOnce('failure',self.StartTLSHandler,xmlns=NS_TLS)
-        self._owner.Connection.send('<starttls xmlns="%s"/>'%NS_TLS)
+        self.DEBUG("TLS supported by remote server. Requesting TLS start.", 'ok')
+        self._owner.RegisterHandlerOnce('proceed', self.StartTLSHandler, xmlns=NS_TLS)
+        self._owner.RegisterHandlerOnce('failure', self.StartTLSHandler, xmlns=NS_TLS)
+        self._owner.Connection.send('<starttls xmlns="%s"/>' % NS_TLS)
         raise NodeProcessed
 
-    def pending_data(self,timeout=0):
+    def pending_data(self, timeout=0):
         """ Returns true if there possible is a data ready to be read. """
-        return self._tcpsock._seen_data or select.select([self._tcpsock._sock],[],[],timeout)[0]
+        return self._tcpsock._seen_data or select.select([self._tcpsock._sock], [], [], timeout)[0]
 
     def _startSSL(self):
         """ Immidiatedly switch socket to TLS mode. Used internally."""
         """ Here we should switch pending_data to hint mode."""
-        tcpsock=self._owner.Connection
-        tcpsock._sslObj    = socket.ssl(tcpsock._sock, None, None)
+        tcpsock = self._owner.Connection
+        tcpsock._sslObj = socket.ssl(tcpsock._sock, None, None)
         tcpsock._recv = tcpsock._sslObj.read
         tcpsock._send = tcpsock._sslObj.write
 
-        tcpsock._seen_data=1
-        self._tcpsock=tcpsock
-        tcpsock.pending_data=self.pending_data
+        tcpsock._seen_data = 1
+        self._tcpsock = tcpsock
+        tcpsock.pending_data = self.pending_data
         tcpsock._sock.setblocking(0)
 
-        self.starttls='success'
+        self.starttls = 'success'
 
     def StartTLSHandler(self, conn, starttls):
         """ Handle server reply if TLS is allowed to process. Behaves accordingly.
             Used internally."""
-        if starttls.getNamespace()<>NS_TLS: return
-        self.starttls=starttls.getName()
-        if self.starttls=='failure':
-            self.DEBUG("Got starttls response: "+self.starttls,'error')
+        if starttls.getNamespace() <> NS_TLS: return
+        self.starttls = starttls.getName()
+        if self.starttls == 'failure':
+            self.DEBUG("Got starttls response: " + self.starttls, 'error')
             return
-        self.DEBUG("Got starttls proceed response. Switching to TLS/SSL...",'ok')
+        self.DEBUG("Got starttls proceed response. Switching to TLS/SSL...", 'ok')
         self._startSSL()
         self._owner.Dispatcher.PlugOut()
         dispatcher.Dispatcher().PlugIn(self._owner)
 
-POST='POST'
+POST = 'POST'
 OK = 200
 BAD_REQUEST = 400
 FORBIDDEN = 403
@@ -449,7 +449,7 @@ class Bosh(PlugIn):
         # records from DNS TXT records (see srv_lookup)
         if not self.connect(self._http_host, self._http_port):
             return
-        self._owner.Connection=self
+        self._owner.Connection = self
         self._owner.RegisterDisconnectHandler(self.disconnect)
         return 'ok'
 
@@ -470,7 +470,7 @@ class Bosh(PlugIn):
             try:
                 conn.connect()
             except socket.error as e:
-                if e.errno == ECONNREFUSED: # Connection refused
+                if e.errno == ECONNREFUSED:  # Connection refused
                     if time.time() > endat:
                         msg = "Failed to connect to remote host %s: %s (%s)" % (
                             'server', e.strerror, e.errno,
@@ -595,13 +595,13 @@ class Bosh(PlugIn):
                 self.wait = int(node.getAttr('wait') or self.wait)
                 self.hold = int(node.getAttr('hold') or self.hold)
                 self.requests = int(node.getAttr('requests') or self.requests)
-            stream=Node('stream:stream', payload=node.getChildren())
+            stream = Node('stream:stream', payload=node.getChildren())
             stream.setNamespace(self._owner.Namespace)
-            stream.setAttr('version','1.0')
+            stream.setAttr('version', '1.0')
             stream.setAttr('xmlns:stream', NS_STREAMS)
             stream.setAttr('from', self._owner.Server)
             data = str(stream)[:-len('</stream:stream>')]
-            resp = "<?xml version='1.0'?>%s"%str(data)
+            resp = "<?xml version='1.0'?>%s" % str(data)
         elif node.getChildren():
             resp = ''.join(str(i) for i in node.getChildren())
         else:
@@ -616,12 +616,12 @@ class Bosh(PlugIn):
             # after authentication.
 
             # Sanitize stream tag so that it is suitable for parsing.
-            stream = stream.split('>',1)[1]
-            stream = '%s/>'%str(stream)[:-1]
+            stream = stream.split('>', 1)[1]
+            stream = '%s/>' % str(stream)[:-1]
             stream = Node(node=stream)
             # XXX This hasn't been tested with old-style auth. Will
             # probably need to detec that and handle similarly.
-            SASL = getattr(self._owner, 'SASL',  None)
+            SASL = getattr(self._owner, 'SASL', None)
             if SASL and SASL.startsasl == 'success':
                 # Send restart after authentication.
                 body = Node('body')
@@ -631,7 +631,7 @@ class Bosh(PlugIn):
             else:
                 # Opening a new BOSH session.
                 self.restart = False
-                body=Node('body')
+                body = Node('body')
                 body.setNamespace(NS_HTTP_BIND)
                 body.setAttr('hold', self.hold)
                 body.setAttr('wait', self.wait)
@@ -662,18 +662,18 @@ class Bosh(PlugIn):
         body.setAttr('rid', self.Rid)
         if self.Sid:
             body.setAttr('sid', self.Sid)
-        return str(body)
+        return unicode(body).encode('utf-8')
 
     def send(self, raw_data, headers={}):
         if type(raw_data) != type('') or type(raw_data) != type(u''):
-            raw_data = str(raw_data)
+            raw_data = unicode(raw_data).encode('utf-8')
         bosh_data = self.xmlstream_to_bosh(raw_data)
         default = dict(self.headers)
         default['Host'] = self._http_host
         default['Content-Length'] = len(bosh_data)
         if self.GZIP:
             default['Accept-Encoding'] = 'gzip, deflate'
-        headers = dict(default, **headers) 
+        headers = dict(default, **headers)
         conn = self.Connection()
         if self.PIPELINE:
             conn._HTTPConnection__state = _CS_IDLE
