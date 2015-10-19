@@ -512,6 +512,8 @@ class Bosh(PlugIn):
 
     def receive(self):
         resp = ''
+        if len(self._respobjs) == 0:
+            return resp
         if self.PIPELINE:
             res, data = self._respobjs.pop(0)
         else:
