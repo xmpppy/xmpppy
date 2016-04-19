@@ -200,7 +200,8 @@ for ns,errname,errpool in [(NS_XMPP_STREAMS,'STREAM',xmpp_stream_error_condition
         name=errname+'_'+cond.upper().replace('-','_')
         locals()[name]=ns+' '+cond
         ERRORS[ns+' '+cond]=[code,typ,text]
-        if code: _errorcodes[code]=cond
+        if code:
+            _errorcodes[code]=cond
 del ns,errname,errpool,err,cond,code,typ,text
 
 def isResultNode(node):
@@ -214,30 +215,54 @@ class NodeProcessed(Exception):
     """ Exception that should be raised by handler when the handling should be stopped. """
 class StreamError(Exception):
     """ Base exception class for stream errors."""
-class BadFormat(StreamError): pass
-class BadNamespacePrefix(StreamError): pass
-class Conflict(StreamError): pass
-class ConnectionTimeout(StreamError): pass
-class HostGone(StreamError): pass
-class HostUnknown(StreamError): pass
-class ImproperAddressing(StreamError): pass
-class InternalServerError(StreamError): pass
-class InvalidFrom(StreamError): pass
-class InvalidID(StreamError): pass
-class InvalidNamespace(StreamError): pass
-class InvalidXML(StreamError): pass
-class NotAuthorized(StreamError): pass
-class PolicyViolation(StreamError): pass
-class RemoteConnectionFailed(StreamError): pass
-class ResourceConstraint(StreamError): pass
-class RestrictedXML(StreamError): pass
-class SeeOtherHost(StreamError): pass
-class SystemShutdown(StreamError): pass
-class UndefinedCondition(StreamError): pass
-class UnsupportedEncoding(StreamError): pass
-class UnsupportedStanzaType(StreamError): pass
-class UnsupportedVersion(StreamError): pass
-class XMLNotWellFormed(StreamError): pass
+class BadFormat(StreamError):
+    pass
+class BadNamespacePrefix(StreamError):
+    pass
+class Conflict(StreamError):
+    pass
+class ConnectionTimeout(StreamError):
+    pass
+class HostGone(StreamError):
+    pass
+class HostUnknown(StreamError):
+    pass
+class ImproperAddressing(StreamError):
+    pass
+class InternalServerError(StreamError):
+    pass
+class InvalidFrom(StreamError):
+    pass
+class InvalidID(StreamError):
+    pass
+class InvalidNamespace(StreamError):
+    pass
+class InvalidXML(StreamError):
+    pass
+class NotAuthorized(StreamError):
+    pass
+class PolicyViolation(StreamError):
+    pass
+class RemoteConnectionFailed(StreamError):
+    pass
+class ResourceConstraint(StreamError):
+    pass
+class RestrictedXML(StreamError):
+    pass
+class SeeOtherHost(StreamError):
+    pass
+class SystemShutdown(StreamError):
+    pass
+class UndefinedCondition(StreamError):
+    pass
+class UnsupportedEncoding(StreamError):
+    pass
+class UnsupportedStanzaType(StreamError):
+    pass
+class UnsupportedVersion(StreamError):
+    pass
+class XMLNotWellFormed(StreamError):
+    pass
 
 stream_exceptions = {'bad-format': BadFormat,
                      'bad-namespace-prefix': BadNamespacePrefix,
@@ -272,14 +297,21 @@ class JID:
             JID('node@domain/resource')
             JID(node='node',domain='domain.org')
         """
-        if not jid and not domain: raise ValueError('JID must contain at least domain name')
-        elif type(jid)==type(self): self.node,self.domain,self.resource=jid.node,jid.domain,jid.resource
-        elif domain: self.node,self.domain,self.resource=node,domain,resource
+        if not jid and not domain:
+            raise ValueError('JID must contain at least domain name')
+        elif type(jid)==type(self):
+            self.node,self.domain,self.resource=jid.node,jid.domain,jid.resource
+        elif domain:
+            self.node,self.domain,self.resource=node,domain,resource
         else:
-            if jid.find('@')+1: self.node,jid=jid.split('@',1)
-            else: self.node=''
-            if jid.find('/')+1: self.domain,self.resource=jid.split('/',1)
-            else: self.domain,self.resource=jid,''
+            if jid.find('@')+1:
+                self.node,jid=jid.split('@',1)
+            else:
+                self.node=''
+            if jid.find('/')+1:
+                self.domain,self.resource=jid.split('/',1)
+            else:
+                self.domain,self.resource=jid,''
     def getNode(self):
         """ Return the node part of the JID """
         return self.node
@@ -303,8 +335,10 @@ class JID:
         return self.__str__(0)
     def __eq__(self, other):
         """ Compare the JID to another instance or to string for equality. """
-        try: other=JID(other)
-        except ValueError: return 0
+        try:
+            other=JID(other)
+        except ValueError:
+            return 0
         return self.resource==other.resource and self.__str__(0) == other.__str__(0)
     def __ne__(self, other):
         """ Compare the JID to another instance or to string for non-equality. """
@@ -314,9 +348,12 @@ class JID:
         return self.__str__(0) == JID(other).__str__(0)
     def __str__(self,wresource=1):
         """ Serialise JID into string. """
-        if self.node: jid=self.node+'@'+self.domain
-        else: jid=self.domain
-        if wresource and self.resource: return jid+'/'+self.resource
+        if self.node:
+            jid=self.node+'@'+self.domain
+        else:
+            jid=self.domain
+        if wresource and self.resource:
+            return jid+'/'+self.resource
         return jid
     def __hash__(self):
         """ Produce hash of the JID, Allows to use JID objects as keys of the dictionary. """
@@ -332,29 +369,44 @@ class Protocol(Node):
             xmlns - namespace of top stanza node
             node - parsed or unparsed stana to be taken as prototype.
         """
-        if not attrs: attrs={}
-        if to: attrs['to']=to
-        if frm: attrs['from']=frm
-        if typ: attrs['type']=typ
+        if not attrs:
+            attrs={}
+        if to:
+            attrs['to']=to
+        if frm:
+            attrs['from']=frm
+        if typ:
+            attrs['type']=typ
         Node.__init__(self, tag=name, attrs=attrs, payload=payload, node=node)
-        if not node and xmlns: self.setNamespace(xmlns)
-        if self['to']: self.setTo(self['to'])
-        if self['from']: self.setFrom(self['from'])
-        if node and type(self)==type(node) and self.__class__==node.__class__ and self.attrs.has_key('id'): del self.attrs['id']
+        if not node and xmlns:
+            self.setNamespace(xmlns)
+        if self['to']:
+            self.setTo(self['to'])
+        if self['from']:
+            self.setFrom(self['from'])
+        if node and type(self)==type(node) and self.__class__==node.__class__ and self.attrs.has_key('id'):
+            del self.attrs['id']
         self.timestamp=None
         for x in self.getTags('x',namespace=NS_DELAY):
             try:
-                if not self.getTimestamp() or x.getAttr('stamp')<self.getTimestamp(): self.setTimestamp(x.getAttr('stamp'))
-            except: pass
-        if timestamp is not None: self.setTimestamp(timestamp)  # To auto-timestamp stanza just pass timestamp=''
+                if not self.getTimestamp() or x.getAttr('stamp')<self.getTimestamp():
+                    self.setTimestamp(x.getAttr('stamp'))
+            except:
+                pass
+        if timestamp is not None:
+            self.setTimestamp(timestamp)  # To auto-timestamp stanza just pass timestamp=''
     def getTo(self):
         """ Return value of the 'to' attribute. """
-        try: return self['to']
-        except: return None
+        try:
+            return self['to']
+        except:
+            return None
     def getFrom(self):
         """ Return value of the 'from' attribute. """
-        try: return self['from']
-        except: return None
+        try:
+            return self['from']
+        except:
+            return None
     def getTimestamp(self):
         """ Return the timestamp in the 'yyyymmddThhmmss' format. """
         return self.timestamp
@@ -381,7 +433,8 @@ class Protocol(Node):
         errtag=self.getTag('error')
         if errtag:
             for tag in errtag.getChildren():
-                if tag.getName()<>'text': return tag.getName()
+                if tag.getName() != 'text':
+                    return tag.getName()
             return errtag.getData()
     def getErrorCode(self):
         """ Return the error code. Obsolette. """
@@ -389,14 +442,18 @@ class Protocol(Node):
     def setError(self,error,code=None):
         """ Set the error code. Obsolette. Use error-conditions instead. """
         if code:
-            if str(code) in _errorcodes.keys(): error=ErrorNode(_errorcodes[str(code)],text=error)
-            else: error=ErrorNode(ERR_UNDEFINED_CONDITION,code=code,typ='cancel',text=error)
-        elif type(error) in [type(''),type(u'')]: error=ErrorNode(error)
+            if str(code) in _errorcodes.keys():
+                error=ErrorNode(_errorcodes[str(code)],text=error)
+            else:
+                error=ErrorNode(ERR_UNDEFINED_CONDITION,code=code,typ='cancel',text=error)
+        elif type(error) in [type(''),type(u'')]:
+            error=ErrorNode(error)
         self.setType('error')
         self.addChild(node=error)
     def setTimestamp(self,val=None):
         """Set the timestamp. timestamp should be the yyyymmddThhmmss string."""
-        if not val: val=time.strftime('%Y%m%dT%H:%M:%S', time.gmtime())
+        if not val:
+            val=time.strftime('%Y%m%dT%H:%M:%S', time.gmtime())
         self.timestamp=val
         self.setTag('x',{'stamp':self.timestamp},namespace=NS_DELAY)
     def getProperties(self):
@@ -404,11 +461,13 @@ class Protocol(Node):
         props=[]
         for child in self.getChildren():
             prop=child.getNamespace()
-            if prop not in props: props.append(prop)
+            if prop not in props:
+                props.append(prop)
         return props
     def __setitem__(self,item,val):
         """ Set the item 'item' to the value 'val'."""
-        if item in ['to','from']: val=JID(val)
+        if item in ['to','from']:
+            val=JID(val)
         return self.setAttr(item,val)
 
 class Message(Protocol):
@@ -418,8 +477,10 @@ class Message(Protocol):
             any additional attributes, sender of the message, any additional payload (f.e. jabber:x:delay element) and namespace in one go.
             Alternatively you can pass in the other XML object as the 'node' parameted to replicate it as message. """
         Protocol.__init__(self, 'message', to=to, typ=typ, attrs=attrs, frm=frm, payload=payload, timestamp=timestamp, xmlns=xmlns, node=node)
-        if body: self.setBody(body)
-        if subject: self.setSubject(subject)
+        if body:
+            self.setBody(body)
+        if subject:
+            self.setSubject(subject)
     def getBody(self):
         """ Returns text of the message. """
         return self.getTagData('body')
@@ -443,7 +504,8 @@ class Message(Protocol):
             The to, from, thread and type properties of new message are pre-set as reply to this message. """
         m=Message(to=self.getFrom(),frm=self.getTo(),body=text,typ=self.getType())
         th=self.getThread()
-        if th: m.setThread(th)
+        if th:
+            m.setThread(th)
         return m
 
 class Presence(Protocol):
@@ -453,9 +515,12 @@ class Presence(Protocol):
             any additional attributes, sender of the presence, timestamp, any additional payload (f.e. jabber:x:delay element) and namespace in one go.
             Alternatively you can pass in the other XML object as the 'node' parameted to replicate it as presence. """
         Protocol.__init__(self, 'presence', to=to, typ=typ, attrs=attrs, frm=frm, payload=payload, timestamp=timestamp, xmlns=xmlns, node=node)
-        if priority: self.setPriority(priority)
-        if show: self.setShow(show)
-        if status: self.setStatus(status)
+        if priority:
+            self.setPriority(priority)
+        if show:
+            self.setShow(show)
+        if status:
+            self.setStatus(status)
     def getPriority(self):
         """ Returns the priority of the message. """
         return self.getTagData('priority')
@@ -514,8 +579,10 @@ class Iq(Protocol):
             any additional attributes, recipient of the iq, sender of the iq, any additional payload (f.e. jabber:x:data node) and namespace in one go.
             Alternatively you can pass in the other XML object as the 'node' parameted to replicate it as an iq. """
         Protocol.__init__(self, 'iq', to=to, typ=typ, attrs=attrs, frm=frm, xmlns=xmlns, node=node)
-        if payload: self.setQueryPayload(payload)
-        if queryNS: self.setQueryNS(queryNS)
+        if payload:
+            self.setQueryPayload(payload)
+        if queryNS:
+            self.setQueryNS(queryNS)
     def getQuery(self):
         """ Return the IQ's child element if it exists, None otherwise."""
         typ = self.getType()
@@ -528,18 +595,21 @@ class Iq(Protocol):
     def getQueryNS(self):
         """ Return the namespace of the 'query' child element."""
         tag=self.getQuery()
-        if tag: return tag.getNamespace()
+        if tag:
+            return tag.getNamespace()
     def getQuerynode(self):
         """ Return the 'node' attribute value of the 'query' child element."""
         return self.getQuery().getAttr('node')
     def getQueryPayload(self):
         """ Return the 'query' child element payload."""
         tag=self.getQuery()
-        if tag: return tag.getPayload()
+        if tag:
+            return tag.getPayload()
     def getQueryChildren(self):
         """ Return the 'query' child element child nodes."""
         tag=self.getQuery()
-        if tag: return tag.getChildren()
+        if tag:
+            return tag.getChildren()
     def setQuery(self, name=None):
         """ Change the name of the query node, creating it if needed. Keep the existing name if none is given (use 'query' if it's a creation). Return the query node."""
         query=self.getQuery()
@@ -575,15 +645,23 @@ class ErrorNode(Node):
         if ERRORS.has_key(name):
             cod,type,txt=ERRORS[name]
             ns=name.split()[0]
-        else: cod,ns,type,txt='500',NS_STANZAS,'cancel',''
-        if typ: type=typ
-        if code: cod=code
-        if text: txt=text
+        else:
+            cod,ns,type,txt='500',NS_STANZAS,'cancel',''
+        if typ:
+            type=typ
+        if code:
+            cod=code
+        if text:
+            txt=text
         Node.__init__(self,'error',{},[Node(name)])
-        if type: self.setAttr('type',type)
-        if not cod: self.setName('stream:error')
-        if txt: self.addChild(node=Node(ns+' text',{},[txt]))
-        if cod: self.setAttr('code',cod)
+        if type:
+            self.setAttr('type',type)
+        if not cod:
+            self.setName('stream:error')
+        if txt:
+            self.addChild(node=Node(ns+' text',{},[txt]))
+        if cod:
+            self.setAttr('code',cod)
 
 class Error(Protocol):
     """ Used to quickly transform received stanza into error reply."""
@@ -591,10 +669,13 @@ class Error(Protocol):
         """ Create error reply basing on the received 'node' stanza and the 'error' error condition.
             If the 'node' is not the received stanza but locally created ('to' and 'from' fields needs not swapping)
             specify the 'reply' argument as false."""
-        if reply: Protocol.__init__(self,to=node.getFrom(),frm=node.getTo(),node=node)
-        else: Protocol.__init__(self,node=node)
+        if reply:
+            Protocol.__init__(self,to=node.getFrom(),frm=node.getTo(),node=node)
+        else:
+            Protocol.__init__(self,node=node)
         self.setError(error)
-        if node.getType()=='error': self.__str__=self.__dupstr__
+        if node.getType()=='error':
+            self.__str__=self.__dupstr__
     def __dupstr__(self,dup1=None,dup2=None):
         """ Dummy function used as preventor of creating error node in reply to error node.
             I.e. you will not be able to serialise "double" error into string.
@@ -611,21 +692,33 @@ class DataField(Node):
             Alternatively other XML object can be passed in as the 'node' parameted to replicate it as a new datafiled.
             """
         Node.__init__(self,'field',node=node)
-        if name: self.setVar(name)
-        if type(value) in [list,tuple]: self.setValues(value)
-        elif value: self.setValue(value)
-        if typ: self.setType(typ)
-        elif not typ and not node: self.setType('text-single')
-        if required: self.setRequired(required)
-        if label: self.setLabel(label)
-        if desc: self.setDesc(desc)
-        if options: self.setOptions(options)
+        if name:
+            self.setVar(name)
+        if type(value) in [list,tuple]:
+            self.setValues(value)
+        elif value:
+            self.setValue(value)
+        if typ:
+            self.setType(typ)
+        elif not typ and not node:
+            self.setType('text-single')
+        if required:
+            self.setRequired(required)
+        if label:
+            self.setLabel(label)
+        if desc:
+            self.setDesc(desc)
+        if options:
+            self.setOptions(options)
     def setRequired(self,req=1):
         """ Change the state of the 'required' flag. """
-        if req: self.setTag('required')
+        if req:
+            self.setTag('required')
         else:
-            try: self.delChild('required')
-            except ValueError: return
+            try:
+                self.delChild('required')
+            except ValueError:
+                return
     def isRequired(self):
         """ Returns in this field a required one. """
         return self.getTag('required')
@@ -649,29 +742,37 @@ class DataField(Node):
     def setValues(self,lst):
         """ Set the values of this field as values-list.
             Replaces all previous filed values! If you need to just add a value - use addValue method."""
-        while self.getTag('value'): self.delChild('value')
-        for val in lst: self.addValue(val)
+        while self.getTag('value'):
+            self.delChild('value')
+        for val in lst:
+            self.addValue(val)
     def addValue(self,val):
         """ Add one more value to this field. Used in 'get' iq's or such."""
         self.addChild('value',{},[val])
     def getValues(self):
         """ Return the list of values associated with this field."""
         ret=[]
-        for tag in self.getTags('value'): ret.append(tag.getData())
+        for tag in self.getTags('value'):
+            ret.append(tag.getData())
         return ret
     def getOptions(self):
         """ Return label-option pairs list associated with this field."""
         ret=[]
-        for tag in self.getTags('option'): ret.append([tag.getAttr('label'),tag.getTagData('value')])
+        for tag in self.getTags('option'):
+            ret.append([tag.getAttr('label'),tag.getTagData('value')])
         return ret
     def setOptions(self,lst):
         """ Set label-option pairs list associated with this field."""
-        while self.getTag('option'): self.delChild('option')
-        for opt in lst: self.addOption(opt)
+        while self.getTag('option'):
+            self.delChild('option')
+        for opt in lst:
+            self.addOption(opt)
     def addOption(self,opt):
         """ Add one more label-option pair to this field."""
-        if type(opt) in [str,unicode]: self.addChild('option').setTagData('value',opt)
-        else: self.addChild('option',{'label':opt[0]}).setTagData('value',opt[1])
+        if type(opt) in [str,unicode]:
+            self.addChild('option').setTagData('value',opt)
+        else:
+            self.addChild('option',{'label':opt[0]}).setTagData('value',opt[1])
     def getType(self):
         """ Get type of this field. """
         return self.getAttr('type')
@@ -703,8 +804,10 @@ class DataReported(Node):
         if node:
             newkids=[]
             for n in self.getChildren():
-                if    n.getName()=='field': newkids.append(DataField(node=n))
-                else: newkids.append(n)
+                if    n.getName()=='field':
+                    newkids.append(DataField(node=n))
+                else:
+                    newkids.append(n)
             self.kids=newkids
     def getField(self,name):
         """ Return the datafield object with name 'name' (if exists). """
@@ -713,7 +816,8 @@ class DataReported(Node):
         """ Create if nessessary or get the existing datafield object with name 'name' and return it.
             If created, attributes 'type' and 'label' are applied to new datafield."""
         f=self.getField(name)
-        if f: return f
+        if f:
+            return f
         return self.addChild(node=DataField(name,None,typ,0,label))
     def asDict(self):
         """ Represent dataitem as simple dictionary mapping of datafield names to their values."""
@@ -723,15 +827,19 @@ class DataReported(Node):
             typ=field.getType()
             if isinstance(typ,(str,unicode)) and typ[-6:]=='-multi':
                 val=[]
-                for i in field.getTags('value'): val.append(i.getData())
-            else: val=field.getTagData('value')
+                for i in field.getTags('value'):
+                    val.append(i.getData())
+            else:
+                val=field.getTagData('value')
             ret[name]=val
-        if self.getTag('instructions'): ret['instructions']=self.getInstructions()
+        if self.getTag('instructions'):
+            ret['instructions']=self.getInstructions()
         return ret
     def __getitem__(self,name):
         """ Simple dictionary interface for getting datafields values by their names."""
         item=self.getField(name)
-        if item: return item.getValue()
+        if item:
+            return item.getValue()
         raise IndexError('No such field')
     def __setitem__(self,name,val):
         """ Simple dictionary interface for setting datafields values by their names."""
@@ -751,8 +859,10 @@ class DataItem(Node):
         if node:
             newkids=[]
             for n in self.getChildren():
-                if    n.getName()=='field': newkids.append(DataField(node=n))
-                else: newkids.append(n)
+                if    n.getName()=='field':
+                    newkids.append(DataField(node=n))
+                else:
+                    newkids.append(n)
             self.kids=newkids
     def getField(self,name):
         """ Return the datafield object with name 'name' (if exists). """
@@ -760,7 +870,8 @@ class DataItem(Node):
     def setField(self,name):
         """ Create if nessessary or get the existing datafield object with name 'name' and return it. """
         f=self.getField(name)
-        if f: return f
+        if f:
+            return f
         return self.addChild(node=DataField(name))
     def asDict(self):
         """ Represent dataitem as simple dictionary mapping of datafield names to their values."""
@@ -770,15 +881,19 @@ class DataItem(Node):
             typ=field.getType()
             if isinstance(typ,(str,unicode)) and typ[-6:]=='-multi':
                 val=[]
-                for i in field.getTags('value'): val.append(i.getData())
-            else: val=field.getTagData('value')
+                for i in field.getTags('value'):
+                    val.append(i.getData())
+            else:
+                val=field.getTagData('value')
             ret[name]=val
-        if self.getTag('instructions'): ret['instructions']=self.getInstructions()
+        if self.getTag('instructions'):
+            ret['instructions']=self.getInstructions()
         return ret
     def __getitem__(self,name):
         """ Simple dictionary interface for getting datafields values by their names."""
         item=self.getField(name)
-        if item: return item.getValue()
+        if item:
+            return item.getValue()
         raise IndexError('No such field')
     def __setitem__(self,name,val):
         """ Simple dictionary interface for setting datafields values by their names."""
@@ -807,24 +922,36 @@ class DataForm(Node):
         if node:
             newkids=[]
             for n in self.getChildren():
-                if   n.getName()=='field': newkids.append(DataField(node=n))
-                elif n.getName()=='item': newkids.append(DataItem(node=n))
-                elif n.getName()=='reported': newkids.append(DataReported(node=n))
-                else: newkids.append(n)
+                if   n.getName()=='field':
+                    newkids.append(DataField(node=n))
+                elif n.getName()=='item':
+                    newkids.append(DataItem(node=n))
+                elif n.getName()=='reported':
+                    newkids.append(DataReported(node=n))
+                else:
+                    newkids.append(n)
             self.kids=newkids
-        if typ: self.setType(typ)
+        if typ:
+            self.setType(typ)
         self.setNamespace(NS_DATA)
-        if title: self.setTitle(title)
+        if title:
+            self.setTitle(title)
         if type(data)==type({}):
             newdata=[]
-            for name in data.keys(): newdata.append(DataField(name,data[name]))
+            for name in data.keys():
+                newdata.append(DataField(name,data[name]))
             data=newdata
         for child in data:
-            if type(child) in [type(''),type(u'')]: self.addInstructions(child)
-            elif child.__class__.__name__=='DataField': self.kids.append(child)
-            elif child.__class__.__name__=='DataItem': self.kids.append(child)
-            elif child.__class__.__name__=='DataReported': self.kids.append(child)
-            else: self.kids.append(DataField(node=child))
+            if type(child) in [type(''),type(u'')]:
+                self.addInstructions(child)
+            elif child.__class__.__name__=='DataField':
+                self.kids.append(child)
+            elif child.__class__.__name__=='DataItem':
+                self.kids.append(child)
+            elif child.__class__.__name__=='DataReported':
+                self.kids.append(child)
+            else:
+                self.kids.append(DataField(node=child))
     def getType(self):
         """ Return the type of dataform. """
         return self.getAttr('type')
@@ -852,7 +979,8 @@ class DataForm(Node):
     def setField(self,name):
         """ Create if nessessary or get the existing datafield object with name 'name' and return it. """
         f=self.getField(name)
-        if f: return f
+        if f:
+            return f
         return self.addChild(node=DataField(name))
     def asDict(self):
         """ Represent dataform as simple dictionary mapping of datafield names to their values."""
@@ -862,15 +990,19 @@ class DataForm(Node):
             typ=field.getType()
             if isinstance(typ,(str,unicode)) and typ[-6:]=='-multi':
                 val=[]
-                for i in field.getTags('value'): val.append(i.getData())
-            else: val=field.getTagData('value')
+                for i in field.getTags('value'):
+                    val.append(i.getData())
+            else:
+                val=field.getTagData('value')
             ret[name]=val
-        if self.getTag('instructions'): ret['instructions']=self.getInstructions()
+        if self.getTag('instructions'):
+            ret['instructions']=self.getInstructions()
         return ret
     def __getitem__(self,name):
         """ Simple dictionary interface for getting datafields values by their names."""
         item=self.getField(name)
-        if item: return item.getValue()
+        if item:
+            return item.getValue()
         raise IndexError('No such field')
     def __setitem__(self,name,val):
         """ Simple dictionary interface for setting datafields values by their names."""

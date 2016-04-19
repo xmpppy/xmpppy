@@ -45,20 +45,25 @@ class Roster(PlugIn):
         self._owner.RegisterHandler('iq',self.RosterIqHandler,'result',NS_ROSTER)
         self._owner.RegisterHandler('iq',self.RosterIqHandler,'set',NS_ROSTER)
         self._owner.RegisterHandler('presence',self.PresenceHandler)
-        if request: self.Request()
+        if request:
+            self.Request()
 
     def Request(self,force=0):
         """ Request roster from server if it were not yet requested
             (or if the 'force' argument is set). """
-        if self.set is None: self.set=0
-        elif not force: return
+        if self.set is None:
+            self.set=0
+        elif not force:
+            return
         self._owner.send(Iq('get',NS_ROSTER))
         self.DEBUG('Roster requested from server','start')
 
     def getRoster(self):
         """ Requests roster from server if neccessary and returns self."""
-        if not self.set: self.Request()
-        while not self.set: self._owner.Process(10)
+        if not self.set:
+            self.Request()
+        while not self.set:
+            self._owner.Process(10)
         return self
 
     def RosterIqHandler(self,dis,stanza):
@@ -67,16 +72,20 @@ class Roster(PlugIn):
         for item in stanza.getTag('query').getTags('item'):
             jid=item.getAttr('jid')
             if item.getAttr('subscription')=='remove':
-                if self._data.has_key(jid): del self._data[jid]
+                if self._data.has_key(jid):
+                    del self._data[jid]
                 raise NodeProcessed             # a MUST
             self.DEBUG('Setting roster item %s...'%jid,'ok')
-            if not self._data.has_key(jid): self._data[jid]={}
+            if not self._data.has_key(jid):
+                self._data[jid]={}
             self._data[jid]['name']=item.getAttr('name')
             self._data[jid]['ask']=item.getAttr('ask')
             self._data[jid]['subscription']=item.getAttr('subscription')
             self._data[jid]['groups']=[]
-            if not self._data[jid].has_key('resources'): self._data[jid]['resources']={}
-            for group in item.getTags('group'): self._data[jid]['groups'].append(group.getData())
+            if not self._data[jid].has_key('resources'):
+                self._data[jid]['resources']={}
+            for group in item.getTags('group'):
+                self._data[jid]['groups'].append(group.getData())
         self._data[self._owner.User+'@'+self._owner.Server]={'resources':{},'name':None,'ask':None,'subscription':None,'groups':None,}
         self.set=1
         raise NodeProcessed   # a MUST. Otherwise you'll get back an <iq type='error'/>
@@ -85,7 +94,8 @@ class Roster(PlugIn):
         """ Presence tracker. Used internally for setting items' resources state in
             internal roster representation. """
         jid=JID(pres.getFrom())
-        if not self._data.has_key(jid.getStripped()): self._data[jid.getStripped()]={'name':None,'ask':None,'subscription':'none','groups':['Not in roster'],'resources':{}}
+        if not self._data.has_key(jid.getStripped()):
+            self._data[jid.getStripped()]={'name':None,'ask':None,'subscription':'none','groups':['Not in roster'],'resources':{}}
 
         item=self._data[jid.getStripped()]
         typ=pres.getType()
@@ -93,12 +103,17 @@ class Roster(PlugIn):
         if not typ:
             self.DEBUG('Setting roster item %s for resource %s...'%(jid.getStripped(),jid.getResource()),'ok')
             item['resources'][jid.getResource()]=res={'show':None,'status':None,'priority':'0','timestamp':None}
-            if pres.getTag('show'): res['show']=pres.getShow()
-            if pres.getTag('status'): res['status']=pres.getStatus()
-            if pres.getTag('priority'): res['priority']=pres.getPriority()
-            if not pres.getTimestamp(): pres.setTimestamp()
+            if pres.getTag('show'):
+                res['show']=pres.getShow()
+            if pres.getTag('status'):
+                res['status']=pres.getStatus()
+            if pres.getTag('priority'):
+                res['priority']=pres.getPriority()
+            if not pres.getTimestamp():
+                pres.setTimestamp()
             res['timestamp']=pres.getTimestamp()
-        elif typ=='unavailable' and item['resources'].has_key(jid.getResource()): del item['resources'][jid.getResource()]
+        elif typ=='unavailable' and item['resources'].has_key(jid.getResource()):
+            del item['resources'][jid.getResource()]
         # Need to handle type='error' also
 
     def _getItemData(self,jid,dataname):
@@ -109,11 +124,13 @@ class Roster(PlugIn):
         """ Return specific jid's resource representation in internal format. Used internally. """
         if jid.find('/')+1:
             jid,resource=jid.split('/',1)
-            if self._data[jid]['resources'].has_key(resource): return self._data[jid]['resources'][resource][dataname]
+            if self._data[jid]['resources'].has_key(resource):
+                return self._data[jid]['resources'][resource][dataname]
         elif self._data[jid]['resources'].keys():
             lastpri=-129
             for r in self._data[jid]['resources'].keys():
-                if int(self._data[jid]['resources'][r]['priority'])>lastpri: resource,lastpri=r,int(self._data[jid]['resources'][r]['priority'])
+                if int(self._data[jid]['resources'][r]['priority'])>lastpri:
+                    resource,lastpri=r,int(self._data[jid]['resources'][r]['priority'])
             return self._data[jid]['resources'][resource][dataname]
     def delItem(self,jid):
         """ Delete contact 'jid' from roster."""
@@ -153,9 +170,11 @@ class Roster(PlugIn):
         iq=Iq('set',NS_ROSTER)
         query=iq.getTag('query')
         attrs={'jid':jid}
-        if name: attrs['name']=name
+        if name:
+            attrs['name']=name
         item=query.setTag('item',attrs)
-        for group in groups: item.addChild(node=Node('group',payload=[group]))
+        for group in groups:
+            item.addChild(node=Node('group',payload=[group]))
         self._owner.send(iq)
     def getItems(self):
         """ Return list of all [bare] JIDs that the roster is currently tracks."""
@@ -168,7 +187,8 @@ class Roster(PlugIn):
         return self._data[item]
     def getItem(self,item):
         """ Get the contact in the internal format (or None if JID 'item' is not in roster)."""
-        if self._data.has_key(item): return self._data[item]
+        if self._data.has_key(item):
+            return self._data[item]
     def Subscribe(self,jid):
         """ Send subscription request to JID 'jid'."""
         self._owner.send(Presence(jid,'subscribe'))

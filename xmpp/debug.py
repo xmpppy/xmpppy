@@ -397,12 +397,18 @@ class Debug:
     colors={}
     def Show(self, flag, msg, prefix=''):
         msg=msg.replace('\r','\\r').replace('\n','\\n').replace('><','>\n  <')
-        if not colors_enabled: pass
-        elif self.colors.has_key(prefix): msg=self.colors[prefix]+msg+color_none
-        else: msg=color_none+msg
-        if not colors_enabled: prefixcolor=''
-        elif self.colors.has_key(flag): prefixcolor=self.colors[flag]
-        else: prefixcolor=color_none
+        if not colors_enabled:
+            pass
+        elif self.colors.has_key(prefix):
+            msg=self.colors[prefix]+msg+color_none
+        else:
+            msg=color_none+msg
+        if not colors_enabled:
+            prefixcolor=''
+        elif self.colors.has_key(flag):
+            prefixcolor=self.colors[flag]
+        else:
+            prefixcolor=color_none
 
         if prefix=='error':
             _exception = sys.exc_info()
@@ -413,8 +419,10 @@ class Debug:
         self.show(msg, flag, prefix)
 
     def is_active( self, flag ):
-        if not self.active: return 0
-        if not flag or flag in self.active and DBG_ALWAYS not in self.active or flag not in self.active and DBG_ALWAYS in self.active : return 1
+        if not self.active:
+            return 0
+        if not flag or flag in self.active and DBG_ALWAYS not in self.active or flag not in self.active and DBG_ALWAYS in self.active :
+            return 1
         return 0
 
 DBG_ALWAYS='always'

@@ -119,10 +119,14 @@ class TCPsocket(PlugIn):
         """ Fire up connection. Return non-empty string on success.
             Also registers self.disconnected method in the owner's dispatcher.
             Called internally. """
-        if not self._server: self._server=(self._owner.Server,5222)
-        if self.use_srv: server=self.srv_lookup(self._server)
-        else: server=self._server
-        if not self.connect(server): return
+        if not self._server:
+            self._server=(self._owner.Server,5222)
+        if self.use_srv:
+            server=self.srv_lookup(self._server)
+        else:
+            server=self._server
+        if not self.connect(server):
+            return
         self._owner.Connection=self
         self._owner.RegisterDisconnectHandler(self.disconnected)
         return 'ok'
@@ -137,7 +141,8 @@ class TCPsocket(PlugIn):
     def connect(self,server=None):
         """ Try to connect to the given host/port. Does not lookup for SRV record.
             Returns non-empty string on success. """
-        if not server: server=self._server
+        if not server:
+            server=self._server
         try:
             for res in socket.getaddrinfo(server[0], int(server[1]), 0, socket.SOCK_STREAM):
                 af, socktype, proto, canonname, sa = res
@@ -149,7 +154,8 @@ class TCPsocket(PlugIn):
                     self.DEBUG("Successfully connected to remote host %s"%`server`,'start')
                     return 'ok'
                 except socket.error, (errno, strerror):
-                    if self._sock is not None: self._sock.close()
+                    if self._sock is not None:
+                        self._sock.close()
             self.DEBUG("Failed to connect to remote host %s: %s (%s)"%(`server`, strerror, errno),'error')
         except socket.gaierror, (errno, strerror):
             self.DEBUG("Failed to lookup remote host %s: %s (%s)"%(`server`, strerror, errno),'error')
@@ -165,7 +171,8 @@ class TCPsocket(PlugIn):
     def receive(self):
         """ Reads all pending incoming data.
             In case of disconnection calls owner's disconnected() method and then raises IOError exception."""
-        try: received = self._recv(BUFLEN)
+        try:
+            received = self._recv(BUFLEN)
         except socket.sslerror,e:
             self._seen_data=0
             if e[0]==socket.SSL_ERROR_WANT_READ:
@@ -180,10 +187,12 @@ class TCPsocket(PlugIn):
             sys.exc_clear()
             self._owner.disconnected()
             raise IOError("Disconnected from server")
-        except: received = ''
+        except:
+            received = ''
 
         while self.pending_data(0):
-            try: add = self._recv(BUFLEN)
+            try:
+                add = self._recv(BUFLEN)
             except socket.sslerror,e:
                 self._seen_data=0
                 if e[0]==socket.SSL_ERROR_WANT_READ:
@@ -198,9 +207,11 @@ class TCPsocket(PlugIn):
                 sys.exc_clear()
                 self._owner.disconnected()
                 raise IOError("Disconnected from server")
-            except: add=''
+            except:
+                add=''
             received +=add
-            if not add: break
+            if not add:
+                break
 
         if len(received): # length of 0 means disconnect
             self._seen_data=1
@@ -216,8 +227,10 @@ class TCPsocket(PlugIn):
     def send(self,raw_data,retry_timeout=1):
         """ Writes raw outgoing data. Blocks until done.
             If supplied data is unicode string, encodes it to utf-8 before send."""
-        if type(raw_data)==type(u''): raw_data = raw_data.encode('utf-8')
-        elif type(raw_data)<>type(''): raw_data = ustr(raw_data).encode('utf-8')
+        if type(raw_data)==type(u''):
+            raw_data = raw_data.encode('utf-8')
+        elif type(raw_data)<>type(''):
+            raw_data = ustr(raw_data).encode('utf-8')
         try:
             sent = 0
             while not sent:
@@ -282,9 +295,11 @@ class HTTPPROXYsocket(TCPsocket):
         """ Starts connection. Connects to proxy, supplies login and password to it
             (if were specified while creating instance). Instructs proxy to make
             connection to the target server. Returns non-empty sting on success. """
-        if not TCPsocket.connect(self,(self._proxy['host'],self._proxy['port'])): return
+        if not TCPsocket.connect(self,(self._proxy['host'],self._proxy['port'])):
+            return
         self.DEBUG("Proxy server contacted, performing authentification",'start')
-        if not server: server=self._server
+        if not server:
+            server=self._server
         connector = ['CONNECT %s:%s HTTP/1.0'%server,
             'Proxy-Connection: Keep-Alive',
             'Pragma: no-cache',
@@ -296,19 +311,23 @@ class HTTPPROXYsocket(TCPsocket):
             connector.append('Proxy-Authorization: Basic '+credentials)
         connector.append('\r\n')
         self.send('\r\n'.join(connector))
-        try: reply = self.receive().replace('\r','')
+        try:
+            reply = self.receive().replace('\r','')
         except IOError:
             self.DEBUG('Proxy suddenly disconnected','error')
             self._owner.disconnected()
             return
-        try: proto,code,desc=reply.split('\n')[0].split(' ',2)
-        except: raise error('Invalid proxy reply')
+        try:
+            proto,code,desc=reply.split('\n')[0].split(' ',2)
+        except:
+            raise error('Invalid proxy reply')
         if code<>'200':
             self.DEBUG('Invalid proxy reply: %s %s %s'%(proto,code,desc),'error')
             self._owner.disconnected()
             return
         while reply.find('\n\n') == -1:
-            try: reply += self.receive().replace('\r','')
+            try:
+                reply += self.receive().replace('\r','')
             except IOError:
                 self.DEBUG('Proxy suddenly disconnected','error')
                 self._owner.disconnected()
@@ -327,14 +346,19 @@ class TLS(PlugIn):
             If 'now' in false then starts encryption as soon as TLS feature is
             declared by the server (if it were already declared - it is ok).
         """
-        if owner.__dict__.has_key('TLS'): return  # Already enabled.
+        if owner.__dict__.has_key('TLS'):
+            return  # Already enabled.
         PlugIn.PlugIn(self,owner)
         DBG_LINE='TLS'
-        if now: return self._startSSL()
+        if now:
+            return self._startSSL()
         if self._owner.Dispatcher.Stream.features:
-            try: self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
-            except NodeProcessed: pass
-        else: self._owner.RegisterHandlerOnce('features',self.FeaturesHandler,xmlns=NS_STREAMS)
+            try:
+                self.FeaturesHandler(self._owner.Dispatcher,self._owner.Dispatcher.Stream.features)
+            except NodeProcessed:
+                pass
+        else:
+            self._owner.RegisterHandlerOnce('features',self.FeaturesHandler,xmlns=NS_STREAMS)
         self.starttls=None
 
     def plugout(self,now=0):
@@ -378,7 +402,8 @@ class TLS(PlugIn):
     def StartTLSHandler(self, conn, starttls):
         """ Handle server reply if TLS is allowed to process. Behaves accordingly.
             Used internally."""
-        if starttls.getNamespace()<>NS_TLS: return
+        if starttls.getNamespace()<>NS_TLS:
+            return
         self.starttls=starttls.getName()
         if self.starttls=='failure':
             self.DEBUG("Got starttls response: "+self.starttls,'error')

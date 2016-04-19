@@ -85,8 +85,10 @@ class Session:
         self.DEBUG=owner.Dispatcher.DEBUG
         self._expected={}
         self._owner=owner
-        if self.TYP=='server': self.ID=`random.random()`[2:]
-        else: self.ID=None
+        if self.TYP=='server':
+            self.ID=`random.random()`[2:]
+        else:
+            self.ID=None
 
         self.sendbuffer=''
         self._stream_pos_queued=None
@@ -98,7 +100,8 @@ class Session:
         self._session_state=SESSION_NOT_AUTHED
         self.waiting_features=[]
         for feature in [NS_TLS,NS_SASL,NS_BIND,NS_SESSION]:
-            if feature in owner.features: self.waiting_features.append(feature)
+            if feature in owner.features:
+                self.waiting_features.append(feature)
         self.features=[]
         self.feature_in_process=None
         self.slave_session=None
@@ -124,8 +127,10 @@ class Session:
         """ Reads all pending incoming data.
             Raises IOError on disconnection.
             Blocks until at least one byte is read."""
-        try: received = self._recv(10240)
-        except: received = ''
+        try:
+            received = self._recv(10240)
+        except:
+            received = ''
 
         if len(received): # length of 0 means disconnect
             self.DEBUG(`self.fileno()`+' '+received,'got')
@@ -140,8 +145,10 @@ class Session:
             Should only be used for auth/TLS stuff and like.
             If you just want to shedule regular stanza for delivery use enqueue method.
         """
-        if isinstance(chunk,Node): chunk = chunk.__str__().encode('utf-8')
-        elif type(chunk)==type(u''): chunk = chunk.encode('utf-8')
+        if isinstance(chunk,Node):
+            chunk = chunk.__str__().encode('utf-8')
+        elif type(chunk)==type(u''):
+            chunk = chunk.encode('utf-8')
         self.enqueue(chunk)
 
     def enqueue(self,stanza):
@@ -150,8 +157,10 @@ class Session:
             stream authenticated. After that this method is effectively the same as "sendnow" method."""
         if isinstance(stanza,Protocol):
             self.stanza_queue.append(stanza)
-        else: self.sendbuffer+=stanza
-        if self._socket_state>=SOCKET_ALIVE: self.push_queue()
+        else:
+            self.sendbuffer+=stanza
+        if self._socket_state>=SOCKET_ALIVE:
+            self.push_queue()
 
     def push_queue(self,failreason=ERR_RECIPIENT_UNAVAILABLE):
         """ If stream is authenticated than move items from "send" queue to "immidiatedly send" queue.
@@ -215,7 +224,8 @@ class Session:
         if not attrs.has_key('id') or not attrs['id']:
             return self.terminate_stream(STREAM_INVALID_XML)
         self.ID=attrs['id']
-        if not attrs.has_key('version'): self._owner.Dialback(self)
+        if not attrs.has_key('version'):
+            self._owner.Dialback(self)
 
     def _stream_open(self,ns=None,tag='stream',attrs={}):
         """ This callback is used to handle opening stream tag of the incoming stream.
@@ -227,21 +237,33 @@ class Session:
             text+=' to="%s"'%self.peer
         else:
             text+=' id="%s"'%self.ID
-            if not attrs.has_key('to'): text+=' from="%s"'%self._owner.servernames[0]
-            else: text+=' from="%s"'%attrs['to']
-        if attrs.has_key('xml:lang'): text+=' xml:lang="%s"'%attrs['xml:lang']
-        if self.xmlns: xmlns=self.xmlns
-        else: xmlns=NS_SERVER
+            if not attrs.has_key('to'):
+                text+=' from="%s"'%self._owner.servernames[0]
+            else:
+                text+=' from="%s"'%attrs['to']
+        if attrs.has_key('xml:lang'):
+            text+=' xml:lang="%s"'%attrs['xml:lang']
+        if self.xmlns:
+            xmlns=self.xmlns
+        else:
+            xmlns=NS_SERVER
         text+=' xmlns:db="%s" xmlns:stream="%s" xmlns="%s"'%(NS_DIALBACK,NS_STREAMS,xmlns)
-        if attrs.has_key('version') or self.TYP=='client': text+=' version="1.0"'
+        if attrs.has_key('version') or self.TYP=='client':
+            text+=' version="1.0"'
         self.sendnow(text+'>')
         self.set_stream_state(STREAM__OPENED)
-        if self.TYP=='client': return
-        if tag<>'stream': return self.terminate_stream(STREAM_INVALID_XML)
-        if ns<>NS_STREAMS: return self.terminate_stream(STREAM_INVALID_NAMESPACE)
-        if self.Stream.xmlns<>self.xmlns: return self.terminate_stream(STREAM_BAD_NAMESPACE_PREFIX)
-        if not attrs.has_key('to'): return self.terminate_stream(STREAM_IMPROPER_ADDRESSING)
-        if attrs['to'] not in self._owner.servernames: return self.terminate_stream(STREAM_HOST_UNKNOWN)
+        if self.TYP=='client':
+            return
+        if tag<>'stream':
+            return self.terminate_stream(STREAM_INVALID_XML)
+        if ns<>NS_STREAMS:
+            return self.terminate_stream(STREAM_INVALID_NAMESPACE)
+        if self.Stream.xmlns<>self.xmlns:
+            return self.terminate_stream(STREAM_BAD_NAMESPACE_PREFIX)
+        if not attrs.has_key('to'):
+            return self.terminate_stream(STREAM_IMPROPER_ADDRESSING)
+        if attrs['to'] not in self._owner.servernames:
+            return self.terminate_stream(STREAM_HOST_UNKNOWN)
         self.ourname=attrs['to'].lower()
         if self.TYP=='server' and attrs.has_key('version'):
             # send features
@@ -254,29 +276,35 @@ class Session:
                 for mec in self._owner.SASL.mechanisms:
                     features.T.mechanisms.NT.mechanism=mec
             else:
-                if NS_BIND in self.waiting_features: features.NT.bind.setNamespace(NS_BIND)
-                if NS_SESSION in self.waiting_features: features.NT.session.setNamespace(NS_SESSION)
+                if NS_BIND in self.waiting_features:
+                    features.NT.bind.setNamespace(NS_BIND)
+                if NS_SESSION in self.waiting_features:
+                    features.NT.session.setNamespace(NS_SESSION)
             self.sendnow(features)
 
     def feature(self,feature):
         """ Declare some stream feature as activated one. """
-        if feature not in self.features: self.features.append(feature)
+        if feature not in self.features:
+            self.features.append(feature)
         self.unfeature(feature)
 
     def unfeature(self,feature):
         """ Declare some feature as illegal. Illegal features can not be used.
             Example: BIND feature becomes illegal after Non-SASL auth. """
-        if feature in self.waiting_features: self.waiting_features.remove(feature)
+        if feature in self.waiting_features:
+            self.waiting_features.remove(feature)
 
     def _stream_close(self,unregister=1):
         """ Write the closing stream tag and destroy the underlaying socket. Used internally. """
-        if self._stream_state>=STREAM__CLOSED: return
+        if self._stream_state>=STREAM__CLOSED:
+            return
         self.set_stream_state(STREAM__CLOSING)
         self.sendnow('</stream:stream>')
         self.set_stream_state(STREAM__CLOSED)
         self.push_queue()       # decompose queue really since STREAM__CLOSED
         self._owner.flush_queues()
-        if unregister: self._owner.unregistersession(self)
+        if unregister:
+            self._owner.unregistersession(self)
         self._destroy_socket()
 
     def terminate_stream(self,error=None,unregister=1):
@@ -287,7 +315,8 @@ class Session:
             closing stream tag.
             Emulate receiving 'unavailable' type presence just before stream closure.
         """
-        if self._stream_state>=STREAM__CLOSING: return
+        if self._stream_state>=STREAM__CLOSING:
+            return
         if self._stream_state<STREAM__OPENED:
             self.set_stream_state(STREAM__CLOSING)
             self._stream_open()
@@ -297,8 +326,10 @@ class Session:
             p.setNamespace(NS_CLIENT)
             self._dispatch(p,trusted=1)
         if error:
-            if isinstance(error,Node): self.sendnow(error)
-            else: self.sendnow(ErrorNode(error))
+            if isinstance(error,Node):
+                self.sendnow(error)
+            else:
+                self.sendnow(ErrorNode(error))
         self._stream_close(unregister=unregister)
         if self.slave_session:
             self.slave_session.terminate_stream(STREAM_REMOTE_CONNECTION_FAILED)
@@ -314,12 +345,14 @@ class Session:
 
     def start_feature(self,f):
         """ Declare some feature as "negotiating now" to prevent other features from start negotiating. """
-        if self.feature_in_process: raise Exception("Starting feature %s over %s !"%(f,self.feature_in_process))
+        if self.feature_in_process:
+            raise Exception("Starting feature %s over %s !"%(f,self.feature_in_process))
         self.feature_in_process=f
 
     def stop_feature(self,f):
         """ Declare some feature as "negotiated" to allow other features start negotiating. """
-        if self.feature_in_process<>f: raise Exception("Stopping feature %s instead of %s !"%(f,self.feature_in_process))
+        if self.feature_in_process<>f:
+            raise Exception("Stopping feature %s instead of %s !"%(f,self.feature_in_process))
         self.feature_in_process=None
 
     def set_socket_state(self,newstate):
@@ -327,7 +360,8 @@ class Session:
             Socket starts with SOCKET_UNCONNECTED state
             and then proceeds (possibly) to SOCKET_ALIVE
             and then to SOCKET_DEAD """
-        if self._socket_state<newstate: self._socket_state=newstate
+        if self._socket_state<newstate:
+            self._socket_state=newstate
 
     def set_session_state(self,newstate):
         """ Change the session state.
@@ -337,7 +371,8 @@ class Session:
         """
         if self._session_state<newstate:
             if self._session_state<SESSION_AUTHED and \
-               newstate>=SESSION_AUTHED: self._stream_pos_queued=self._stream_pos_sent
+               newstate>=SESSION_AUTHED:
+                   self._stream_pos_queued=self._stream_pos_sent
             self._session_state=newstate
 
     def set_stream_state(self,newstate):
@@ -346,4 +381,5 @@ class Session:
             STREAM__OPENED, STREAM__CLOSING and STREAM__CLOSED states.
             Note that some features (like TLS and SASL)
             requires stream re-start so this state can have non-linear changes. """
-        if self._stream_state<newstate: self._stream_state=newstate
+        if self._stream_state<newstate:
+            self._stream_state=newstate

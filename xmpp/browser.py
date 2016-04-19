@@ -104,19 +104,28 @@ class Browser(PlugIn):
             Set returns '' or None as the key
             get returns '' or None as the key or None as the dict.
             Used internally."""
-        if self._handlers.has_key(jid): cur=self._handlers[jid]
+        if self._handlers.has_key(jid):
+            cur=self._handlers[jid]
         elif set:
             self._handlers[jid]={}
             cur=self._handlers[jid]
-        else: cur=self._handlers['']
-        if node is None: node=[None]
-        else: node=node.replace('/',' /').split('/')
+        else:
+            cur=self._handlers['']
+        if node is None:
+            node=[None]
+        else:
+            node=node.replace('/',' /').split('/')
         for i in node:
-            if i<>'' and cur.has_key(i): cur=cur[i]
-            elif set and i<>'': cur[i]={dict:cur,str:i}; cur=cur[i]
-            elif set or cur.has_key(''): return cur,''
-            else: return None,None
-        if cur.has_key(1) or set: return cur,1
+            if i<>'' and cur.has_key(i):
+                cur=cur[i]
+            elif set and i<>'':
+                cur[i]={dict:cur,str:i}; cur=cur[i]
+            elif set or cur.has_key(''):
+                return cur,''
+            else:
+                return None,None
+        if cur.has_key(1) or set:
+            return cur,1
         raise Exception("Corrupted data")
 
     def setDiscoHandler(self,handler,node='',jid=''):
@@ -166,7 +175,8 @@ class Browser(PlugIn):
             that is resonsible for this node/jid combination.
             Used internally."""
         node,key=self._traversePath(node,jid)
-        if node: return node[key]
+        if node:
+            return node[key]
 
     def delDiscoHandler(self,node='',jid=''):
         """ Unregisters DISCO handler that is resonsible for this
@@ -196,26 +206,35 @@ class Browser(PlugIn):
             raise NodeProcessed
         self.DEBUG("Handling request with jid->%s node->%s ns->%s"%(request.getTo().__str__().encode('utf8'),nodestr.encode('utf8'),request.getQueryNS().encode('utf8')),'ok')
         rep=request.buildReply('result')
-        if node: rep.setQuerynode(node)
+        if node:
+            rep.setQuerynode(node)
         q=rep.getTag('query')
         if request.getQueryNS()==NS_DISCO_ITEMS:
             # handler must return list: [{jid,action,node,name}]
-            if type(handler)==dict: lst=handler['items']
-            else: lst=handler(conn,request,'items')
+            if type(handler)==dict:
+                lst=handler['items']
+            else:
+                lst=handler(conn,request,'items')
             if lst==None:
                 conn.send(Error(request,ERR_ITEM_NOT_FOUND))
                 raise NodeProcessed
-            for item in lst: q.addChild('item',item)
+            for item in lst:
+                q.addChild('item',item)
         elif request.getQueryNS()==NS_DISCO_INFO:
-            if type(handler)==dict: dt=handler['info']
-            else: dt=handler(conn,request,'info')
+            if type(handler)==dict:
+                dt=handler['info']
+            else:
+                dt=handler(conn,request,'info')
             if dt==None:
                 conn.send(Error(request,ERR_ITEM_NOT_FOUND))
                 raise NodeProcessed
             # handler must return dictionary:
             # {'ids':[{},{},{},{}], 'features':[fe,at,ur,es], 'xdata':DataForm}
-            for id in dt['ids']: q.addChild('identity',id)
-            for feature in dt['features']: q.addChild('feature',{'var':feature})
-            if dt.has_key('xdata'): q.addChild(node=dt['xdata'])
+            for id in dt['ids']:
+                q.addChild('identity',id)
+            for feature in dt['features']:
+                q.addChild('feature',{'var':feature})
+            if dt.has_key('xdata'):
+                q.addChild(node=dt['xdata'])
         conn.send(rep)
         raise NodeProcessed

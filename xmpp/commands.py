@@ -118,7 +118,8 @@ class Commands(PlugIn):
                     if i != None:
                         list.append(Node(tag='item',attrs={'jid':i[0],'node':i[1],'name':i[2]}))
                 iq = request.buildReply('result')
-                if request.getQuerynode(): iq.setQuerynode(request.getQuerynode())
+                if request.getQuerynode():
+                    iq.setQuerynode(request.getQuerynode())
                 iq.setQueryPayload(list)
                 conn.send(iq)
             else:
@@ -227,7 +228,8 @@ class Command_Handler_Prototype(PlugIn):
             action = request.getTagAttr('command','action')
         except:
             action = None
-        if action == None: action = 'execute'
+        if action == None:
+            action = 'execute'
         # Check session is in session list
         if self.sessions.has_key(session):
             if self.sessions[session]['jid']==request.getFrom():
