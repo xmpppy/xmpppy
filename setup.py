@@ -1,12 +1,6 @@
 #!/usr/bin/python
 # -*- coding: koi8-r -*-
-from distutils.core import setup,sys
-import os
-
-if sys.version < '2.2.3':
-    from distutils.dist import DistributionMetadata
-    DistributionMetadata.classifiers = None
-    DistributionMetadata.download_url = None
+from setuptools import setup
 
 # Set proper release version in source code also!!!
 setup(name='xmpppy',

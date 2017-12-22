@@ -9,3 +9,6 @@
 *.pyc
 /examples
 /html
+/build
+/dist
+*.egg-info/
