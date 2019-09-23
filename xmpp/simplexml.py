@@ -22,15 +22,15 @@ import xml.parsers.expat
 def XMLescape(txt):
     """Returns provided string with symbols & < > " replaced by their respective XML entities."""
     # replace also FORM FEED and ESC, because they are not valid XML chars
-    return txt.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;").replace(u'\x0C', "").replace(u'\x1B', "")
+    return txt.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;").replace('\x0C', "").replace('\x1B', "")
 
 ENCODING='utf-8'
 def ustr(what):
     """Converts object "what" to unicode string using it's own __str__ method if accessible or unicode method otherwise."""
-    if isinstance(what, unicode): return what
+    if isinstance(what, str): return what
     try: r=what.__str__()
     except AttributeError: r=str(what)
-    if not isinstance(r, unicode): return unicode(r,ENCODING)
+    if not isinstance(r, str): return str(r,ENCODING)
     return r
 
 class Node(object):
@@ -65,19 +65,19 @@ class Node(object):
                 node_built = True
             else:
                 self.name,self.namespace,self.attrs,self.data,self.kids,self.parent,self.nsd = node.name,node.namespace,{},[],[],node.parent,{}
-                for key  in node.attrs.keys(): self.attrs[key]=node.attrs[key]
+                for key  in list(node.attrs.keys()): self.attrs[key]=node.attrs[key]
                 for data in node.data: self.data.append(data)
                 for kid  in node.kids: self.kids.append(kid)
-                for k,v in node.nsd.items(): self.nsd[k] = v
+                for k,v in list(node.nsd.items()): self.nsd[k] = v
         else: self.name,self.namespace,self.attrs,self.data,self.kids,self.parent,self.nsd = 'tag','',{},[],[],None,{}
         if parent:
             self.parent = parent
         self.nsp_cache = {}
         if nsp:
-            for k,v in nsp.items(): self.nsp_cache[k] = v
-        for attr,val in attrs.items():
+            for k,v in list(nsp.items()): self.nsp_cache[k] = v
+        for attr,val in list(attrs.items()):
             if attr == 'xmlns':
-                self.nsd[u''] = val
+                self.nsd[''] = val
             elif attr.startswith('xmlns:'):
                 self.nsd[attr[6:]] = val
             self.attrs[attr]=attrs[attr]
@@ -90,7 +90,7 @@ class Node(object):
                     self.namespace,self.name = tag.split()
                 else:
                     self.name = tag
-        if isinstance(payload, basestring): payload=[payload]
+        if isinstance(payload, str): payload=[payload]
         for i in payload:
             if isinstance(i, Node): self.addChild(node=i)
             else: self.data.append(ustr(i))
@@ -115,7 +115,7 @@ class Node(object):
             if not self.parent or self.parent.namespace!=self.namespace:
                 if 'xmlns' not in self.attrs:
                     s = s + ' xmlns="%s"'%self.namespace
-        for key in self.attrs.keys():
+        for key in list(self.attrs.keys()):
             val = ustr(self.attrs[key])
             s = s + ' %s="%s"' % ( key, XMLescape(val) )
         s = s + ">"
@@ -165,7 +165,7 @@ class Node(object):
         if namespace:
             newnode.setNamespace(namespace)
         self.kids.append(newnode)
-        self.data.append(u'')
+        self.data.append('')
         return newnode
     def addData(self, data):
         """ Adds some CDATA to node. """
@@ -234,7 +234,7 @@ class Node(object):
             if not node: continue
             if namespace and namespace!=node.getNamespace(): continue
             if node.getName() == name:
-                for key in attrs.keys():
+                for key in list(attrs.keys()):
                    if key not in node.attrs or node.attrs[key]!=attrs[key]: break
                 else: nodes.append(node)
             if one and nodes: return nodes[0]
@@ -246,7 +246,7 @@ class Node(object):
             if not node: continue
             if namespace is not None and namespace!=node.getNamespace(): continue
             if node.getName() == name:
-                for key in attrs.keys():
+                for key in list(attrs.keys()):
                     if key not in node.attrs or \
                         node.attrs[key]!=attrs[key]: break
                 else:
@@ -271,7 +271,7 @@ class Node(object):
     def setPayload(self,payload,add=0):
         """ Sets node payload according to the list specified. WARNING: completely replaces all node's
             previous content. If you wish just to add child or CDATA - use addData or addChild methods. """
-        if isinstance(payload, basestring): payload=[payload]
+        if isinstance(payload, str): payload=[payload]
         if add: self.kids+=payload
         else: self.kids=payload
     def setTag(self, name, attrs={}, namespace=None):
@@ -383,7 +383,7 @@ class NodeBuilder:
         """XML Parser callback. Used internally"""
         self.check_data_buffer()
         self._inc_depth()
-        self.DEBUG(DBG_NODEBUILDER, "DEPTH -> %i , tag -> %s, attrs -> %s" % (self.__depth, tag, `attrs`), 'down')
+        self.DEBUG(DBG_NODEBUILDER, "DEPTH -> %i , tag -> %s, attrs -> %s" % (self.__depth, tag, repr(attrs)), 'down')
         if self.__depth == self._dispatch_depth:
             if not self._mini_dom :
                 self._mini_dom = Node(tag=tag, attrs=attrs, nsp = self._document_nsp, node_built=True)
@@ -397,9 +397,9 @@ class NodeBuilder:
             self._document_attrs = {}
             self._document_nsp = {}
             nsp, name = (['']+tag.split(':'))[-2:]
-            for attr,val in attrs.items():
+            for attr,val in list(attrs.items()):
                 if attr == 'xmlns':
-                    self._document_nsp[u''] = val
+                    self._document_nsp[''] = val
                 elif attr.startswith('xmlns:'):
                     self._document_nsp[attr[6:]] = val
                 else:
@@ -407,7 +407,7 @@ class NodeBuilder:
             ns = self._document_nsp.get(nsp, 'http://www.gajim.org/xmlns/undeclared-root')
             try:
                 self.stream_header_received(ns, name, attrs)
-            except ValueError, e:
+            except ValueError as e:
                 self._document_attrs = None
                 raise ValueError(str(e))
         if not self.last_is_data and self._ptr.parent:

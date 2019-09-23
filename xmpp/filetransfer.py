@@ -20,8 +20,8 @@ Note that this is just a transport for data. You have to negotiate data transfer
 (via StreamInitiation most probably). Unfortunately SI is not implemented yet.
 """
 
-from protocol import *
-from dispatcher import PlugIn
+from .protocol import *
+from .dispatcher import PlugIn
 import base64
 
 class IBB(PlugIn):
@@ -74,7 +74,7 @@ class IBB(PlugIn):
         try: blocksize=int(blocksize)
         except: err=ERR_BAD_REQUEST
         if not sid or not blocksize: err=ERR_BAD_REQUEST
-        elif sid in self._streams.keys(): err=ERR_UNEXPECTED_REQUEST
+        elif sid in list(self._streams.keys()): err=ERR_UNEXPECTED_REQUEST
         if err: rep=Error(stanza,err)
         else:
             self.DEBUG("Opening stream: id %s, block-size %s"%(sid,blocksize),'info')
@@ -87,7 +87,7 @@ class IBB(PlugIn):
             the file object containing info for send 'fp'. Also the desired blocksize can be specified.
             Take into account that recommended stanza size is 4k and IBB uses base64 encoding
             that increases size of data by 1/3."""
-        if sid in self._streams.keys(): return
+        if sid in list(self._streams.keys()): return
         if not JID(to).getResource(): return
         self._streams[sid]={'direction':'|>'+to,'block-size':blocksize,'fp':fp,'seq':0}
         self._owner.RegisterCycleHandler(self.SendHandler)
@@ -99,7 +99,7 @@ class IBB(PlugIn):
     def SendHandler(self,conn):
         """ Send next portion of data if it is time to do it. Used internally. """
         self.DEBUG('SendHandler called','info')
-        for sid in self._streams.keys():
+        for sid in list(self._streams.keys()):
             stream=self._streams[sid]
             if stream['direction'][:2]=='|>': cont=1
             elif stream['direction'][0]=='>':
@@ -143,11 +143,11 @@ class IBB(PlugIn):
         try: seq=int(seq); data=base64.decodestring(data)
         except: seq=''; data=''
         err=None
-        if not sid in self._streams.keys(): err=ERR_ITEM_NOT_FOUND
+        if not sid in list(self._streams.keys()): err=ERR_ITEM_NOT_FOUND
         else:
             stream=self._streams[sid]
             if not data: err=ERR_BAD_REQUEST
-            elif seq<>stream['seq']: err=ERR_UNEXPECTED_REQUEST
+            elif seq!=stream['seq']: err=ERR_UNEXPECTED_REQUEST
             else:
                 self.DEBUG('Successfull receive sid->%s %s+%s bytes'%(sid,stream['fp'].tell(),len(data)),'ok')
                 stream['seq']+=1
@@ -161,7 +161,7 @@ class IBB(PlugIn):
             Raise xmpppy event specifying successfull data receive. """
         sid=stanza.getTagAttr('close','sid')
         self.DEBUG('StreamCloseHandler called sid->%s'%sid,'info')
-        if sid in self._streams.keys():
+        if sid in list(self._streams.keys()):
             conn.send(stanza.buildReply('result'))
             conn.Event(self.DBG_LINE,'SUCCESSFULL RECEIVE',self._streams[sid])
             del self._streams[sid]
@@ -172,7 +172,7 @@ class IBB(PlugIn):
             Raise xmpppy event specifying unsuccessfull data receive. """
         syn_id=stanza.getID()
         self.DEBUG('StreamBrokenHandler called syn_id->%s'%syn_id,'info')
-        for sid in self._streams.keys():
+        for sid in list(self._streams.keys()):
             stream=self._streams[sid]
             if stream['syn_id']==syn_id:
                 if stream['direction'][0]=='<': conn.Event(self.DBG_LINE,'ERROR ON RECEIVE',stream)
@@ -185,7 +185,7 @@ class IBB(PlugIn):
             is agreed upon."""
         syn_id=stanza.getID()
         self.DEBUG('StreamOpenReplyHandler called syn_id->%s'%syn_id,'info')
-        for sid in self._streams.keys():
+        for sid in list(self._streams.keys()):
             stream=self._streams[sid]
             if stream['syn_id']==syn_id:
                 if stanza.getType()=='error':

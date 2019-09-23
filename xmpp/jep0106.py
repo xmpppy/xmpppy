@@ -40,13 +40,13 @@ if __name__ == "__main__":
         during = JIDEncode(before)
         after = JIDDecode(during)
         if during == valid and after == before:
-            print 'PASS Before: ' + before
-            print 'PASS During: ' + during
+            print(('PASS Before: ' + before))
+            print(('PASS During: ' + during))
         else:
-            print 'FAIL Before: ' + before
-            print 'FAIL During: ' + during
-            print 'FAIL After : ' + after
-        print
+            print(('FAIL Before: ' + before))
+            print(('FAIL During: ' + during))
+            print(('FAIL After : ' + after))
+        print()
 
     test('jid escaping',r'jid\20escaping')
     test(r'\3and\2is\5@example.com',r'\5c3and\2is\5\40example.com')

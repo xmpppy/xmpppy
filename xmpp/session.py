@@ -23,7 +23,7 @@ one client for each connection. Is is specifically important when you are
 writing the server.
 """
 
-from protocol import *
+from .protocol import *
 
 # Transport-level flags
 SOCKET_UNCONNECTED  =0
@@ -85,7 +85,7 @@ class Session:
         self.DEBUG=owner.Dispatcher.DEBUG
         self._expected={}
         self._owner=owner
-        if self.TYP=='server': self.ID=`random.random()`[2:]
+        if self.TYP=='server': self.ID=repr(random.random())[2:]
         else: self.ID=None
 
         self.sendbuffer=''
@@ -128,7 +128,7 @@ class Session:
         except: received = ''
 
         if len(received): # length of 0 means disconnect
-            self.DEBUG(`self.fileno()`+' '+received,'got')
+            self.DEBUG(repr(self.fileno())+' '+received,'got')
         else:
             self.DEBUG('Socket error while receiving data','error')
             self.set_socket_state(SOCKET_DEAD)
@@ -141,7 +141,7 @@ class Session:
             If you just want to shedule regular stanza for delivery use enqueue method.
         """
         if isinstance(chunk,Node): chunk = chunk.__str__().encode('utf-8')
-        elif type(chunk)==type(u''): chunk = chunk.encode('utf-8')
+        elif type(chunk)==type(''): chunk = chunk.encode('utf-8')
         self.enqueue(chunk)
 
     def enqueue(self,stanza):
@@ -167,7 +167,7 @@ class Session:
                 self._dispatch(Error(stanza,failreason),trusted=1)                      # Infinite loops in case of S2S connection...
             self.deliver_queue_map,self.deliver_key_queue,self.stanza_queue={},[],[]
             return
-        elif self._session_state>=SESSION_AUTHED:       # FIXME! Должен быть какой-то другой флаг.
+        elif self._session_state>=SESSION_AUTHED:       # FIXME! 
             #### LOCK_QUEUE
             for stanza in self.stanza_queue:
                 txt=stanza.__str__().encode('utf-8')
@@ -183,13 +183,13 @@ class Session:
         if self.sendbuffer:
             try:
                 # LOCK_QUEUE
-                sent=self._send(self.sendbuffer)    # Блокирующая штучка!
+                sent=self._send(self.sendbuffer)     
             except:
                 # UNLOCK_QUEUE
                 self.set_socket_state(SOCKET_DEAD)
                 self.DEBUG("Socket error while sending data",'error')
                 return self.terminate_stream()
-            self.DEBUG(`self.fileno()`+' '+self.sendbuffer[:sent],'sent')
+            self.DEBUG(repr(self.fileno())+' '+self.sendbuffer[:sent],'sent')
             self._stream_pos_sent+=sent
             self.sendbuffer=self.sendbuffer[sent:]
             self._stream_pos_delivered=self._stream_pos_sent            # Should be acquired from socket somehow. Take SSL into account.
@@ -212,10 +212,10 @@ class Session:
 
     def _catch_stream_id(self,ns=None,tag='stream',attrs={}):
         """ This callback is used to detect the stream namespace of incoming stream. Used internally. """
-        if not attrs.has_key('id') or not attrs['id']:
+        if 'id' not in attrs or not attrs['id']:
             return self.terminate_stream(STREAM_INVALID_XML)
         self.ID=attrs['id']
-        if not attrs.has_key('version'): self._owner.Dialback(self)
+        if 'version' not in attrs: self._owner.Dialback(self)
 
     def _stream_open(self,ns=None,tag='stream',attrs={}):
         """ This callback is used to handle opening stream tag of the incoming stream.
@@ -227,23 +227,23 @@ class Session:
             text+=' to="%s"'%self.peer
         else:
             text+=' id="%s"'%self.ID
-            if not attrs.has_key('to'): text+=' from="%s"'%self._owner.servernames[0]
+            if 'to' not in attrs: text+=' from="%s"'%self._owner.servernames[0]
             else: text+=' from="%s"'%attrs['to']
-        if attrs.has_key('xml:lang'): text+=' xml:lang="%s"'%attrs['xml:lang']
+        if 'xml:lang' in attrs: text+=' xml:lang="%s"'%attrs['xml:lang']
         if self.xmlns: xmlns=self.xmlns
         else: xmlns=NS_SERVER
         text+=' xmlns:db="%s" xmlns:stream="%s" xmlns="%s"'%(NS_DIALBACK,NS_STREAMS,xmlns)
-        if attrs.has_key('version') or self.TYP=='client': text+=' version="1.0"'
+        if 'version' in attrs or self.TYP=='client': text+=' version="1.0"'
         self.sendnow(text+'>')
         self.set_stream_state(STREAM__OPENED)
         if self.TYP=='client': return
-        if tag<>'stream': return self.terminate_stream(STREAM_INVALID_XML)
-        if ns<>NS_STREAMS: return self.terminate_stream(STREAM_INVALID_NAMESPACE)
-        if self.Stream.xmlns<>self.xmlns: return self.terminate_stream(STREAM_BAD_NAMESPACE_PREFIX)
-        if not attrs.has_key('to'): return self.terminate_stream(STREAM_IMPROPER_ADDRESSING)
+        if tag!='stream': return self.terminate_stream(STREAM_INVALID_XML)
+        if ns!=NS_STREAMS: return self.terminate_stream(STREAM_INVALID_NAMESPACE)
+        if self.Stream.xmlns!=self.xmlns: return self.terminate_stream(STREAM_BAD_NAMESPACE_PREFIX)
+        if 'to' not in attrs: return self.terminate_stream(STREAM_IMPROPER_ADDRESSING)
         if attrs['to'] not in self._owner.servernames: return self.terminate_stream(STREAM_HOST_UNKNOWN)
         self.ourname=attrs['to'].lower()
-        if self.TYP=='server' and attrs.has_key('version'):
+        if self.TYP=='server' and 'version' in attrs:
             # send features
             features=Node('stream:features')
             if NS_TLS in self.waiting_features:
@@ -319,7 +319,7 @@ class Session:
 
     def stop_feature(self,f):
         """ Declare some feature as "negotiated" to allow other features start negotiating. """
-        if self.feature_in_process<>f: raise Exception("Stopping feature %s instead of %s !"%(f,self.feature_in_process))
+        if self.feature_in_process!=f: raise Exception("Stopping feature %s instead of %s !"%(f,self.feature_in_process))
         self.feature_in_process=None
 
     def set_socket_state(self,newstate):

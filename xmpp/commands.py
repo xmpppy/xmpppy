@@ -31,8 +31,8 @@ What it supplies:
     A means of handling requests, by redirection though the command manager.
 """
 
-from protocol import *
-from client import PlugIn
+from .protocol import *
+from .client import PlugIn
 
 class Commands(PlugIn):
     """Commands is an ancestor of PlugIn and can be attached to any session.
@@ -72,19 +72,19 @@ class Commands(PlugIn):
         # We must:
         #   Pass on command execution to command handler
         #   (Do we need to keep session details here, or can that be done in the command?)
-        jid = unicode(request.getTo())
+        jid = str(request.getTo())
         try:
             node = request.getTagAttr('command','node')
         except:
             conn.send(Error(request,ERR_BAD_REQUEST))
             raise NodeProcessed
-        if self._handlers.has_key(jid):
-            if self._handlers[jid].has_key(node):
+        if jid in self._handlers:
+            if node in self._handlers[jid]:
                 self._handlers[jid][node]['execute'](conn,request)
             else:
                 conn.send(Error(request,ERR_ITEM_NOT_FOUND))
                 raise NodeProcessed
-        elif self._handlers[''].has_key(node):
+        elif node in self._handlers['']:
                 self._handlers[''][node]['execute'](conn,request)
         else:
             conn.send(Error(request,ERR_ITEM_NOT_FOUND))
@@ -103,14 +103,14 @@ class Commands(PlugIn):
             #   To make this code easy to write we add an 'list' disco type, it returns a tuple or 'none' if not advertised
             list = []
             items = []
-            jid = unicode(request.getTo())
+            jid = str(request.getTo())
             # Get specific jid based results
-            if self._handlers.has_key(jid):
-                for each in self._handlers[jid].keys():
+            if jid in self._handlers:
+                for each in list(self._handlers[jid].keys()):
                     items.append((jid,each))
             else:
                 # Get generic results
-                for each in self._handlers[''].keys():
+                for each in list(self._handlers[''].keys()):
                     items.append(('',each))
             if items != []:
                 for each in items:
@@ -133,11 +133,11 @@ class Commands(PlugIn):
         # We must:
         #   Add item into disco
         #   Add item into command list
-        if not self._handlers.has_key(jid):
+        if jid not in self._handlers:
             self._handlers[jid]={}
             self._browser.setDiscoHandler(self._DiscoHandler,node=NS_COMMANDS,jid=jid)
-        if self._handlers[jid].has_key(name):
-            raise NameError,'Command Exists'
+        if name in self._handlers[jid]:
+            raise NameError('Command Exists')
         else:
             self._handlers[jid][name]={'disco':cmddisco,'execute':cmdexecute}
         # Need to add disco stuff here
@@ -149,10 +149,10 @@ class Commands(PlugIn):
         # We must:
         #   Remove item from disco
         #   Remove item from command list
-        if not self._handlers.has_key(jid):
-            raise NameError,'Jid not found'
-        if not self._handlers[jid].has_key(name):
-            raise NameError, 'Command not found'
+        if jid not in self._handlers:
+            raise NameError('Jid not found')
+        if name not in self._handlers[jid]:
+            raise NameError('Command not found')
         else:
             #Do disco removal here
             command = self.getCommand(name,jid)['disco']
@@ -164,10 +164,10 @@ class Commands(PlugIn):
         # This gets the command object with name
         # We must:
         #   Return item that matches this name
-        if not self._handlers.has_key(jid):
-            raise NameError,'Jid not found'
-        elif not self._handlers[jid].has_key(name):
-            raise NameError,'Command not found'
+        if jid not in self._handlers:
+            raise NameError('Jid not found')
+        elif name not in self._handlers[jid]:
+            raise NameError('Command not found')
         else:
             return self._handlers[jid][name]
 
@@ -229,10 +229,10 @@ class Command_Handler_Prototype(PlugIn):
             action = None
         if action == None: action = 'execute'
         # Check session is in session list
-        if self.sessions.has_key(session):
+        if session in self.sessions:
             if self.sessions[session]['jid']==request.getFrom():
                 # Check action is vaild
-                if self.sessions[session]['actions'].has_key(action):
+                if action in self.sessions[session]['actions']:
                     # Execute next action
                     self.sessions[session]['actions'][action](conn,request)
                 else:

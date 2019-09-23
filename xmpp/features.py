@@ -24,7 +24,7 @@ All these methods takes 'disp' first argument that should be already connected
 (and in most cases already authorised) dispatcher instance.
 """
 
-from protocol import *
+from .protocol import *
 
 REGISTER_DATA_RECEIVED='REGISTER DATA RECEIVED'
 
@@ -83,7 +83,7 @@ def getRegInfo(disp,host,info={},sync=True):
         info as {'username':'joey'}. See JEP-0077 for details.
         'disp' must be connected dispatcher instance."""
     iq=Iq('get',NS_REGISTER,to=host)
-    for i in info.keys(): iq.setTagData(i,info[i])
+    for i in list(info.keys()): iq.setTagData(i,info[i])
     if sync:
         resp=disp.SendAndWaitForResponse(iq)
         _ReceivedRegInfo(disp.Dispatcher,resp, host)
@@ -99,7 +99,7 @@ def _ReceivedRegInfo(con, resp, agent):
         return
     df=DataForm(typ='form')
     for i in resp.getQueryPayload():
-        if type(i)<>type(iq): pass
+        if type(i)!=type(iq): pass
         elif i.getName()=='instructions': df.addInstructions(i.getData())
         else: df.setField(i.getName()).setValue(i.getData())
     con.Event(NS_REGISTER,REGISTER_DATA_RECEIVED,(agent, df))
@@ -112,8 +112,8 @@ def register(disp,host,info):
         attributes lastErrNode, lastErr and lastErrCode.
     """
     iq=Iq('set',NS_REGISTER,to=host)
-    if type(info)<>type({}): info=info.asDict()
-    for i in info.keys(): iq.setTag('query').setTagData(i,info[i])
+    if type(info)!=type({}): info=info.asDict()
+    for i in list(info.keys()): iq.setTag('query').setTagData(i,info[i])
     resp=disp.SendAndWaitForResponse(iq)
     if isResultNode(resp): return 1
 

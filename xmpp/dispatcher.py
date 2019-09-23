@@ -21,9 +21,10 @@ Contains one tunable attribute: DefaultTimeout (25 seconds by default). It defin
 Dispatcher.SendAndWaitForResponce method will wait for reply stanza before giving up.
 """
 
-import simplexml,time,sys
-from protocol import *
-from client import PlugIn
+import time,sys
+from . import simplexml
+from .protocol import *
+from .client import PlugIn
 
 DefaultTimeout=25
 ID=0
@@ -100,7 +101,7 @@ class Dispatcher(PlugIn):
         self._owner.send("<?xml version='1.0'?>%s>"%str(self._metastream)[:-2])
 
     def _check_stream_start(self,ns,tag,attrs):
-        if ns<>NS_STREAMS or tag<>'stream':
+        if ns!=NS_STREAMS or tag!='stream':
             raise ValueError('Incorrect stream start: (%s,%s). Terminating.'%(tag,ns))
 
     def Process(self, timeout=0):
@@ -115,14 +116,14 @@ class Dispatcher(PlugIn):
         for handler in self._cycleHandlers: handler(self)
         if len(self._pendingExceptions) > 0:
             _pendingException = self._pendingExceptions.pop()
-            raise _pendingException[0], _pendingException[1], _pendingException[2]
+            raise _pendingException[0](_pendingException[1]).with_traceback(_pendingException[2])
         if self._owner.Connection.pending_data(timeout):
             try: data=self._owner.Connection.receive()
             except IOError: return
             self.Stream.Parse(data)
             if len(self._pendingExceptions) > 0:
                 _pendingException = self._pendingExceptions.pop()
-                raise _pendingException[0], _pendingException[1], _pendingException[2]
+                raise _pendingException[0](_pendingException[1]).with_traceback(_pendingException[2])
             if data: return len(data)
         return '0'      # It means that nothing is received but link is alive.
 
@@ -168,9 +169,9 @@ class Dispatcher(PlugIn):
         if not xmlns: xmlns=self._owner.defaultNamespace
         self.DEBUG('Registering handler %s for "%s" type->%s ns->%s(%s)'%(handler,name,typ,ns,xmlns), 'info')
         if not typ and not ns: typ='default'
-        if not self.handlers.has_key(xmlns): self.RegisterNamespace(xmlns,'warn')
-        if not self.handlers[xmlns].has_key(name): self.RegisterProtocol(name,Protocol,xmlns,'warn')
-        if not self.handlers[xmlns][name].has_key(typ+ns): self.handlers[xmlns][name][typ+ns]=[]
+        if xmlns not in self.handlers: self.RegisterNamespace(xmlns,'warn')
+        if name not in self.handlers[xmlns]: self.RegisterProtocol(name,Protocol,xmlns,'warn')
+        if typ+ns not in self.handlers[xmlns][name]: self.handlers[xmlns][name][typ+ns]=[]
         if makefirst: self.handlers[xmlns][name][typ+ns].insert(0,{'func':handler,'system':system})
         else: self.handlers[xmlns][name][typ+ns].append({'func':handler,'system':system})
 
@@ -182,7 +183,7 @@ class Dispatcher(PlugIn):
     def UnregisterHandler(self,name,handler,typ='',ns='',xmlns=None):
         """ Unregister handler. "typ" and "ns" must be specified exactly the same as with registering."""
         if not xmlns: xmlns=self._owner.defaultNamespace
-        if not self.handlers.has_key(xmlns): return
+        if xmlns not in self.handlers: return
         if not typ and not ns: typ='default'
         for pack in self.handlers[xmlns][name][typ+ns]:
             if handler==pack['func']: break
@@ -210,7 +211,7 @@ class Dispatcher(PlugIn):
             if tag.getNamespace()==NS_XMPP_STREAMS:
                 if tag.getName()=='text': text=tag.getData()
                 else: name=tag.getName()
-        if name in stream_exceptions.keys(): exc=stream_exceptions[name]
+        if name in list(stream_exceptions.keys()): exc=stream_exceptions[name]
         else: exc=StreamError
         raise exc((name,text))
 
@@ -256,10 +257,10 @@ class Dispatcher(PlugIn):
         if name=='features': session.Stream.features=stanza
 
         xmlns=stanza.getNamespace()
-        if not self.handlers.has_key(xmlns):
+        if xmlns not in self.handlers:
             self.DEBUG("Unknown namespace: " + xmlns,'warn')
             xmlns='unknown'
-        if not self.handlers[xmlns].has_key(name):
+        if name not in self.handlers[xmlns]:
             self.DEBUG("Unknown stanza: " + name,'warn')
             name='unknown'
         else:
@@ -275,24 +276,24 @@ class Dispatcher(PlugIn):
         session.DEBUG("Dispatching %s stanza with type->%s props->%s id->%s"%(name,typ,stanza.props,ID),'ok')
 
         list=['default']                                                     # we will use all handlers:
-        if self.handlers[xmlns][name].has_key(typ): list.append(typ)                # from very common...
+        if typ in self.handlers[xmlns][name]: list.append(typ)                # from very common...
         for prop in stanza.props:
-            if self.handlers[xmlns][name].has_key(prop): list.append(prop)
-            if typ and self.handlers[xmlns][name].has_key(typ+prop): list.append(typ+prop)  # ...to very particular
+            if prop in self.handlers[xmlns][name]: list.append(prop)
+            if typ and typ+prop in self.handlers[xmlns][name]: list.append(typ+prop)  # ...to very particular
 
         chain=self.handlers[xmlns]['default']['default']
         for key in list:
             if key: chain = chain + self.handlers[xmlns][name][key]
 
         output=''
-        if session._expected.has_key(ID):
+        if ID in session._expected:
             user=0
             if type(session._expected[ID])==type(()):
                 cb,args=session._expected[ID]
                 session.DEBUG("Expected stanza arrived. Callback %s(%s) found!"%(cb,args),'ok')
                 try: cb(session,stanza,**args)
-                except Exception, typ:
-                    if typ.__class__.__name__<>'NodeProcessed': raise
+                except Exception as typ:
+                    if typ.__class__.__name__!='NodeProcessed': raise
             else:
                 session.DEBUG("Expected stanza arrived!",'ok')
                 session._expected[ID]=stanza
@@ -301,8 +302,8 @@ class Dispatcher(PlugIn):
             if user or handler['system']:
                 try:
                     handler['func'](session,stanza)
-                except Exception, typ:
-                    if typ.__class__.__name__<>'NodeProcessed':
+                except Exception as typ:
+                    if typ.__class__.__name__!='NodeProcessed':
                         self._pendingExceptions.insert(0, sys.exc_info())
                         return
                     user=0
@@ -344,12 +345,12 @@ class Dispatcher(PlugIn):
     def send(self,stanza):
         """ Serialise stanza and put it on the wire. Assign an unique ID to it before send.
             Returns assigned ID."""
-        if type(stanza) in [type(''), type(u'')]: return self._owner_send(stanza)
+        if type(stanza) in [type(''), type('')]: return self._owner_send(stanza)
         if not isinstance(stanza,Protocol): _ID=None
         elif not stanza.getID():
             global ID
             ID+=1
-            _ID=`ID`
+            _ID=repr(ID)
             stanza.setID(_ID)
         else: _ID=stanza.getID()
         if self._owner._registered_name and not stanza.getAttr('from'): stanza.setAttr('from',self._owner._registered_name)

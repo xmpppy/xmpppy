@@ -46,7 +46,7 @@ import os
 
 import types
 
-if os.environ.has_key('TERM'):
+if 'TERM' in os.environ:
     colors_enabled=True
 else:
     colors_enabled=False
@@ -177,7 +177,7 @@ class Debug:
                 try:
                     self._fh = open(log_file,'w')
                 except:
-                    print 'ERROR: can open %s for writing'
+                    print('ERROR: can open %s for writing')
                     sys.exit(0)
             else: ## assume its a stream type object
                 self._fh = log_file
@@ -277,7 +277,7 @@ class Debug:
             self._fh.write( output )
         except:
             # unicode strikes again ;)
-            s=u''
+            s=''
             for i in range(len(output)):
                 if ord(output[i]) < 128:
                     c = output[i]
@@ -312,7 +312,7 @@ class Debug:
         if not active_flags:
             #no debuging at all
             self.active = []
-        elif type( active_flags ) in ( types.TupleType, types.ListType ):
+        elif type( active_flags ) in ( tuple, list ):
             flags = self._as_one_list( active_flags )
             for t in flags:
                 if t not in self.debug_flags:
@@ -350,7 +350,7 @@ class Debug:
 
         This code organises lst and remves dupes
         """
-        if type( items ) <> type( [] ) and type( items ) <> type( () ):
+        if type( items ) != type( [] ) and type( items ) != type( () ):
             return [ items ]
         r = []
         for l in items:
@@ -367,7 +367,7 @@ class Debug:
 
     def _append_unique_str( self, lst, item ):
         """filter out any dupes."""
-        if type(item) <> type(''):
+        if type(item) != type(''):
             msg2 = '%s' % item
             raise Exception('Invalid item type (should be string)',msg2)
         if item not in lst:
@@ -398,10 +398,10 @@ class Debug:
     def Show(self, flag, msg, prefix=''):
         msg=msg.replace('\r','\\r').replace('\n','\\n').replace('><','>\n  <')
         if not colors_enabled: pass
-        elif self.colors.has_key(prefix): msg=self.colors[prefix]+msg+color_none
+        elif prefix in self.colors: msg=self.colors[prefix]+msg+color_none
         else: msg=color_none+msg
         if not colors_enabled: prefixcolor=''
-        elif self.colors.has_key(flag): prefixcolor=self.colors[flag]
+        elif flag in self.colors: prefixcolor=self.colors[flag]
         else: prefixcolor=color_none
 
         if prefix=='error':

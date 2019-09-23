@@ -19,8 +19,8 @@ Simple roster implementation. Can be used though for different tasks like
 mass-renaming of contacts.
 """
 
-from protocol import *
-from client import PlugIn
+from .protocol import *
+from .client import PlugIn
 
 class Roster(PlugIn):
     """ Defines a plenty of methods that will allow you to manage roster.
@@ -67,15 +67,15 @@ class Roster(PlugIn):
         for item in stanza.getTag('query').getTags('item'):
             jid=item.getAttr('jid')
             if item.getAttr('subscription')=='remove':
-                if self._data.has_key(jid): del self._data[jid]
+                if jid in self._data: del self._data[jid]
                 raise NodeProcessed             # a MUST
             self.DEBUG('Setting roster item %s...'%jid,'ok')
-            if not self._data.has_key(jid): self._data[jid]={}
+            if jid not in self._data: self._data[jid]={}
             self._data[jid]['name']=item.getAttr('name')
             self._data[jid]['ask']=item.getAttr('ask')
             self._data[jid]['subscription']=item.getAttr('subscription')
             self._data[jid]['groups']=[]
-            if not self._data[jid].has_key('resources'): self._data[jid]['resources']={}
+            if 'resources' not in self._data[jid]: self._data[jid]['resources']={}
             for group in item.getTags('group'): self._data[jid]['groups'].append(group.getData())
         self._data[self._owner.User+'@'+self._owner.Server]={'resources':{},'name':None,'ask':None,'subscription':None,'groups':None,}
         self.set=1
@@ -85,7 +85,7 @@ class Roster(PlugIn):
         """ Presence tracker. Used internally for setting items' resources state in
             internal roster representation. """
         jid=JID(pres.getFrom())
-        if not self._data.has_key(jid.getStripped()): self._data[jid.getStripped()]={'name':None,'ask':None,'subscription':'none','groups':['Not in roster'],'resources':{}}
+        if jid.getStripped() not in self._data: self._data[jid.getStripped()]={'name':None,'ask':None,'subscription':'none','groups':['Not in roster'],'resources':{}}
 
         item=self._data[jid.getStripped()]
         typ=pres.getType()
@@ -98,7 +98,7 @@ class Roster(PlugIn):
             if pres.getTag('priority'): res['priority']=pres.getPriority()
             if not pres.getTimestamp(): pres.setTimestamp()
             res['timestamp']=pres.getTimestamp()
-        elif typ=='unavailable' and item['resources'].has_key(jid.getResource()): del item['resources'][jid.getResource()]
+        elif typ=='unavailable' and jid.getResource() in item['resources']: del item['resources'][jid.getResource()]
         # Need to handle type='error' also
 
     def _getItemData(self,jid,dataname):
@@ -109,10 +109,10 @@ class Roster(PlugIn):
         """ Return specific jid's resource representation in internal format. Used internally. """
         if jid.find('/')+1:
             jid,resource=jid.split('/',1)
-            if self._data[jid]['resources'].has_key(resource): return self._data[jid]['resources'][resource][dataname]
-        elif self._data[jid]['resources'].keys():
+            if resource in self._data[jid]['resources']: return self._data[jid]['resources'][resource][dataname]
+        elif list(self._data[jid]['resources'].keys()):
             lastpri=-129
-            for r in self._data[jid]['resources'].keys():
+            for r in list(self._data[jid]['resources'].keys()):
                 if int(self._data[jid]['resources'][r]['priority'])>lastpri: resource,lastpri=r,int(self._data[jid]['resources'][r]['priority'])
             return self._data[jid]['resources'][resource][dataname]
     def delItem(self,jid):
@@ -147,7 +147,7 @@ class Roster(PlugIn):
         return self._getItemData(jid,'subscription')
     def getResources(self,jid):
         """ Returns list of connected resources of contact 'jid'."""
-        return self._data[jid[:(jid+'/').find('/')]]['resources'].keys()
+        return list(self._data[jid[:(jid+'/').find('/')]]['resources'].keys())
     def setItem(self,jid,name=None,groups=[]):
         """ Creates/renames contact 'jid' and sets the groups list that it now belongs to."""
         iq=Iq('set',NS_ROSTER)
@@ -159,16 +159,16 @@ class Roster(PlugIn):
         self._owner.send(iq)
     def getItems(self):
         """ Return list of all [bare] JIDs that the roster is currently tracks."""
-        return self._data.keys()
+        return list(self._data.keys())
     def keys(self):
         """ Same as getItems. Provided for the sake of dictionary interface."""
-        return self._data.keys()
+        return list(self._data.keys())
     def __getitem__(self,item):
         """ Get the contact in the internal format. Raises KeyError if JID 'item' is not in roster."""
         return self._data[item]
     def getItem(self,item):
         """ Get the contact in the internal format (or None if JID 'item' is not in roster)."""
-        if self._data.has_key(item): return self._data[item]
+        if item in self._data: return self._data[item]
     def Subscribe(self,jid):
         """ Send subscription request to JID 'jid'."""
         self._owner.send(Presence(jid,'subscribe'))
