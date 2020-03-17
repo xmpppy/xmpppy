@@ -76,7 +76,8 @@ For learning about how to use this module, please have a look at these spots.
 
 - The ``xmpp/cli.py`` example program.
 - The ``doc/examples`` directory.
-  The two most basic programs are ``README.py`` and ``xsend.py``.
+  You might want to look at ``basic.py`` and ``demo.py`` first
+  before investigating the other examples.
 - The HTML pages on http://xmpppy.sf.net/.
 - The docstrings.
 
@@ -89,3 +90,10 @@ to share some ideas - you are welcome to join us on the
 `issue tracker <https://github.com/xmpppy/xmpppy/issues>`_
 or on the
 `xmpppy-devel mailing list <http://lists.sourceforge.net/lists/listinfo/xmpppy-devel>`_.
+
+
+
+**************
+Other projects
+**************
+- https://github.com/Jajcus/pyxmpp2
