@@ -47,6 +47,11 @@ except ImportError:
     from urllib import parse
     urlparse = parse.urlparse
 
+if not hasattr(sys, 'exc_clear'):
+    def exc_clear(): pass
+    setattr(sys, 'exc_clear', exc_clear)
+
+
 # determine which DNS resolution library is available
 HAVE_DNSPYTHON = False
 HAVE_PYDNS = False
@@ -176,15 +181,9 @@ class TCPsocket(PlugIn):
         """ Reads all pending incoming data.
             In case of disconnection calls owner's disconnected() method and then raises IOError exception."""
         try: received = self._recv(BUFLEN)
-        except socket.sslerror as e:
+        except socket.error as e:
             self._seen_data=0
-            if e[0]==socket.SSL_ERROR_WANT_READ:
-                sys.exc_clear()
-                self.DEBUG("SSL_WANT_READ while receiving data, asking for a retry",'warn')
-                return ''
-            if e[0]==socket.SSL_ERROR_WANT_WRITE:
-                sys.exc_clear()
-                self.DEBUG("SSL_WANT_WRITE while receiving data, asking for a retry",'warn')
+            if self.check_pending(e, 'receiving', 'asking for a retry'):
                 return ''
             self.DEBUG('Socket error while receiving data','error')
             sys.exc_clear()
@@ -194,15 +193,9 @@ class TCPsocket(PlugIn):
 
         while self.pending_data(0):
             try: add = self._recv(BUFLEN)
-            except socket.sslerror as e:
+            except socket.error as e:
                 self._seen_data=0
-                if e[0]==socket.SSL_ERROR_WANT_READ:
-                    sys.exc_clear()
-                    self.DEBUG("SSL_WANT_READ while receiving data, ignoring",'warn')
-                    break
-                if e[0]==socket.SSL_ERROR_WANT_WRITE:
-                    sys.exc_clear()
-                    self.DEBUG("SSL_WANT_WRITE while receiving data, ignoring",'warn')
+                if self.check_pending(e, 'receiving', 'ignoring'):
                     break
                 self.DEBUG('Socket error while receiving data','error')
                 sys.exc_clear()
@@ -227,24 +220,18 @@ class TCPsocket(PlugIn):
         """ Writes raw outgoing data. Blocks until done.
             If supplied data is unicode string, encodes it to utf-8 before send."""
         print('type:', type(raw_data))
-        if type(raw_data)==type(''): raw_data = raw_data.encode('utf-8')
+        if type(raw_data)==type(''): raw_data = raw_data
         elif type(raw_data)!=type(''): raw_data = ustr(raw_data)
+        if sys.version_info.major >= 3:
+            raw_data = raw_data.encode('utf-8')
         try:
             sent = 0
             while not sent:
                 try:
                     self._send(raw_data)
                     sent = 1
-                except socket.sslerror as e:
-                    if e[0]==socket.SSL_ERROR_WANT_READ:
-                        sys.exc_clear()
-                        self.DEBUG("SSL_WANT_READ while sending data, wating to retry",'warn')
-                        select.select([self._sock],[],[],retry_timeout)
-                        continue
-                    if e[0]==socket.SSL_ERROR_WANT_WRITE:
-                        sys.exc_clear()
-                        self.DEBUG("SSL_WANT_WRITE while sending data, waiting to retry",'warn')
-                        select.select([],[self._sock],[],retry_timeout)
+                except socket.error as e:
+                    if self.check_pending(e, 'sending', 'waiting to retry'):
                         continue
                     raise
             # Avoid printing messages that are empty keepalive packets.
@@ -259,6 +246,26 @@ class TCPsocket(PlugIn):
     def pending_data(self,timeout=0):
         """ Returns true if there is a data ready to be read. """
         return select.select([self._sock],[],[],timeout)[0]
+
+    def check_pending(self, ex, direction, action):
+        if hasattr(socket, 'sslerror'):
+            if ex[0] == socket.SSL_ERROR_WANT_READ:
+                sys.exc_clear()
+                self.DEBUG("SSL_WANT_READ while {direction} data, {action}".format(**locals()), 'warn')
+                return True
+            if ex[0] == socket.SSL_ERROR_WANT_WRITE:
+                sys.exc_clear()
+                self.DEBUG("SSL_WANT_WRITE while {direction} data, {action}".format(**locals()), 'warn')
+                return True
+        else:
+            if isinstance(ex, ssl.SSLWantReadError):
+                sys.exc_clear()
+                self.DEBUG("SSL_WANT_READ while {direction} data, {action}".format(**locals()), 'warn')
+                return True
+            if isinstance(ex, ssl.SSLWantWriteError):
+                sys.exc_clear()
+                self.DEBUG("SSL_WANT_WRITE while {direction} data, {action}".format(**locals()), 'warn')
+                return True
 
     def disconnect(self):
         """ Closes the socket. """
@@ -369,7 +376,7 @@ class TLS(PlugIn):
 
     def pending_data(self,timeout=0):
         """ Returns true if there possible is a data ready to be read. """
-        return self._tcpsock._seen_data or select.select([self._tcpsock._sock],[],[],timeout)[0]
+        return self._tcpsock._seen_data or select.select([self._tcpsock._sslObj],[],[],timeout)[0]
 
     def _startSSL(self):
         """ Immidiatedly switch socket to TLS mode. Used internally."""
@@ -384,7 +391,7 @@ class TLS(PlugIn):
         tcpsock._seen_data=1
         self._tcpsock=tcpsock
         tcpsock.pending_data=self.pending_data
-        tcpsock._sock.setblocking(0)
+        tcpsock._sslObj.setblocking(False)
 
         self.starttls='success'
 
