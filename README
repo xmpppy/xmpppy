@@ -41,3 +41,14 @@ http://lists.sourceforge.net/lists/listinfo/xmpppy-devel
 for details of subscription.
 
 2004.12.26                  Alexey Nezhdanov
+
+
+----
+
+
+The module now contains an example program called "xmpp-message".
+The synopsis is::
+
+    xmpp-message --debug \
+        --jabberid foobar@jabber.example.org --password secret \
+        --receiver bazqux@jabber.example.org --message '☠☠☠ hello world ☠☠☠'

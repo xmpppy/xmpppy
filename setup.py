@@ -30,4 +30,9 @@ Unlike jabberpy it is distributed under the terms of GPL.""",
           'Development Status :: 4 - Beta',
           'Intended Audience :: Developers',
         ],
-     )
+      entry_points={
+          'console_scripts': [
+              'xmpp-message = xmpp.cli:simple_message',
+          ],
+      },
+  )
