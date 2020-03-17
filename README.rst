@@ -40,8 +40,21 @@ Otherwise, you might want to use pip::
 *****
 Usage
 *****
-The module installs a basic example program called ``xmpp-message``.
-The synopsis is::
+Regularly, the module is used as a library, like::
+
+    jabberid = "foobar@jabber.example.org"
+    password = "secret"
+    receiver = "bazqux@jabber.example.org"
+    message  = "☠☠☠ hello world ☠☠☠"
+
+    jid = xmpp.protocol.JID(jabberid)
+    connection = xmpp.Client(server=jid.getDomain(), debug=debug)
+    connection.connect()
+    connection.auth(user=jid.getNode(), password=password, resource=jid.getResource())
+    connection.send(xmpp.protocol.Message(to=receiver, body=message))
+
+However, the module also installs a basic example program called ``xmpp-message``,
+which can be invoked from the command line. Its synopsis is::
 
     xmpp-message --debug \
         --jabberid foobar@jabber.example.org --password secret \
