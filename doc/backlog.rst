@@ -73,3 +73,11 @@ Before 0.2 release:
 - Investigate http://trac.gajim.org/ticket/676 problem. We should fix - but not workaround it.
 - If auth fails because connection was not connected, unplug correctly and/or return gracefully
 - If IOException during dispatcher.process then return 0 instead of None
+
+After 0.6.0 release:
+
+- [x] Retroactively add changelog.
+- [o] Integrate documentation about alternative installation variants. Add note about virtualenv and pipx.
+- [o] Add more example programs as command line entrypoints.
+- [o] Update documentation files doc/*.html
+- [o] Run the Black code formatter

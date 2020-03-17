@@ -7,6 +7,7 @@ in progress
 ===========
 - Add library usage example to README
 - Retroactively add changelog
+- Improve documentation
 
 
 2020-03-17 0.6.0

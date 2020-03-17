@@ -2,7 +2,7 @@
 xmpppy
 ######
 
-    *Python 2/3 implementation of XMPP.*
+    *Python 2/3 implementation of XMPP (RFC3920, RFC3921).*
 
 ----
 
@@ -23,6 +23,14 @@ xmpppy
 
 
 ----
+
+*****
+About
+*****
+This library has been written to be compliant with
+`RFC3920 <https://datatracker.ietf.org/doc/rfc3920/>`_
+and
+`RFC3921 <https://datatracker.ietf.org/doc/rfc3921/>`_.
 
 
 ************

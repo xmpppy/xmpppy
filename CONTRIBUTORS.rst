@@ -3,25 +3,39 @@ Contributors
 ############
 
 This is an alphabetically-ordered list of the people who directly
-contributed to xmppy in one way or another.
+contributed to xmpppy in one way or another.
 
 - Alexey Nezhdanov <snakeru@gmail.com>
 - Andreas Motl <andreas.motl@panodata.org>
+- Brendan Sleight
+- Brian Tipton
 - Daniel Wozniak <dan@orvant.com>
+- Daryl Herzmann
 - David Ammouial <da@weeno.net>
 - Gabriel Ebner <gebner@2b7e.org>
+- Iván Lloro
 - Ivan Vučica <ivan@vucica.net>
 - James Wu <jamesw@minted.com>
 - Johan Bakker <johan@provonet.org>
 - Justin Forest <justin.forest@gmail.com>
 - Jörg Thalheim <joerg@higgsboson.tk>
+- Marek Kubica
+- Martin Thomas
 - Michael Taboada <michael@michaels.world>
 - Michał Pasternak <michal.dtz@gmail.com>
 - Mike Albon <mikea@yuri.org.uk>
 - Norman Rasmussen <norman@rasmussen.co.za>
 - Rulexec <rulix.exec@gmail.com>
+- Soren Roug
 - Stanislav Gorbenko <xenginex@gmail.com>
 - Vladimir Osintsev <oc@co.ru>
+- asterix
 - iamsudip <iamsudip@programmer.net>
+- dkm
+- dwd
+- google
+- randomthoughts
+- sneakin
+- thorstenp
 
 Thanks a bunch!

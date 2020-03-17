@@ -17,7 +17,7 @@ setup(name='xmpppy',
       packages=['xmpp'],
       license="GPL",
       platforms="All",
-      keywords=['jabber', 'xmpp'],
+      keywords=['jabber', 'xmpp', 'RFC3920', 'RFC3921'],
       classifiers = [
           "Programming Language :: Python",
           "Programming Language :: Python :: 2",
