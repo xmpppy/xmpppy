@@ -87,7 +87,8 @@ class PlugIn:
         """ Feed a provided debug line to main instance's debug facility along with our ID string. """
         self._owner.DEBUG(self.DBG_LINE,text,severity)
 
-from . import transports,dispatcher,auth,roster
+import xmpp
+from xmpp import transports, dispatcher, roster
 class CommonClient:
     """ Base for Client and Component classes."""
     def __init__(self,server,port=5222,debug=['always', 'nodebuilder']):
@@ -216,17 +217,17 @@ class Client(CommonClient):
         while not self.Dispatcher.Stream._document_attrs and self.Process(1): pass
         if 'version' in self.Dispatcher.Stream._document_attrs and self.Dispatcher.Stream._document_attrs['version']=='1.0':
             while not self.Dispatcher.Stream.features and self.Process(1): pass      # If we get version 1.0 stream the features tag MUST BE presented
-        if sasl: auth.SASL(user,password).PlugIn(self)
+        if sasl: xmpp.auth.SASL(user,password).PlugIn(self)
         if not sasl or self.SASL.startsasl=='not-supported':
             if not resource: resource='xmpppy'
-            if auth.NonSASL(user,password,resource).PlugIn(self):
+            if xmpp.auth.NonSASL(user,password,resource).PlugIn(self):
                 self.connected+='+old_auth'
                 return 'old_auth'
             return
         self.SASL.auth()
         while self.SASL.startsasl=='in-process' and self.Process(1): pass
         if self.SASL.startsasl=='success':
-            auth.Bind().PlugIn(self)
+            xmpp.auth.Bind().PlugIn(self)
             while self.Bind.bound is None and self.Process(1): pass
             if self.Bind.Bind(resource):
                 self.connected+='+sasl'
@@ -281,11 +282,11 @@ class Component(CommonClient):
             the namespace to be jabber:client as that is required for jabberd2.
             'server' and 'proxy' arguments have the same meaning as in xmpp.Client.connect() """
         if self.sasl:
-            self.Namespace=auth.NS_COMPONENT_1
+            self.Namespace=xmpp.auth.NS_COMPONENT_1
             self.Server=server[0]
         CommonClient.connect(self,server=server,proxy=proxy)
         if self.connected and (self.typ=='jabberd2' or not self.typ and self.Dispatcher.Stream.features != None) and (not self.xcp):
-            self.defaultNamespace=auth.NS_CLIENT
+            self.defaultNamespace=xmpp.auth.NS_CLIENT
             self.Dispatcher.RegisterNamespace(self.defaultNamespace)
             self.Dispatcher.RegisterProtocol('iq',dispatcher.Iq)
             self.Dispatcher.RegisterProtocol('message',dispatcher.Message)
@@ -297,7 +298,7 @@ class Component(CommonClient):
         self._route = self.route
         if self.bind:
             for domain in self.domains:
-                auth.ComponentBind(sasl).PlugIn(self)
+                xmpp.auth.ComponentBind(sasl).PlugIn(self)
                 while self.ComponentBind.bound is None: self.Process(1)
                 if (not self.ComponentBind.Bind(domain)):
                     self.ComponentBind.PlugOut()
@@ -308,9 +309,9 @@ class Component(CommonClient):
         """ Authenticate component "name" with password "password"."""
         self._User,self._Password,self._Resource=name,password,''
         try:
-            if self.sasl: auth.SASL(name,password).PlugIn(self)
+            if self.sasl: xmpp.auth.SASL(name,password).PlugIn(self)
             if not self.sasl or self.SASL.startsasl=='not-supported':
-                if auth.NonSASL(name,password,'').PlugIn(self):
+                if xmpp.auth.NonSASL(name,password,'').PlugIn(self):
                     self.dobind(sasl=False)
                     self.connected+='+old_auth'
                     return 'old_auth'
@@ -322,7 +323,7 @@ class Component(CommonClient):
                 self.connected+='+sasl'
                 return 'sasl'
             else:
-                raise auth.NotAuthorized(self.SASL.startsasl)
+                raise xmpp.auth.NotAuthorized(self.SASL.startsasl)
         except:
             self.DEBUG(self.DBG,"Failed to authenticate %s"%name,'error')
 

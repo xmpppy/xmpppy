@@ -32,13 +32,20 @@ from . import dispatcher
 from .simplexml import ustr
 from .client import PlugIn
 from .protocol import *
-from http.client import HTTPConnection, HTTPSConnection, _CS_IDLE, BadStatusLine
+try:
+    from httplib import HTTPConnection, HTTPSConnection, _CS_IDLE, BadStatusLine
+except ImportError:
+    from http.client import HTTPConnection, HTTPSConnection, _CS_IDLE, BadStatusLine
 from errno import ECONNREFUSED
 import random
 import gzip
 from io import StringIO
-from urllib import parse
-urlparse = parse.urlparse
+try:
+    from urllib2 import urlparse
+    urlparse = urlparse.urlparse
+except ImportError:
+    from urllib import parse
+    urlparse = parse.urlparse
 
 # determine which DNS resolution library is available
 HAVE_DNSPYTHON = False
@@ -219,8 +226,9 @@ class TCPsocket(PlugIn):
     def send(self,raw_data,retry_timeout=1):
         """ Writes raw outgoing data. Blocks until done.
             If supplied data is unicode string, encodes it to utf-8 before send."""
+        print('type:', type(raw_data))
         if type(raw_data)==type(''): raw_data = raw_data.encode('utf-8')
-        elif type(raw_data)!=type(''): raw_data = ustr(raw_data).encode('utf-8')
+        elif type(raw_data)!=type(''): raw_data = ustr(raw_data)
         try:
             sent = 0
             while not sent:
