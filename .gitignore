@@ -1,3 +1,10 @@
+/.idea
+*.egg-info/
+*.pyc
+.venv*
+/build
+/dist
+/html
 .*.swp
 *-stamp
 /debian/files
@@ -6,9 +13,4 @@
 /debian/python-xmpp.substvars
 /debian/python-xmpp/
 /doc/apidocs/
-*.pyc
 /examples
-/html
-/build
-/dist
-*.egg-info/
