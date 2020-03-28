@@ -219,7 +219,7 @@ class TCPsocket(PlugIn):
     def send(self,raw_data,retry_timeout=1):
         """ Writes raw outgoing data. Blocks until done.
             If supplied data is unicode string, encodes it to utf-8 before send."""
-        print('type:', type(raw_data))
+        #print('type:', type(raw_data))
         if type(raw_data)==type(''): raw_data = raw_data
         elif type(raw_data)!=type(''): raw_data = ustr(raw_data)
         if sys.version_info.major >= 3:
