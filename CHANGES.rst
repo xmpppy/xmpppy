@@ -5,6 +5,10 @@ xmpppy changelog
 
 in progress
 ===========
+
+
+2020-03-28 0.6.1
+================
 - Add library usage example to README
 - Retroactively add changelog
 - Improve documentation

@@ -17,7 +17,7 @@ for all yet undocumented modules and now I can say that this issue is resolved
 Documentation exists in three formats.
 
 - The first is the examples that I wrote to show xmpppy in action. This is
-  two simple scripts - README.py and xsend.py.
+  two simple scripts - ``README.py`` and ``xsend.py``.
 - The second is the html pages where I try to describe the idea of library
   and the ways the goals are achieved.
 - Third is the docstrings. I am currently using epydoc but other tools
@@ -81,3 +81,4 @@ After 0.6.0 release:
 - [o] Add more example programs as command line entrypoints.
 - [o] Update documentation files doc/*.html
 - [o] Run the Black code formatter
+- [o] Documentation: Add note about installing DNS libraries (dnspython or pydns) for querying SRV records.

@@ -97,3 +97,5 @@ or on the
 Other projects
 **************
 - https://github.com/Jajcus/pyxmpp2
+- https://github.com/fritzy/SleekXMPP
+- https://dev.gajim.org/gajim/python-nbxmpp

@@ -1,3 +1,14 @@
+#######
+Authors
+#######
+``xmpppy`` has been conceived and maintained by
+
+- Alexey Nezhdanov <snakeru@gmail.com>
+- Norman Rasmussen <norman@rasmussen.co.za>
+
+with the help of many others.
+
+
 ############
 Contributors
 ############
@@ -5,7 +16,6 @@ Contributors
 This is an alphabetically-ordered list of the people who directly
 contributed to xmpppy in one way or another.
 
-- Alexey Nezhdanov <snakeru@gmail.com>
 - Andreas Motl <andreas.motl@panodata.org>
 - Brendan Sleight
 - Brian Tipton
@@ -24,7 +34,6 @@ contributed to xmpppy in one way or another.
 - Michael Taboada <michael@michaels.world>
 - Michał Pasternak <michal.dtz@gmail.com>
 - Mike Albon <mikea@yuri.org.uk>
-- Norman Rasmussen <norman@rasmussen.co.za>
 - Rulexec <rulix.exec@gmail.com>
 - Soren Roug
 - Stanislav Gorbenko <xenginex@gmail.com>
