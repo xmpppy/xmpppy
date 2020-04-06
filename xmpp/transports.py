@@ -331,7 +331,7 @@ class HTTPPROXYsocket(TCPsocket):
                 self.DEBUG('Proxy suddenly disconnected','error')
                 self._owner.disconnected()
                 return
-        self.DEBUG("Authentification successfull. Jabber server contacted.",'ok')
+        self.DEBUG("Authentification successfull. XMPP server contacted.",'ok')
         return 'ok'
 
     def DEBUG(self,text,severity):

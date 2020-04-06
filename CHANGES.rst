@@ -155,7 +155,7 @@ in progress
 2006-10-06 0.4.0
 ================
 - minor typos
-- moved jep-0106 into xmpp
+- moved XEP-0106 into xmpp
 - Added CDATA extracting method to xml node.
 - Fix for non-int ports
 - General cleanups
@@ -381,7 +381,7 @@ in progress
 - Added support for several hosts on one connection.
 - Added import of ustr function from simplexml module.
 - Added support for multiple values.
-- DataForm class re-implemented to conform JEP-0004 more closely.
+- DataForm class re-implemented to conform XEP-0004 more closely.
 - Fixed bug in CDATA handling code. The data will not be shifted between tags anymore.
 - Made getPayload to return both CDATA and child nodes just like setPayload uses.
 - Added getQueryChildren method. WARNING: it behaves gust like getQueryPayload before. And the getQueryPayload is now different!

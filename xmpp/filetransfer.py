@@ -15,7 +15,7 @@
 # $Id$
 
 """
-This module contains IBB class that is the simple implementation of JEP-0047.
+This module contains IBB class that is the simple implementation of XEP-0047.
 Note that this is just a transport for data. You have to negotiate data transfer before
 (via StreamInitiation most probably). Unfortunately SI is not implemented yet.
 """

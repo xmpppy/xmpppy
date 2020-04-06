@@ -5,8 +5,8 @@ import argparse
 Synopsis::
 
     xmpp-message --debug \
-        --jabberid foobar@jabber.example.org --password secret \
-        --receiver bazqux@jabber.example.org --message '☠☠☠ hello world ☠☠☠'
+        --jabberid foobar@xmpp.domain.tld --password secret \
+        --receiver bazqux@xmpp.domain.tld --message '☠☠☠ hello world ☠☠☠'
 """
 
 

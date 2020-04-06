@@ -30,7 +30,7 @@ def H(some): return md5(some).digest()
 def C(some): return ':'.join(some)
 
 class NonSASL(PlugIn):
-    """ Implements old Non-SASL (JEP-0078) authentication used in jabberd1.4 and transport authentication."""
+    """ Implements old Non-SASL (XEP-0078) authentication used in jabberd1.4 and transport authentication."""
     def __init__(self,user,password,resource):
         """ Caches username, password and resource for auth. """
         PlugIn.__init__(self)

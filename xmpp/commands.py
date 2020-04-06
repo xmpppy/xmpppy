@@ -178,7 +178,7 @@ class Command_Handler_Prototype(PlugIn):
        stages on too. There is an example command below.
 
     The parameters are as follows:
-    name : the name of the command within the jabber environment
+    name : the name of the command within the XMPP environment
     description : the natural language description
     discofeatures : the features supported by the command
     initial : the initial command in the from of {'execute':commandname}

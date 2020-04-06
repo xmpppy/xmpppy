@@ -7,7 +7,7 @@ import xmpp
 commands={}
 i18n={'ru':{},'en':{}}
 ########################### user handlers start ##################################
-i18n['en']['HELP']="This is example jabber bot.\nAvailable commands: %s"
+i18n['en']['HELP']="This is example XMPP bot.\nAvailable commands: %s"
 def helpHandler(user,command,args,mess):
     lst=commands.keys()
     lst.sort()

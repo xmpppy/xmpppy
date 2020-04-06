@@ -16,7 +16,7 @@
 
 """Browser module provides DISCO server framework for your application.
 This functionality can be used for very different purposes - from publishing
-software version and supported features to building of "jabber site" that users
+software version and supported features to building of "XMPP site" that users
 can navigate with their disco browsers and interact with active content.
 
 Such functionality is achieved via registering "DISCO handlers" that are
@@ -36,7 +36,7 @@ class Browser(PlugIn):
         node/jid combination only one (or none) handler registered.
         You can register static information or the fully-blown function that will
         calculate the answer dynamically.
-        Example of static info (see JEP-0030, examples 13-14):
+        Example of static info (see XEP-0030, examples 13-14):
         # cl - your xmpppy connection instance.
         b=xmpp.browser.Browser()
         b.PlugIn(cl)
@@ -64,7 +64,7 @@ class Browser(PlugIn):
         info should be a dicionary and must have keys 'ids' and 'features'.
         Both of them should be lists:
             ids is a list of dictionaries and features is a list of text strings.
-        Example (see JEP-0030, examples 1-2)
+        Example (see XEP-0030, examples 1-2)
         # cl - your xmpppy connection instance.
         b=xmpp.browser.Browser()
         b.PlugIn(cl)
@@ -74,7 +74,7 @@ class Browser(PlugIn):
         ids.append({'category':'directory','type':'chatroom','name':'Play-Specific Chatrooms'})
         features=[NS_DISCO_INFO,NS_DISCO_ITEMS,NS_MUC,NS_REGISTER,NS_SEARCH,NS_TIME,NS_VERSION]
         info={'ids':ids,'features':features}
-        # info['xdata']=xmpp.protocol.DataForm() # JEP-0128
+        # info['xdata']=xmpp.protocol.DataForm() # XEP-0128
         b.setDiscoHandler({'items':[],'info':info})
     """
     def __init__(self):

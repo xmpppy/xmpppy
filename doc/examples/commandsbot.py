@@ -1,5 +1,5 @@
 #!/usr/bin/python
-""" The example of using xmpppy's Ad-Hoc Commands (JEP-0050) implementation.
+""" The example of using xmpppy's Ad-Hoc Commands (XEP-0050) implementation.
 """
 import xmpp
 from xmpp.protocol import *

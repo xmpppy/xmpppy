@@ -28,9 +28,9 @@ from .protocol import *
 
 REGISTER_DATA_RECEIVED='REGISTER DATA RECEIVED'
 
-### DISCO ### http://jabber.org/protocol/disco ### JEP-0030 ####################
-### Browse ### jabber:iq:browse ### JEP-0030 ###################################
-### Agents ### jabber:iq:agents ### JEP-0030 ###################################
+### DISCO ### http://jabber.org/protocol/disco ### XEP-0030 ####################
+### Browse ### jabber:iq:browse ### XEP-0030 ###################################
+### Agents ### jabber:iq:agents ### XEP-0030 ###################################
 def _discover(disp,ns,jid,node=None,fb2b=0,fb2a=1):
     """ Try to obtain info from the remote object.
         If remote object doesn't support disco fall back to browse (if fb2b is true)
@@ -46,7 +46,7 @@ def _discover(disp,ns,jid,node=None,fb2b=0,fb2a=1):
 
 def discoverItems(disp,jid,node=None):
     """ Query remote object about any items that it contains. Return items list. """
-    """ According to JEP-0030:
+    """ According to XEP-0030:
         query MAY have node attribute
         item: MUST HAVE jid attribute and MAY HAVE name, node, action attributes.
         action attribute of item can be either of remove or update value."""
@@ -58,7 +58,7 @@ def discoverItems(disp,jid,node=None):
 
 def discoverInfo(disp,jid,node=None):
     """ Query remote object about info that it publishes. Returns identities and features lists."""
-    """ According to JEP-0030:
+    """ According to XEP-0030:
         query MAY have node attribute
         identity: MUST HAVE category and name attributes and MAY HAVE type attribute.
         feature: MUST HAVE var attribute"""
@@ -75,12 +75,12 @@ def discoverInfo(disp,jid,node=None):
             if i.getTag('search'): features.append(NS_SEARCH)
     return identities , features
 
-### Registration ### jabber:iq:register ### JEP-0077 ###########################
+### Registration ### jabber:iq:register ### XEP-0077 ###########################
 def getRegInfo(disp,host,info={},sync=True):
     """ Gets registration form from remote host.
         You can pre-fill the info dictionary.
         F.e. if you are requesting info on registering user joey than specify
-        info as {'username':'joey'}. See JEP-0077 for details.
+        info as {'username':'joey'}. See XEP-0077 for details.
         'disp' must be connected dispatcher instance."""
     iq=Iq('get',NS_REGISTER,to=host)
     for i in list(info.keys()): iq.setTagData(i,info[i])

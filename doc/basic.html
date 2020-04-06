@@ -25,7 +25,7 @@ writing a command-line script for sending a single message.</p>
 recipient.
 Example:</p>
 <pre>
-xsend test@jabber.org Hello there!
+xsend foobar@xmpp.domain.tld Hello there!
 </pre>
 <p>You don't have a similar tool in your toolkit? Using the xmpppy
 library it can be created easily.
@@ -48,7 +48,7 @@ if len(sys.argv) &lt; 2:
 tojid=sys.argv[1]
 text=' '.join(sys.argv[2:])
 </pre>
-<p>One more non-jabber step: We have to get our Jabber ID and login
+<p>One more non-XMPP step: We have to get our Jabber ID and login
 details. Presuming that all info
 stored in ~/.xsend file:</p>
 <pre>
@@ -63,9 +63,9 @@ for mandatory in ['jid','password']:
         print 'Please ensure the ~/.xsend file has valid JID for sending messages.'
         sys.exit(0)
 </pre>
-<p>Phew! The most complex (non-jabber ;) ) part is finished. From now on we have to:</p>
+<p>Phew! The most complex (non-XMPP ;) ) part is finished. From now on we have to:</p>
 <ul>
-  <li>connect to jabber server</li>
+  <li>connect to XMPP server</li>
   <li>authenticate ourselves</li>
   <li>submit a message</li>
 </ul>
@@ -90,7 +90,7 @@ cl.send(xmpp.protocol.Message(tojid,text))
 </pre>
 <p>We're done! The session must now be closed but since we have not registered
 disconnect handler we will just leave it to python and TCP/IP layer.
-All jabber servers that I know handle <span style="font-style: italic;">such</span>
+All XMPP servers that I know handle <span style="font-style: italic;">such</span>
 disconnects correctly.
 <br />
 You can download this script <a href="examples/xsend.py">here</a>.</p>
