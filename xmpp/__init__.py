@@ -4,7 +4,7 @@
 All features of xmpppy library contained within separate modules.
 At present there are modules:
 simplexml - XML handling routines
-protocol - jabber-objects (I.e. JID and different stanzas and sub-stanzas) handling routines.
+protocol - XMPP-objects (I.e. JID and different stanzas and sub-stanzas) handling routines.
 debug - Jacob Lundquist's debugging module. Very handy if you like colored debug.
 auth - Non-SASL and SASL stuff. You will need it to auth as a client or transport.
 transports - low level connection handling. TCP and TLS currently. HTTP support planned.

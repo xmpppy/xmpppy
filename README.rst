@@ -50,9 +50,9 @@ Usage
 *****
 Regularly, the module is used as a library, like::
 
-    jabberid = "foobar@jabber.example.org"
+    jabberid = "foobar@xmpp.domain.tld"
     password = "secret"
-    receiver = "bazqux@jabber.example.org"
+    receiver = "bazqux@xmpp.domain.tld"
     message  = "☠☠☠ hello world ☠☠☠"
 
     jid = xmpp.protocol.JID(jabberid)
@@ -65,8 +65,8 @@ However, the module also installs a basic example program called ``xmpp-message`
 which can be invoked from the command line. Its synopsis is::
 
     xmpp-message --debug \
-        --jabberid foobar@jabber.example.org --password secret \
-        --receiver bazqux@jabber.example.org --message '☠☠☠ hello world ☠☠☠'
+        --jabberid foobar@xmpp.domain.tld --password secret \
+        --receiver bazqux@xmpp.domain.tld --message '☠☠☠ hello world ☠☠☠'
 
 
 *************

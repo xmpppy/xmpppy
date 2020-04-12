@@ -571,7 +571,7 @@ class ErrorNode(Node):
     def __init__(self,name,code=None,typ=None,text=None):
         """ Create new error node object.
             Mandatory parameter: name - name of error condition.
-            Optional parameters: code, typ, text. Used for backwards compartibility with older jabber protocol."""
+            Optional parameters: code, typ, text. Used for backwards compartibility with older XMPP protocol."""
         if name in ERRORS:
             cod,type,txt=ERRORS[name]
             ns=name.split()[0]

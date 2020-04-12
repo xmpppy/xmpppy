@@ -192,7 +192,7 @@ class CommonClient:
 class Client(CommonClient):
     """ Example client class, based on CommonClient. """
     def connect(self,server=None,proxy=None,secure=None,use_srv=True, transport=None):
-        """ Connect to jabber server. If you want to specify different ip/port to connect to you can
+        """ Connect to XMPP server. If you want to specify different ip/port to connect to you can
             pass it as tuple as first parameter. If there is HTTP proxy between you and server
             specify it's address and credentials (if needed) in the second argument.
             If you want ssl/tls support to be discovered and enable automatically - leave third argument as None. (ssl will be autodetected only if port is 5223 or 443)
