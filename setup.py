@@ -18,7 +18,7 @@ setup(name='xmpppy',
       license="GPL",
       platforms="All",
       keywords=['jabber', 'xmpp', 'RFC3920', 'RFC3921'],
-      classifiers = [
+      classifiers=[
           "Programming Language :: Python",
           "Programming Language :: Python :: 2",
           "Programming Language :: Python :: 3",
@@ -39,10 +39,10 @@ setup(name='xmpppy',
           "Topic :: System :: Networking",
           "Topic :: Text Processing",
           "Topic :: Utilities",
-        ],
+      ],
       entry_points={
           'console_scripts': [
               'xmpp-message = xmpp.cli:simple_message',
           ],
       },
-  )
+      )

@@ -16,6 +16,7 @@ Contributors
 This is an alphabetically-ordered list of the people who directly
 contributed to xmpppy in one way or another.
 
+- Abhijeet Kasurde <akasurde@redhat.com>
 - Andreas Motl <andreas.motl@panodata.org>
 - Brendan Sleight
 - Brian Tipton
