@@ -46,5 +46,6 @@ contributed to xmpppy in one way or another.
 - randomthoughts
 - sneakin
 - thorstenp
+- rogue73 (Stefan)
 
 Thanks a bunch!
