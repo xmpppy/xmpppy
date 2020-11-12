@@ -37,6 +37,7 @@ contributed to xmpppy in one way or another.
 - Rulexec <rulix.exec@gmail.com>
 - Soren Roug
 - Stanislav Gorbenko <xenginex@gmail.com>
+- Stefan Fritze (@rogue73)
 - Vladimir Osintsev <oc@co.ru>
 - asterix
 - iamsudip <iamsudip@programmer.net>
@@ -46,6 +47,5 @@ contributed to xmpppy in one way or another.
 - randomthoughts
 - sneakin
 - thorstenp
-- rogue73 (Stefan)
 
 Thanks a bunch!

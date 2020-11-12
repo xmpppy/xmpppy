@@ -6,9 +6,13 @@ xmpppy changelog
 in progress
 ===========
 
+
 2020-11-12 0.6.2
 ================
-- use modern base64 interface (base64.encodestring/decodestring -> base64.b64encode/decode)
+- Use modern base64 interface (base64.b64encode/decode). Thanks, @rogue73!
+  This adds compatibility with Python 3.9,
+  but still retains compatibility with Python 2.7.
+
 
 2020-03-28 0.6.1
 ================
