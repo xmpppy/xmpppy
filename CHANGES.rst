@@ -6,6 +6,9 @@ xmpppy changelog
 in progress
 ===========
 
+2020-11-12 0.6.2
+================
+- use modern base64 interface (base64.encodestring/decodestring -> base64.b64encode/decode)
 
 2020-03-28 0.6.1
 ================
