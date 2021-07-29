@@ -123,7 +123,10 @@ class Dispatcher(PlugIn):
             self.Stream.Parse(data)
             if len(self._pendingExceptions) > 0:
                 _pendingException = self._pendingExceptions.pop()
-                raise _pendingException[0](_pendingException[1]).with_traceback(_pendingException[2])
+                ex = _pendingException[0](_pendingException[1])
+                if hasattr(ex, "with_traceback"):
+                    ex = ex.with_traceback(_pendingException[2])
+                raise ex
             if data: return len(data)
         return '0'      # It means that nothing is received but link is alive.
 
