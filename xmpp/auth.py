@@ -19,15 +19,28 @@ Provides library with all Non-SASL and SASL authentication mechanisms.
 Can be used both for client and transport authentication.
 """
 
+import sys
 from .protocol import *
 from .client import PlugIn
 import base64,random,re
 from . import dispatcher
-
 from hashlib import md5,sha1
-def HH(some): return md5(some).hexdigest()
-def H(some): return md5(some).digest()
-def C(some): return ':'.join(some)
+
+IS_PYTHON3 = sys.version_info >= (3, 0, 0)
+
+def HH(some):
+    print("HH:some:", some)
+    if IS_PYTHON3 and isinstance(some, str):
+        some = some.encode("utf-8")
+    return md5(some).hexdigest()
+def H(some):
+    if IS_PYTHON3 and isinstance(some, str):
+        some = some.encode("utf-8")
+    return md5(some).digest()
+def C(some):
+    if isinstance(some[0], bytes):
+        some = map(str, some)
+    return ':'.join(some)
 
 class NonSASL(PlugIn):
     """ Implements old Non-SASL (XEP-0078) authentication used in jabberd1.4 and transport authentication."""
@@ -176,7 +189,9 @@ class SASL(PlugIn):
         incoming_data=challenge.getData()
         chal={}
         data=base64.b64decode(incoming_data)
-        self.DEBUG('Got challenge:'+data,'ok')
+        if isinstance(data, bytes):
+            data = data.decode('utf-8')
+        self.DEBUG('Got challenge: '+data,'ok')
         for pair in re.findall('(\w+\s*=\s*(?:(?:"[^"]+")|(?:[^,]+)))',data):
             key,value=[x.strip() for x in pair.split('=', 1)]
             if value[:1]=='"' and value[-1:]=='"': value=value[1:-1]
@@ -203,7 +218,7 @@ class SASL(PlugIn):
                 if key in ['nc','qop','response','charset']: sasl_data+="%s=%s,"%(key,resp[key])
                 else: sasl_data+='%s="%s",'%(key,resp[key])
 ########################################3333
-            node=Node('response',attrs={'xmlns':NS_SASL},payload=[base64.b64encode(sasl_data[:-1]).replace('\r','').replace('\n','')])
+            node=Node('response',attrs={'xmlns':NS_SASL},payload=[base64.b64encode(sasl_data[:-1].encode()).decode().replace('\r','').replace('\n','')])
             self._owner.send(node.__str__())
         elif 'rspauth' in chal: self._owner.send(Node('response',attrs={'xmlns':NS_SASL}).__str__())
         else:

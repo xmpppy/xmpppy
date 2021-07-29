@@ -5,6 +5,8 @@ xmpppy changelog
 
 in progress
 ===========
+- Improve compatibility with Python 3 within authentication subsystem
+
 
 
 2020-11-12 0.6.2
