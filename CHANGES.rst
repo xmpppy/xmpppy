@@ -5,6 +5,10 @@ xmpppy changelog
 
 in progress
 ===========
+
+
+2021-09-14 0.6.3
+================
 - Improve compatibility with Python 3 within authentication subsystem
 - Improve exception handling
 - Remove special characters from README.rst to make installation on Windows easier
