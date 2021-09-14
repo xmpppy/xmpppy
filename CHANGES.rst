@@ -7,6 +7,7 @@ in progress
 ===========
 - Improve compatibility with Python 3 within authentication subsystem
 - Improve exception handling
+- Remove special characters from README.rst to make installation on Windows easier
 
 
 2020-11-12 0.6.2
