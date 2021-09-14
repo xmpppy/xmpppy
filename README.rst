@@ -53,7 +53,7 @@ Regularly, the module is used as a library, like::
     jabberid = "foobar@xmpp.domain.tld"
     password = "secret"
     receiver = "bazqux@xmpp.domain.tld"
-    message  = "☠☠☠ hello world ☠☠☠"
+    message  = "hello world"
 
     jid = xmpp.protocol.JID(jabberid)
     connection = xmpp.Client(server=jid.getDomain(), debug=debug)
@@ -66,7 +66,7 @@ which can be invoked from the command line. Its synopsis is::
 
     xmpp-message --debug \
         --jabberid foobar@xmpp.domain.tld --password secret \
-        --receiver bazqux@xmpp.domain.tld --message '☠☠☠ hello world ☠☠☠'
+        --receiver bazqux@xmpp.domain.tld --message 'hello world'
 
 
 *************
