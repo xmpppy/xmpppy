@@ -7,7 +7,7 @@ README = open(os.path.join(here, 'README.rst')).read()
 
 # Set proper release version in source code also!!!
 setup(name='xmpppy',
-      version='0.6.3',
+      version='0.6.4-dev1',
       author='Alexey Nezhdanov',
       author_email='snakeru@users.sourceforge.net',
       url='http://xmpppy.sourceforge.net/',
