@@ -5,6 +5,10 @@ xmpppy changelog
 
 in progress
 ===========
+
+
+2021-10-19 0.6.4
+================
 - Python 3: Fix handling of ``socket.error``/``OSError`` exceptions
 
 
