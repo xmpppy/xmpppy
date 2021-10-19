@@ -162,11 +162,13 @@ class TCPsocket(PlugIn):
                     self.DEBUG("Successfully connected to remote host %s"%repr(server),'start')
                     return 'ok'
                 except socket.error as xxx_todo_changeme:
-                    (errno, strerror) = xxx_todo_changeme.args
+                    errno = xxx_todo_changeme.args[0]
+                    strerror = xxx_todo_changeme.args[1]
                     if self._sock is not None: self._sock.close()
             self.DEBUG("Failed to connect to remote host %s: %s (%s)"%(repr(server), strerror, errno),'error')
         except socket.gaierror as xxx_todo_changeme1:
-            (errno, strerror) = xxx_todo_changeme1.args
+            errno = xxx_todo_changeme1.args[0]
+            strerror = xxx_todo_changeme1.args[1]
             self.DEBUG("Failed to lookup remote host %s: %s (%s)"%(repr(server), strerror, errno),'error')
 
     def plugout(self):
