@@ -1,0 +1,2 @@
+include setup.cfg *.txt *.rst *.md LICENSE
+recursive-include xmpp
