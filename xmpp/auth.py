@@ -37,10 +37,12 @@ def H(some):
     if IS_PYTHON3 and isinstance(some, str):
         some = some.encode("utf-8")
     return md5(some).digest()
+
 def C(some):
-    if isinstance(some[0], bytes):
-        some = map(str, some)
-    return ':'.join(some)
+    if IS_PYTHON3:
+        some = [x.encode('utf-8') if isinstance(x, str) else x for x in some]
+        return b':'.join(some)
+    return ':'.join(map(str, some))
 
 class NonSASL(PlugIn):
     """ Implements old Non-SASL (XEP-0078) authentication used in jabberd1.4 and transport authentication."""
