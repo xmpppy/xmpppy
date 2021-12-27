@@ -29,7 +29,6 @@ from hashlib import md5,sha1
 IS_PYTHON3 = sys.version_info >= (3, 0, 0)
 
 def HH(some):
-    print("HH:some:", some)
     if IS_PYTHON3 and isinstance(some, str):
         some = some.encode("utf-8")
     return md5(some).hexdigest()
@@ -37,7 +36,6 @@ def H(some):
     if IS_PYTHON3 and isinstance(some, str):
         some = some.encode("utf-8")
     return md5(some).digest()
-
 def C(some):
     if IS_PYTHON3:
         some = [x.encode('utf-8') if isinstance(x, str) else x for x in some]
