@@ -5,6 +5,10 @@ xmpppy changelog
 
 in progress
 ===========
+
+
+2021-12-28 0.6.5
+================
 - Python 3: Encoding fix for authentication (#52). Thanks, @D-L, @sumdog and @gdt!
 
 
