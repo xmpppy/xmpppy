@@ -5,6 +5,7 @@ xmpppy changelog
 
 in progress
 ===========
+- Documentation: Improve README and setup.py
 
 
 2021-12-28 0.6.5
