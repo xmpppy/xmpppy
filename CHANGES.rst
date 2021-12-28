@@ -5,6 +5,10 @@ xmpppy changelog
 
 in progress
 ===========
+
+
+2021-12-28 0.7.0
+================
 - Documentation: Improve README and setup.py
 - ``xmpp-message``: Evaluate return value from ``connection.auth()`` and
   croak when it fails
