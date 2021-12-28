@@ -96,11 +96,9 @@ http://xmpppy.sourceforge.net/.
 For learning about how to use this module, please have a look at these spots
 within the code base.
 
-- The ``xmpp/cli.py`` example program.
-- The ``doc/examples`` directory.
-  You might want to look at ``basic.py`` and ``demo.py`` first
-  before investigating the other examples.
-- The docstrings.
+- The ``xmpp-message`` program, located at ``xmpp/cli.py``, for sending a single XMPP message.
+- The other programs within the ``doc/examples`` directory.
+- The docstrings within the library itself.
 
 
 *******
