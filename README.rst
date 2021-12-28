@@ -12,14 +12,17 @@ xmpppy
 
 **Status**:
 
-.. image:: https://img.shields.io/badge/Python-2.7,%203.8-green.svg
-    :target: https://github.com/xmpppy/xmpppy
+.. image:: https://img.shields.io/pypi/pyversions/xmpppy.svg
+    :target: https://pypi.org/project/xmpppy/
 
 .. image:: https://img.shields.io/pypi/v/xmpppy.svg
     :target: https://pypi.org/project/xmpppy/
 
-.. image:: https://img.shields.io/github/tag/xmpppy/xmpppy.svg
-    :target: https://github.com/xmpppy/xmpppy
+.. image:: https://img.shields.io/pypi/l/xmpppy.svg
+    :target: https://pypi.org/project/xmpppy/
+
+.. image:: https://img.shields.io/pypi/dm/xmpppy.svg
+    :target: https://pypi.org/project/xmpppy/
 
 
 ----
@@ -36,13 +39,10 @@ and
 ************
 Installation
 ************
-If you are using Debian, you can simply run::
 
-    apt-get install python-xmpp
+Using ``pip``, you can install the package with::
 
-Otherwise, you might want to use pip::
-
-    pip install xmpppy
+    pip install xmpppy --upgrade
 
 
 *****
@@ -72,13 +72,17 @@ which can be invoked from the command line. Its synopsis is::
 *************
 Documentation
 *************
-For learning about how to use this module, please have a look at these spots.
+
+The canonical documentation is hosted at https://xmpppy.github.io/ and
+http://xmpppy.sourceforge.net/.
+
+For learning about how to use this module, please have a look at these spots
+within the code base.
 
 - The ``xmpp/cli.py`` example program.
 - The ``doc/examples`` directory.
   You might want to look at ``basic.py`` and ``demo.py`` first
   before investigating the other examples.
-- The HTML pages on http://xmpppy.sf.net/.
 - The docstrings.
 
 
@@ -96,6 +100,9 @@ or on the
 **************
 Other projects
 **************
+- https://github.com/poezio/slixmpp
+- https://github.com/horazont/aioxmpp
 - https://github.com/Jajcus/pyxmpp2
 - https://github.com/fritzy/SleekXMPP
 - https://dev.gajim.org/gajim/python-nbxmpp
+- https://github.com/xmpppy/xmpppy/files/4346179/xmpp_libs.xlsx
