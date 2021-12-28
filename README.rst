@@ -48,6 +48,10 @@ Using ``pip``, you can install the package with::
 *****
 Usage
 *****
+
+As a library
+============
+
 Regularly, the module is used as a library, like::
 
     jabberid = "foobar@xmpp.domain.tld"
@@ -61,12 +65,25 @@ Regularly, the module is used as a library, like::
     connection.auth(user=jid.getNode(), password=password, resource=jid.getResource())
     connection.send(xmpp.protocol.Message(to=receiver, body=message))
 
-However, the module also installs a basic example program called ``xmpp-message``,
-which can be invoked from the command line. Its synopsis is::
+
+Command line interface
+======================
+
+The package also installs a command line program called ``xmpp-message``.
+Its synopsis is::
 
     xmpp-message --debug \
         --jabberid foobar@xmpp.domain.tld --password secret \
         --receiver bazqux@xmpp.domain.tld --message 'hello world'
+
+You can also put your credentials into an ``~/.xsend`` file, like::
+
+    JID=foobar@xmpp.domain.tld
+    PASSWORD=secret
+
+and then invoke ``xmpp-message`` omitting the ``--jabberid`` and ``--password`` options, like::
+
+    xmpp-message --receiver bazqux@xmpp.domain.tld --message 'hello world'
 
 
 *************

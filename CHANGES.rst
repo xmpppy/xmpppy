@@ -8,6 +8,8 @@ in progress
 - Documentation: Improve README and setup.py
 - ``xmpp-message``: Evaluate return value from ``connection.auth()`` and
   croak when it fails
+- ``xmpp-message``: Optionally read credentials from ``~/.xsend`` file
+
 
 2021-12-28 0.6.5
 ================
