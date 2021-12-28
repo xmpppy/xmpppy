@@ -9,6 +9,7 @@ in progress
 - ``xmpp-message``: Evaluate return value from ``connection.auth()`` and
   croak when it fails
 - ``xmpp-message``: Optionally read credentials from ``~/.xsend`` file
+- Remove ``basic.py`` and ``xsend.py`` example programs
 
 
 2021-12-28 0.6.5
