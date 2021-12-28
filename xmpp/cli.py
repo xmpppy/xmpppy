@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import sys
+
 import xmpp
 import argparse
 """
@@ -18,7 +20,10 @@ def send_message(jabberid, password, receiver, message, debug=False):
     jid = xmpp.protocol.JID(jabberid)
     connection = xmpp.Client(server=jid.getDomain(), debug=debug)
     connection.connect()
-    connection.auth(user=jid.getNode(), password=password, resource=jid.getResource())
+    retval = connection.auth(user=jid.getNode(), password=password, resource=jid.getResource())
+    if retval is None:
+        sys.stderr.write("ERROR: Authentication failed\n")
+        sys.exit(1)
     connection.send(xmpp.protocol.Message(to=receiver, body=message))
 
 
