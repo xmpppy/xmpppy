@@ -68,7 +68,7 @@ class NonSASL(PlugIn):
 
         if query.getTag('digest'):
             self.DEBUG("Performing digest authentication",'ok')
-            query.setTagData('digest',sha1(owner.Dispatcher.Stream._document_attrs['id']+self.password).hexdigest())
+            query.setTagData('digest',sha1((owner.Dispatcher.Stream._document_attrs['id']+self.password).encode('utf-8')).hexdigest())
             if query.getTag('password'): query.delChild('password')
             method='digest'
         elif query.getTag('token'):
