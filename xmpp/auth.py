@@ -38,6 +38,8 @@ def C(some):
 
 def HHSHA1(some):
     return sha1(ensure_binary(some, CHARSET_ENCODING)).hexdigest()
+def B64(some):
+    return ensure_str(base64.b64encode(ensure_binary(some,CHARSET_ENCODING)),CHARSET_ENCODING).replace('\r', '').replace('\n', '')
 
 class NonSASL(PlugIn):
     """ Implements old Non-SASL (XEP-0078) authentication used in jabberd1.4 and transport authentication."""
@@ -154,8 +156,7 @@ class SASL(PlugIn):
             node=Node('auth',attrs={'xmlns':NS_SASL,'mechanism':'DIGEST-MD5'})
         elif "PLAIN" in mecs:
             sasl_data='%s\x00%s\x00%s'%(self.username+'@'+self._owner.Server,self.username,self.password)
-            payload = base64.b64encode(sasl_data.encode(CHARSET_ENCODING)).decode(CHARSET_ENCODING).replace('\r','').replace('\n','')
-            node=Node('auth',attrs={'xmlns':NS_SASL,'mechanism':'PLAIN'},payload=[payload])
+            node=Node('auth',attrs={'xmlns':NS_SASL,'mechanism':'PLAIN'},payload=[B64(sasl_data)])
         else:
             self.startsasl='failure'
             self.DEBUG('I can only use DIGEST-MD5 and PLAIN mecanisms.','error')
@@ -214,7 +215,7 @@ class SASL(PlugIn):
                 if key in ['nc','qop','response','charset']: sasl_data+="%s=%s,"%(key,resp[key])
                 else: sasl_data+='%s="%s",'%(key,resp[key])
 ########################################3333
-            node=Node('response',attrs={'xmlns':NS_SASL},payload=[base64.b64encode(sasl_data[:-1].encode()).decode().replace('\r','').replace('\n','')])
+            node=Node('response',attrs={'xmlns':NS_SASL},payload=[B64(sasl_data[:-1])])
             self._owner.send(node.__str__())
         elif 'rspauth' in chal: self._owner.send(Node('response',attrs={'xmlns':NS_SASL}).__str__())
         else:
