@@ -19,28 +19,22 @@ Provides library with all Non-SASL and SASL authentication mechanisms.
 Can be used both for client and transport authentication.
 """
 
-import sys
 from .protocol import *
 from .client import PlugIn
 import base64,random,re
 from . import dispatcher
 from hashlib import md5,sha1
+from six import ensure_str,ensure_binary
 
-IS_PYTHON3 = sys.version_info >= (3, 0, 0)
+CHARSET_ENCODING='utf-8'
 
 def HH(some):
-    if IS_PYTHON3 and isinstance(some, str):
-        some = some.encode("utf-8")
-    return md5(some).hexdigest()
+    return md5(ensure_binary(some, CHARSET_ENCODING)).hexdigest()
 def H(some):
-    if IS_PYTHON3 and isinstance(some, str):
-        some = some.encode("utf-8")
-    return md5(some).digest()
+    return md5(ensure_binary(some, CHARSET_ENCODING)).digest()
 def C(some):
-    if IS_PYTHON3:
-        some = [x.encode('utf-8') if isinstance(x, str) else x for x in some]
-        return b':'.join(some)
-    return ':'.join(map(str, some))
+    some = [ensure_binary(x, CHARSET_ENCODING) for x in some]
+    return b':'.join(some)
 
 class NonSASL(PlugIn):
     """ Implements old Non-SASL (XEP-0078) authentication used in jabberd1.4 and transport authentication."""
@@ -157,7 +151,7 @@ class SASL(PlugIn):
             node=Node('auth',attrs={'xmlns':NS_SASL,'mechanism':'DIGEST-MD5'})
         elif "PLAIN" in mecs:
             sasl_data='%s\x00%s\x00%s'%(self.username+'@'+self._owner.Server,self.username,self.password)
-            payload = base64.b64encode(sasl_data.encode('utf-8')).decode('utf-8').replace('\r','').replace('\n','')
+            payload = base64.b64encode(sasl_data.encode(CHARSET_ENCODING)).decode(CHARSET_ENCODING).replace('\r','').replace('\n','')
             node=Node('auth',attrs={'xmlns':NS_SASL,'mechanism':'PLAIN'},payload=[payload])
         else:
             self.startsasl='failure'
@@ -189,8 +183,7 @@ class SASL(PlugIn):
         incoming_data=challenge.getData()
         chal={}
         data=base64.b64decode(incoming_data)
-        if isinstance(data, bytes):
-            data = data.decode('utf-8')
+        data=ensure_str(data,CHARSET_ENCODING)
         self.DEBUG('Got challenge: '+data,'ok')
         for pair in re.findall('(\w+\s*=\s*(?:(?:"[^"]+")|(?:[^,]+)))',data):
             key,value=[x.strip() for x in pair.split('=', 1)]
@@ -212,7 +205,7 @@ class SASL(PlugIn):
             A2=C(['AUTHENTICATE',resp['digest-uri']])
             response= HH(C([HH(A1),resp['nonce'],resp['nc'],resp['cnonce'],resp['qop'],HH(A2)]))
             resp['response']=response
-            resp['charset']='utf-8'
+            resp['charset']=CHARSET_ENCODING
             sasl_data=''
             for key in ['charset','username','realm','nonce','nc','cnonce','digest-uri','response','qop']:
                 if key in ['nc','qop','response','charset']: sasl_data+="%s=%s,"%(key,resp[key])

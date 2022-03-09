@@ -45,4 +45,5 @@ setup(name='xmpppy',
               'xmpp-message = xmpp.cli:simple_message',
           ],
       },
+      install_requires="six",
   )

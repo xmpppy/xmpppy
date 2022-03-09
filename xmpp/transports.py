@@ -40,6 +40,7 @@ from errno import ECONNREFUSED
 import random
 import gzip
 from io import StringIO
+from six import ensure_binary
 try:
     from urllib2 import urlparse
     urlparse = urlparse.urlparse
@@ -224,8 +225,7 @@ class TCPsocket(PlugIn):
         #print('type:', type(raw_data))
         if type(raw_data)==type(''): raw_data = raw_data
         elif type(raw_data)!=type(''): raw_data = ustr(raw_data)
-        if sys.version_info.major >= 3:
-            raw_data = raw_data.encode('utf-8')
+        raw_data=ensure_binary(raw_data,'utf-8')
         try:
             sent = 0
             while not sent:
