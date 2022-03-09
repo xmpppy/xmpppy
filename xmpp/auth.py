@@ -36,6 +36,9 @@ def C(some):
     some = [ensure_binary(x, CHARSET_ENCODING) for x in some]
     return b':'.join(some)
 
+def HHSHA1(some):
+    return sha1(ensure_binary(some, CHARSET_ENCODING)).hexdigest()
+
 class NonSASL(PlugIn):
     """ Implements old Non-SASL (XEP-0078) authentication used in jabberd1.4 and transport authentication."""
     def __init__(self,user,password,resource):
@@ -62,15 +65,15 @@ class NonSASL(PlugIn):
 
         if query.getTag('digest'):
             self.DEBUG("Performing digest authentication",'ok')
-            query.setTagData('digest',sha1(owner.Dispatcher.Stream._document_attrs['id']+self.password).hexdigest())
+            query.setTagData('digest',HHSHA1(owner.Dispatcher.Stream._document_attrs['id']+self.password))
             if query.getTag('password'): query.delChild('password')
             method='digest'
         elif query.getTag('token'):
             token=query.getTagData('token')
             seq=query.getTagData('sequence')
             self.DEBUG("Performing zero-k authentication",'ok')
-            hash = sha1(sha1(self.password).hexdigest()+token).hexdigest()
-            for foo in range(int(seq)): hash = sha1(hash).hexdigest()
+            hash = HHSHA1(HHSHA1(self.password)+token)
+            for foo in range(int(seq)): hash = HHSHA1(hash)
             query.setTagData('hash',hash)
             method='0k'
         else:
@@ -89,7 +92,7 @@ class NonSASL(PlugIn):
     def authComponent(self,owner):
         """ Authenticate component. Send handshake stanza and wait for result. Returns "ok" on success. """
         self.handshake=0
-        owner.send(Node(NS_COMPONENT_ACCEPT+' handshake',payload=[sha1(owner.Dispatcher.Stream._document_attrs['id']+self.password).hexdigest()]))
+        owner.send(Node(NS_COMPONENT_ACCEPT+' handshake',payload=[HHSHA1(owner.Dispatcher.Stream._document_attrs['id']+self.password)]))
         owner.RegisterHandler('handshake',self.handshakeHandler,xmlns=NS_COMPONENT_ACCEPT)
         while not self.handshake:
             self.DEBUG("waiting on handshake",'notify')
