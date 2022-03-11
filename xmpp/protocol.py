@@ -280,6 +280,9 @@ class JID:
             else: self.node=''
             if jid.find('/')+1: self.domain,self.resource=jid.split('/',1)
             else: self.domain,self.resource=jid,''
+        if self.node == '':
+            self.node = self.domain
+            self.domain = ''
     def getNode(self):
         """ Return the node part of the JID """
         return self.node

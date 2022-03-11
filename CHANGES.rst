@@ -8,6 +8,9 @@ in progress
 - Use ``six.ensure_str()`` and ``six.ensure_binary()`` instead of custom decoding. Thanks, @normanr!
 - Fix Non-SASL (XEP-0078) authentication for Python 3. Thanks, @smudge1977!
 - Add ``B64`` shortcut function to streamline base64 encoding.
+- Update to handling of JID creation: Don't set ``domain`` attribute on specific conditions.
+  Thanks, @smudge1977!
+
 
 2021-12-28 0.7.0
 ================
