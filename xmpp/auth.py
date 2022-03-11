@@ -19,28 +19,27 @@ Provides library with all Non-SASL and SASL authentication mechanisms.
 Can be used both for client and transport authentication.
 """
 
-import sys
 from .protocol import *
 from .client import PlugIn
 import base64,random,re
 from . import dispatcher
 from hashlib import md5,sha1
+from six import ensure_str,ensure_binary
 
-IS_PYTHON3 = sys.version_info >= (3, 0, 0)
+CHARSET_ENCODING='utf-8'
 
 def HH(some):
-    if IS_PYTHON3 and isinstance(some, str):
-        some = some.encode("utf-8")
-    return md5(some).hexdigest()
+    return md5(ensure_binary(some, CHARSET_ENCODING)).hexdigest()
 def H(some):
-    if IS_PYTHON3 and isinstance(some, str):
-        some = some.encode("utf-8")
-    return md5(some).digest()
+    return md5(ensure_binary(some, CHARSET_ENCODING)).digest()
 def C(some):
-    if IS_PYTHON3:
-        some = [x.encode('utf-8') if isinstance(x, str) else x for x in some]
-        return b':'.join(some)
-    return ':'.join(map(str, some))
+    some = [ensure_binary(x, CHARSET_ENCODING) for x in some]
+    return b':'.join(some)
+
+def HHSHA1(some):
+    return sha1(ensure_binary(some, CHARSET_ENCODING)).hexdigest()
+def B64(some):
+    return ensure_str(base64.b64encode(ensure_binary(some,CHARSET_ENCODING)),CHARSET_ENCODING).replace('\r', '').replace('\n', '')
 
 class NonSASL(PlugIn):
     """ Implements old Non-SASL (XEP-0078) authentication used in jabberd1.4 and transport authentication."""
@@ -75,8 +74,8 @@ class NonSASL(PlugIn):
             token=query.getTagData('token')
             seq=query.getTagData('sequence')
             self.DEBUG("Performing zero-k authentication",'ok')
-            hash = sha1(sha1(self.password).hexdigest()+token).hexdigest()
-            for foo in range(int(seq)): hash = sha1(hash).hexdigest()
+            hash = HHSHA1(HHSHA1(self.password)+token)
+            for foo in range(int(seq)): hash = HHSHA1(hash)
             query.setTagData('hash',hash)
             method='0k'
         else:
@@ -95,7 +94,7 @@ class NonSASL(PlugIn):
     def authComponent(self,owner):
         """ Authenticate component. Send handshake stanza and wait for result. Returns "ok" on success. """
         self.handshake=0
-        owner.send(Node(NS_COMPONENT_ACCEPT+' handshake',payload=[sha1(owner.Dispatcher.Stream._document_attrs['id']+self.password).hexdigest()]))
+        owner.send(Node(NS_COMPONENT_ACCEPT+' handshake',payload=[HHSHA1(owner.Dispatcher.Stream._document_attrs['id']+self.password)]))
         owner.RegisterHandler('handshake',self.handshakeHandler,xmlns=NS_COMPONENT_ACCEPT)
         while not self.handshake:
             self.DEBUG("waiting on handshake",'notify')
@@ -157,8 +156,7 @@ class SASL(PlugIn):
             node=Node('auth',attrs={'xmlns':NS_SASL,'mechanism':'DIGEST-MD5'})
         elif "PLAIN" in mecs:
             sasl_data='%s\x00%s\x00%s'%(self.username+'@'+self._owner.Server,self.username,self.password)
-            payload = base64.b64encode(sasl_data.encode('utf-8')).decode('utf-8').replace('\r','').replace('\n','')
-            node=Node('auth',attrs={'xmlns':NS_SASL,'mechanism':'PLAIN'},payload=[payload])
+            node=Node('auth',attrs={'xmlns':NS_SASL,'mechanism':'PLAIN'},payload=[B64(sasl_data)])
         else:
             self.startsasl='failure'
             self.DEBUG('I can only use DIGEST-MD5 and PLAIN mecanisms.','error')
@@ -189,8 +187,7 @@ class SASL(PlugIn):
         incoming_data=challenge.getData()
         chal={}
         data=base64.b64decode(incoming_data)
-        if isinstance(data, bytes):
-            data = data.decode('utf-8')
+        data=ensure_str(data,CHARSET_ENCODING)
         self.DEBUG('Got challenge: '+data,'ok')
         for pair in re.findall('(\w+\s*=\s*(?:(?:"[^"]+")|(?:[^,]+)))',data):
             key,value=[x.strip() for x in pair.split('=', 1)]
@@ -212,13 +209,13 @@ class SASL(PlugIn):
             A2=C(['AUTHENTICATE',resp['digest-uri']])
             response= HH(C([HH(A1),resp['nonce'],resp['nc'],resp['cnonce'],resp['qop'],HH(A2)]))
             resp['response']=response
-            resp['charset']='utf-8'
+            resp['charset']=CHARSET_ENCODING
             sasl_data=''
             for key in ['charset','username','realm','nonce','nc','cnonce','digest-uri','response','qop']:
                 if key in ['nc','qop','response','charset']: sasl_data+="%s=%s,"%(key,resp[key])
                 else: sasl_data+='%s="%s",'%(key,resp[key])
 ########################################3333
-            node=Node('response',attrs={'xmlns':NS_SASL},payload=[base64.b64encode(sasl_data[:-1].encode()).decode().replace('\r','').replace('\n','')])
+            node=Node('response',attrs={'xmlns':NS_SASL},payload=[B64(sasl_data[:-1])])
             self._owner.send(node.__str__())
         elif 'rspauth' in chal: self._owner.send(Node('response',attrs={'xmlns':NS_SASL}).__str__())
         else:
