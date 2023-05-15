@@ -54,16 +54,22 @@ As a library
 
 Regularly, the module is used as a library, like::
 
+    import xmpp
+
     jabberid = "foobar@xmpp.domain.tld"
     password = "secret"
     receiver = "bazqux@xmpp.domain.tld"
     message  = "hello world"
 
-    jid = xmpp.protocol.JID(jabberid)
-    connection = xmpp.Client(server=jid.getDomain(), debug=debug)
-    connection.connect()
-    connection.auth(user=jid.getNode(), password=password, resource=jid.getResource())
-    connection.send(xmpp.protocol.Message(to=receiver, body=message))
+    def main():
+        jid = xmpp.protocol.JID(jabberid)
+        connection = xmpp.Client(server=jid.getDomain(), debug=True)
+        connection.connect()
+        connection.auth(user=jid.getNode(), password=password, resource=jid.getResource())
+        connection.send(xmpp.protocol.Message(to=receiver, body=message))
+
+    if __name__ == "__main__":
+        main()
 
 
 Command line interface
