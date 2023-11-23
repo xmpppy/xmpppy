@@ -384,7 +384,10 @@ class TLS(PlugIn):
         """ Immidiatedly switch socket to TLS mode. Used internally."""
         """ Here we should switch pending_data to hint mode."""
         tcpsock=self._owner.Connection
-        tcpsock._sslObj    = ssl.wrap_socket(tcpsock._sock, None, None)
+        context=ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        context.check_hostname = False
+
+        tcpsock._sslObj    = context.wrap_socket(tcpsock._sock)
         tcpsock._sslIssuer = tcpsock._sslObj.getpeercert().get('issuer')
         tcpsock._sslServer = tcpsock._sslObj.getpeercert().get('server')
         tcpsock._recv = tcpsock._sslObj.read
@@ -694,7 +697,7 @@ class Bosh(PlugIn):
         default['Content-Length'] = len(bosh_data)
         if self.GZIP:
             default['Accept-Encoding'] = 'gzip, deflate'
-        headers = dict(default, **headers) 
+        headers = dict(default, **headers)
         conn = self.Connection()
         if self.PIPELINE:
             conn._HTTPConnection__state = _CS_IDLE
