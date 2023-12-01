@@ -386,6 +386,7 @@ class TLS(PlugIn):
         tcpsock=self._owner.Connection
         context=ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
 
         tcpsock._sslObj    = context.wrap_socket(tcpsock._sock)
         tcpsock._sslIssuer = tcpsock._sslObj.getpeercert().get('issuer')
