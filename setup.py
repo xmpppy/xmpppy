@@ -46,4 +46,11 @@ setup(name='xmpppy',
           ],
       },
       install_requires="six",
+      extras_require={
+          "test": [
+              "pytest<8",
+              "pytest-cov<5",
+              "pytz",
+          ],
+      }
   )
