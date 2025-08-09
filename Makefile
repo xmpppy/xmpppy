@@ -12,7 +12,7 @@ install:
 	install -m 0644 xmpp/*py $(MODULESDIR)/xmpp
 
 #release: bumpversion push sdist pypi-upload
-release: push sdist pypi-upload
+release: push build pypi-upload
 
 
 # ===============
@@ -24,11 +24,11 @@ bumpversion: install-releasetools check-bump-options
 push:
 	git push && git push --tags
 
-sdist:
-	python setup.py sdist
+build:
+	uvx --with=build python -m build
 
 pypi-upload:
-	twine upload --skip-existing --verbose dist/*.tar.gz
+	uvx twine upload --skip-existing --verbose dist/*.tar.gz
 
 install-releasetools: setup-virtualenv2
 	@$(pip) install --quiet --requirement requirements-release.txt --upgrade
