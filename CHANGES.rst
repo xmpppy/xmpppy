@@ -6,6 +6,14 @@ xmpppy changelog
 in progress
 ===========
 
+2025-08-09 0.7.2
+================
+- Fixed ``AttributeError: module 'ssl' has no attribute 'wrap_socket'``.
+  Thanks, @juanvalino.
+- Ensured certificate checking is disabled to maintain backward compatibility.
+  Thanks, @juanvalino.
+- Added example for sending data to a MUC room. Thanks, @sebix.
+
 2022-04-10 0.7.1
 ================
 - Use ``six.ensure_str()`` and ``six.ensure_binary()`` instead of custom decoding. Thanks, @normanr!
