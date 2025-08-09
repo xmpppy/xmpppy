@@ -27,6 +27,7 @@ contributed to xmpppy in one way or another.
 - Ivan Vučica <ivan@vucica.net>
 - James Wu <jamesw@minted.com>
 - Johan Bakker <johan@provonet.org>
+- Juan Antonio Valiño García (@juanvalino)
 - Justin Forest <justin.forest@gmail.com>
 - Jörg Thalheim <joerg@higgsboson.tk>
 - Marek Kubica
@@ -35,6 +36,7 @@ contributed to xmpppy in one way or another.
 - Michał Pasternak <michal.dtz@gmail.com>
 - Mike Albon <mikea@yuri.org.uk>
 - Rulexec <rulix.exec@gmail.com>
+- Sebastian Wagner (@sebix)
 - Soren Roug
 - Stanislav Gorbenko <xenginex@gmail.com>
 - Stefan Fritze (@rogue73)
