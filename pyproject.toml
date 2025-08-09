@@ -1,0 +1,21 @@
+[tool.pytest.ini_options]
+minversion = "2.0"
+addopts = """
+  -rfEX -p pytester --strict-markers --verbosity=3
+  """
+log_level = "DEBUG"
+log_cli_level = "DEBUG"
+testpaths = ["tests"]
+xfail_strict = true
+markers = [
+]
+
+[tool.coverage.run]
+branch = false
+source = ["xmpp"]
+
+[tool.coverage.report]
+fail_under = 0
+show_missing = true
+omit = [
+]
