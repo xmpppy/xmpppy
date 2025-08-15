@@ -107,6 +107,19 @@ within the code base.
 - The docstrings within the library itself.
 
 
+***********
+Development
+***********
+
+::
+
+    git clone https://github.com/xmpppy/xmpppy
+    cd xmpppy
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install --editable='.[test]' --upgrade
+
+
 *******
 Support
 *******
