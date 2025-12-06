@@ -589,7 +589,7 @@ class Bosh(PlugIn):
             self.DEBUG("Invalid/Corrupt Stream", 'error')
             raise Exception("Disconnected from server")
         else:
-            msg = "Recieved status not defined in XEP-1204: %s" % res.status
+            msg = "Recieved status not defined in XEP-0124: %s" % res.status
             self.DEBUG(msg, 'error')
             raise Exception("Disconnected from server")
         node = Node(node=data)
