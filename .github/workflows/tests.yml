@@ -33,7 +33,6 @@ jobs:
     env:
       OS: ${{ matrix.os }}
       PYTHON: ${{ matrix.python-version }}
-      UV_SYSTEM_PYTHON: true
 
     name: "
     Python ${{ matrix.python-version }},
@@ -49,22 +48,12 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Set up uv
-      uses: astral-sh/setup-uv@v7
-      with:
-        cache-dependency-glob: |
-          pyproject.toml
-          setup.py
-        cache-suffix: ${{ matrix.python-version }}
-        enable-cache: true
-        version: "latest"
-
     - name: Set up project
       run: |
-        uv pip install --upgrade --editable='.'
-        uv pip install -r requirements-test.txt
+        pip install --upgrade --editable='.'
+        pip install -r requirements-test.txt
 
     - name: Run software tests
       run: |
         docker compose --file tests/compose.yml up --detach --wait
-        uv run pytest
+        pytest
