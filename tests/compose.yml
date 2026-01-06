@@ -1,0 +1,8 @@
+services:
+
+  prosody:
+    image: docker.io/prosodyim/prosody:13.0
+    ports:
+      - 5222:5222
+    environment:
+      PROSODY_VIRTUAL_HOSTS: localhost
