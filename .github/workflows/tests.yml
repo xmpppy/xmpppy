@@ -26,6 +26,7 @@ jobs:
           "ubuntu-22.04",
         ]
         python-version: [
+          "2.7",
           "3.7",
           "3.14",
         ]
