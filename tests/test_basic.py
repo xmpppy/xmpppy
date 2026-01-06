@@ -4,9 +4,9 @@ def test_cli_send_simple(run, timestamp_iso):
     """
 
     # Run command and capture output.
-    message = f"Message from CI. Date/Time: {timestamp_iso}"
-    result = run(f"xmpp-message --jabberid=testdrive@localhost --password=secret "
-                 f"--receiver=testdrive@localhost --message='{message}' --debug")
+    message = "Message from CI. Date/Time: {timestamp_iso}".format(timestamp_iso=timestamp_iso)
+    result = run("xmpp-message --jabberid=testdrive@localhost --password=secret "
+                 "--receiver=testdrive@localhost --message='{message}' --debug".format(message=message))
 
     # Verify output.
     assert 'Registering namespace "http://etherx.jabber.org/streams"' in result.err
