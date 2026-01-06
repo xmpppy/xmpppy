@@ -1,0 +1,70 @@
+name: Tests
+
+on:
+  pull_request:
+
+  push:
+    branches: [ master ]
+
+  # Allow job to be triggered manually.
+  workflow_dispatch:
+
+# Cancel in-progress jobs when pushing to the same branch.
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+
+  tests:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [
+          "ubuntu-22.04",
+        ]
+        python-version: [
+          "3.7",
+          "3.14",
+        ]
+
+    env:
+      OS: ${{ matrix.os }}
+      PYTHON: ${{ matrix.python-version }}
+      UV_SYSTEM_PYTHON: true
+
+    name: "
+    Python ${{ matrix.python-version }},
+    OS ${{ matrix.os }}
+    "
+    steps:
+
+    - name: Acquire sources
+      uses: actions/checkout@v5
+
+    - name: Set up Python
+      uses: LizardByte/setup-python-action@master
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v7
+      with:
+        cache-dependency-glob: |
+          pyproject.toml
+          setup.py
+        cache-suffix: ${{ matrix.python-version }}
+        enable-cache: true
+        version: "latest"
+
+    - name: Set up project
+      run: |
+        uv pip install --upgrade --editable='.'
+        uv pip install -r requirements-test.txt
+
+    - name: Run software tests
+      run: |
+        docker compose --file tests/compose.yml up --detach --wait
+        uv run pytest
