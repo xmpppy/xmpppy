@@ -49,7 +49,7 @@ setup(name='xmpppy',
       extras_require={
           "test": [
               "pytest<10",
-              "pytest-cov<5",
+              "pytest-cov<8",
               "pytz",
           ],
       }
