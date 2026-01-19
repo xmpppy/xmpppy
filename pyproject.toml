@@ -2,6 +2,7 @@
 minversion = "2.0"
 addopts = """
   -rfEX -p pytester --strict-markers --verbosity=3
+  --cov --cov-report=term-missing --cov-report=xml
   """
 log_level = "DEBUG"
 log_cli_level = "DEBUG"
@@ -13,6 +14,7 @@ markers = [
 [tool.coverage.run]
 branch = false
 source = ["xmpp"]
+patch = ["subprocess"]
 
 [tool.coverage.report]
 fail_under = 0

@@ -3,6 +3,8 @@
 *.pyc
 .venv*
 /build
+.coverage
+coverage.xml
 /dist
 /html
 .*.swp
