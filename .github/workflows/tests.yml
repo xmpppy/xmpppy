@@ -1,0 +1,71 @@
+name: Tests
+
+on:
+  pull_request:
+
+  push:
+    branches: [ master ]
+
+  # Allow job to be triggered manually.
+  workflow_dispatch:
+
+# Cancel in-progress jobs when pushing to the same branch.
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+
+  tests:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [
+          "ubuntu-22.04",
+        ]
+        python-version: [
+          "2.7",
+          "3.7",
+          "3.14",
+        ]
+
+    env:
+      OS: ${{ matrix.os }}
+      PYTHON: ${{ matrix.python-version }}
+
+    name: "
+    Python ${{ matrix.python-version }},
+    OS ${{ matrix.os }}
+    "
+    steps:
+
+    - name: Acquire sources
+      uses: actions/checkout@v6
+
+    - name: Set up Python
+      uses: LizardByte/setup-python-action@master
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Set up project
+      run: |
+        pip install --upgrade --editable='.'
+        pip install -r requirements-test.txt
+
+    - name: Run software tests
+      run: |
+        docker compose --file tests/compose.yml up --detach --wait
+        pytest
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      with:
+        files: ./coverage.xml
+        flags: unittests
+        env_vars: OS,PYTHON
+        name: codecov-umbrella
+        fail_ci_if_error: false

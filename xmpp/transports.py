@@ -381,10 +381,14 @@ class TLS(PlugIn):
         return self._tcpsock._seen_data or select.select([self._tcpsock._sslObj],[],[],timeout)[0]
 
     def _startSSL(self):
-        """ Immidiatedly switch socket to TLS mode. Used internally."""
+        """ Immediately switch socket to TLS mode. Used internally."""
         """ Here we should switch pending_data to hint mode."""
         tcpsock=self._owner.Connection
-        context=ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        if sys.version_info >= (3, 0, 0):
+            protocol = ssl.PROTOCOL_TLS_CLIENT
+        else:
+            protocol = ssl.PROTOCOL_TLS
+        context=ssl.SSLContext(protocol)
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
 
@@ -589,7 +593,7 @@ class Bosh(PlugIn):
             self.DEBUG("Invalid/Corrupt Stream", 'error')
             raise Exception("Disconnected from server")
         else:
-            msg = "Recieved status not defined in XEP-1204: %s" % res.status
+            msg = "Recieved status not defined in XEP-0124: %s" % res.status
             self.DEBUG(msg, 'error')
             raise Exception("Disconnected from server")
         node = Node(node=data)
