@@ -120,6 +120,7 @@ class Dispatcher(PlugIn):
         if self._owner.Connection.pending_data(timeout):
             try: data=self._owner.Connection.receive()
             except IOError: return
+            data = data.encode('utf-8')
             self.Stream.Parse(data)
             if len(self._pendingExceptions) > 0:
                 _pendingException = self._pendingExceptions.pop()

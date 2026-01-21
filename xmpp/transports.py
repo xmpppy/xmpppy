@@ -691,11 +691,11 @@ class Bosh(PlugIn):
         body.setAttr('rid', self.Rid)
         if self.Sid:
             body.setAttr('sid', self.Sid)
-        return str(body)
+        return str(body).encode('utf-8')
 
     def send(self, raw_data, headers={}):
         if type(raw_data) != type('') or type(raw_data) != type(''):
-            raw_data = str(raw_data)
+            raw_data = str(raw_data).encode('utf-8')
         bosh_data = self.xmlstream_to_bosh(raw_data)
         default = dict(self.headers)
         default['Host'] = self._http_host
