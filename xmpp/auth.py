@@ -366,14 +366,15 @@ class SASL(PlugIn):
             stored_key=hash_mod(client_key).digest()
             client_final_no_proof='c=%s,r=%s'%(cbind,combined_nonce)
             auth_message=','.join([state['client_first_bare'],data,client_final_no_proof])
-            client_signature=hmac.new(stored_key,ensure_binary(auth_message,CHARSET_ENCODING),hash_mod).digest()
-            proof=bytes([a ^ b for a,b in zip(client_key,client_signature)])
-            server_key=hmac.new(salted,b"Server Key",hash_mod).digest()
-            server_signature=hmac.new(server_key,ensure_binary(auth_message,CHARSET_ENCODING),hash_mod).digest()
-            state['server_signature']=base64.b64encode(server_signature).decode('ascii')
-            state['server_first']=data
-            resp='%s,p=%s'%(client_final_no_proof,base64.b64encode(proof).decode('ascii'))
-            node=Node('response',attrs={'xmlns':NS_SASL},payload=[B64(resp)])
+            client_signature = hmac.new(stored_key, ensure_binary(auth_message, CHARSET_ENCODING), hash_mod).digest()
+            proof_bytes = bytearray(a ^ b for a, b in zip(bytearray(client_key), bytearray(client_signature)))
+            proof = bytes(proof_bytes)
+            server_key = hmac.new(salted, b"Server Key", hash_mod).digest()
+            server_signature = hmac.new(server_key, ensure_binary(auth_message, CHARSET_ENCODING), hash_mod).digest()
+            state['server_signature'] = base64.b64encode(server_signature).decode('ascii')
+            state['server_first'] = data
+            resp = '%s,p=%s' % (client_final_no_proof, base64.b64encode(proof).decode('ascii'))
+            node = Node('response', attrs={'xmlns': NS_SASL}, payload=[B64(resp)])
             self._owner.send(node.__str__())
         else:
             # Should not reach here because success handled separately
