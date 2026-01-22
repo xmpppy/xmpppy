@@ -161,6 +161,11 @@ class SASL(PlugIn):
             node=self._build_scram_auth('SCRAM-SHA-256-PLUS', cb_type, cb_data)
         elif "SCRAM-SHA-256" in mecs:
             node=self._build_scram_auth('SCRAM-SHA-256')
+        elif "SCRAM-SHA-1-PLUS" in mecs and cb_data:
+            use_plus=True
+            node=self._build_scram_auth('SCRAM-SHA-1-PLUS', cb_type, cb_data)
+        elif "SCRAM-SHA-1" in mecs:
+            node=self._build_scram_auth('SCRAM-SHA-1')
         elif "ANONYMOUS" in mecs and self.username == None:
             self.mechanism='ANONYMOUS'
             node=Node('auth',attrs={'xmlns':NS_SASL,'mechanism':'ANONYMOUS'})
@@ -173,12 +178,13 @@ class SASL(PlugIn):
             node=Node('auth',attrs={'xmlns':NS_SASL,'mechanism':'PLAIN'},payload=[B64(sasl_data)])
         else:
             self.startsasl='failure'
-            self.DEBUG('I can only use SCRAM-SHA-256(+), DIGEST-MD5 and PLAIN mecanisms.','error')
+            self.DEBUG('I can only use SCRAM-SHA-256(+)/SCRAM-SHA-1(+), DIGEST-MD5 and PLAIN mechanisms.','error')
             return
-        if use_plus:
-            self.mechanism='SCRAM-SHA-256-PLUS'
-        elif node and not self.mechanism:
-            self.mechanism=node.getAttr('mechanism')
+        if node:
+            try:
+                self.mechanism = node.getAttr('mechanism')
+            except Exception:
+                pass
         self.startsasl='in-process'
         self._owner.send(node.__str__())
         raise NodeProcessed
@@ -187,10 +193,28 @@ class SASL(PlugIn):
         """ Perform next SASL auth step. Used internally. """
         if challenge.getNamespace()!=NS_SASL: return
         if challenge.getName()=='failure':
+            try:
+                reason_node = challenge.getChildren()[0]
+            except:
+                reason_node = challenge
+            reason_text = ''
+            try:
+                for c in challenge.getChildren():
+                    if c.getName() == 'text':
+                        reason_text = c.getData() or ''
+                        break
+            except Exception:
+                pass
+            if self.mechanism and self.mechanism.endswith('-PLUS') and ('channel binding' in reason_text.lower() or 'binding' in reason_text.lower()):
+                mech = self.mechanism.replace('-PLUS', '')
+                self.DEBUG('Server rejected channel binding, falling back to %s' % mech, 'warn')
+                self.mechanism = mech
+                node = self._build_scram_auth(mech)
+                self.startsasl = 'in-process'
+                self._owner.send(node.__str__())
+                raise NodeProcessed
             self.startsasl='failure'
-            try: reason=challenge.getChildren()[0]
-            except: reason=challenge
-            self.DEBUG('Failed SASL authentification: %s'%reason,'error')
+            self.DEBUG('Failed SASL authentification: %s'%reason_node,'error')
             raise NodeProcessed
         elif challenge.getName()=='success':
             if self.mechanism and self.mechanism.startswith('SCRAM-SHA-256') and challenge.getData():
@@ -210,7 +234,7 @@ class SASL(PlugIn):
             self._owner.User=self.username
             raise NodeProcessed
 ########################################3333
-        if self.mechanism and self.mechanism.startswith('SCRAM-SHA-256'):
+        if self.mechanism and self.mechanism.startswith('SCRAM-SHA-'):
             self._handle_scram_challenge(challenge)
             raise NodeProcessed
 
@@ -219,7 +243,7 @@ class SASL(PlugIn):
         data=base64.b64decode(incoming_data)
         data=ensure_str(data,CHARSET_ENCODING)
         self.DEBUG('Got challenge: '+data,'ok')
-        for pair in re.findall('(\w+\s*=\s*(?:(?:"[^"]+")|(?:[^,]+)))',data):
+        for pair in re.findall(r'(\w+\s*=\s*(?:(?:"[^"]+")|(?:[^,]+)))',data):
             key,value=[x.strip() for x in pair.split('=', 1)]
             if value[:1]=='"' and value[-1:]=='"': value=value[1:-1]
             chal[key]=value
@@ -331,15 +355,21 @@ class SASL(PlugIn):
             gs2header=state['gs2']
             cb_data=state.get('cb_data',b'')
             cbind=B64(gs2header.encode(CHARSET_ENCODING)+cb_data)
-            salted=pbkdf2_hmac('sha256',ensure_binary(self.password,CHARSET_ENCODING),salt,iterations)
-            client_key=hmac.new(salted,b"Client Key",sha256).digest()
-            stored_key=sha256(client_key).digest()
+            if self.mechanism and 'SHA-256' in self.mechanism:
+                hash_name = 'sha256'
+                hash_mod = sha256
+            else:
+                hash_name = 'sha1'
+                hash_mod = sha1
+            salted=pbkdf2_hmac(hash_name,ensure_binary(self.password,CHARSET_ENCODING),salt,iterations)
+            client_key=hmac.new(salted,b"Client Key",hash_mod).digest()
+            stored_key=hash_mod(client_key).digest()
             client_final_no_proof='c=%s,r=%s'%(cbind,combined_nonce)
             auth_message=','.join([state['client_first_bare'],data,client_final_no_proof])
-            client_signature=hmac.new(stored_key,ensure_binary(auth_message,CHARSET_ENCODING),sha256).digest()
+            client_signature=hmac.new(stored_key,ensure_binary(auth_message,CHARSET_ENCODING),hash_mod).digest()
             proof=bytes([a ^ b for a,b in zip(client_key,client_signature)])
-            server_key=hmac.new(salted,b"Server Key",sha256).digest()
-            server_signature=hmac.new(server_key,ensure_binary(auth_message,CHARSET_ENCODING),sha256).digest()
+            server_key=hmac.new(salted,b"Server Key",hash_mod).digest()
+            server_signature=hmac.new(server_key,ensure_binary(auth_message,CHARSET_ENCODING),hash_mod).digest()
             state['server_signature']=base64.b64encode(server_signature).decode('ascii')
             state['server_first']=data
             resp='%s,p=%s'%(client_final_no_proof,base64.b64encode(proof).decode('ascii'))
