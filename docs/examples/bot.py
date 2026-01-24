@@ -20,7 +20,7 @@ def hook1Handler(user,command,args,mess):
 
 i18n['en']['HOOK2']='Responce 2: %s'
 def hook2Handler(user,command,args,mess):
-    return "HOOK2","hook2 called with %s"%(`(user,command,args,mess)`)
+    return "HOOK2","hook2 called with %s"%(repr((user,command,args,mess)))
 
 i18n['en']['HOOK3']='Responce 3: static string'
 def hook3Handler(user,command,args,mess):
@@ -55,8 +55,8 @@ def messageCB(conn,mess):
             except KeyError: pass
     if reply: conn.send(xmpp.Message(mess.getFrom(),reply))
 
-for i in globals().keys():
-    if i[-7:]=='Handler' and i[:-7].lower()==i[:-7]: commands[i[:-7]]=globals()[i]
+for k, v in globals().items():
+    if k[-7:]=='Handler' and k[:-7].lower()==k[:-7]: commands[k[:-7]]=v
 
 ############################# bot logic stop #####################################
 
@@ -70,7 +70,7 @@ def GoOn(conn):
     while StepOn(conn): pass
 
 if len(sys.argv)<3:
-    print "Usage: bot.py username@server.net password"
+    print("Usage: bot.py username@server.net password")
 else:
     jid=xmpp.JID(sys.argv[1])
     user,server,password=jid.getNode(),jid.getDomain(),sys.argv[2]
@@ -78,17 +78,17 @@ else:
     conn=xmpp.Client(server)#,debug=[])
     conres=conn.connect()
     if not conres:
-        print "Unable to connect to server %s!"%server
+        print("Unable to connect to server %s!"%server)
         sys.exit(1)
-    if conres<>'tls':
-        print "Warning: unable to estabilish secure connection - TLS failed!"
+    if conres != 'tls':
+        print("Warning: unable to estabilish secure connection - TLS failed!")
     authres=conn.auth(user,password)
     if not authres:
-        print "Unable to authorize on %s - check login/password."%server
+        print("Unable to authorize on %s - check login/password."%server)
         sys.exit(1)
-    if authres<>'sasl':
-        print "Warning: unable to perform SASL auth os %s. Old authentication method used!"%server
+    if authres != 'sasl':
+        print("Warning: unable to perform SASL auth os %s. Old authentication method used!"%server)
     conn.RegisterHandler('message',messageCB)
     conn.sendInitPresence()
-    print "Bot started."
+    print("Bot started.")
     GoOn(conn)
