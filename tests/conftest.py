@@ -1,10 +1,12 @@
 import datetime as dt
+import logging
 import shlex
 import subprocess
 
 import pytest
 import pytz
 
+logger = logging.getLogger(__name__)
 
 @pytest.fixture
 def run(capfd):
@@ -26,4 +28,7 @@ def timestamp_iso():
 
 @pytest.fixture(autouse=True)
 def prosody_register_user(run):
-    run("docker compose --file=tests/compose.yml exec prosody prosodyctl register testdrive localhost secret")
+    try:
+        run("docker compose --file=tests/compose.yml exec prosody prosodyctl register testdrive localhost secret")
+    except subprocess.CalledProcessError:
+        logger.error("Failed to register XMPP user. Subsequent tests will likely fail. Is Prosody running?")

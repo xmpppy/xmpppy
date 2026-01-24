@@ -119,6 +119,10 @@ Run software tests::
     docker compose --file tests/compose.yml up
     pytest
 
+Run particular tests::
+
+    pytest --no-cov -k compile
+
 
 *******
 Support
