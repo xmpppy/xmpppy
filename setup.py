@@ -48,6 +48,7 @@ setup(name='xmpppy',
       install_requires="six",
       extras_require={
           "test": [
+              "pathlib2; python_version<'3'",
               "pytest<10",
               "pytest-cov<8",
               "pytz",
