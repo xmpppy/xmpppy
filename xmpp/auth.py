@@ -189,7 +189,7 @@ class SASL(PlugIn):
         data=base64.b64decode(incoming_data)
         data=ensure_str(data,CHARSET_ENCODING)
         self.DEBUG('Got challenge: '+data,'ok')
-        for pair in re.findall('(\w+\s*=\s*(?:(?:"[^"]+")|(?:[^,]+)))',data):
+        for pair in re.findall(r'(\w+\s*=\s*(?:(?:"[^"]+")|(?:[^,]+)))',data):
             key,value=[x.strip() for x in pair.split('=', 1)]
             if value[:1]=='"' and value[-1:]=='"': value=value[1:-1]
             chal[key]=value
