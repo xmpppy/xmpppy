@@ -97,7 +97,7 @@ if __name__ == '__main__':
             continue
     if help:
         showhelp(username, password, endpoint, resource)
-        sys.exit(0)
+        sys.exit(1)
     assert username and password and endpoint, \
         'username, password, and endpoint required'
     c = connect(username, password, resource, bosh=endpoint)
