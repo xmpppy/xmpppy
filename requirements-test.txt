@@ -1,3 +1,0 @@
-pytest<10
-pytest-cov<8
-pytz
