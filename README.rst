@@ -2,16 +2,6 @@
 xmpppy
 ######
 
-    *Python 2/3 implementation of XMPP (RFC3920, RFC3921).*
-
-----
-
-**Documentation**: http://xmpppy.sf.net/
-
-**Source Code**: https://github.com/xmpppy/xmpppy
-
-**Status**:
-
 .. image:: https://img.shields.io/pypi/pyversions/xmpppy.svg
     :target: https://pypi.org/project/xmpppy/
 
@@ -24,16 +14,21 @@ xmpppy
 .. image:: https://img.shields.io/pypi/dm/xmpppy.svg
     :target: https://pypi.org/project/xmpppy/
 
+.. image:: https://img.shields.io/pypi/status/xmpppy.svg
+    :target: https://pypi.org/project/xmpppy/
 
-----
+.. image:: https://github.com/xmpppy/xmpppy/actions/workflows/tests.yml/badge.svg
+    :target: https://github.com/xmpppy/xmpppy/actions/workflows/tests.yml
 
-*****
-About
-*****
-This library has been written to be compliant with
-`RFC3920 <https://datatracker.ietf.org/doc/rfc3920/>`_
-and
-`RFC3921 <https://datatracker.ietf.org/doc/rfc3921/>`_.
+.. image:: https://img.shields.io/codecov/c/gh/xmpppy/xmpppy.svg
+    :target: https://codecov.io/gh/xmpppy/xmpppy/
+
+|
+
+:About: Python 2/3 implementation of XMPP
+:Standards: `RFC3920`_, `RFC3921`_
+:Documentation: https://xmpppy.sourceforge.net/
+:Source Code: https://github.com/xmpppy/xmpppy
 
 
 ************
@@ -42,7 +37,7 @@ Installation
 
 Using ``pip``, you can install the package with::
 
-    pip install xmpppy --upgrade
+    pip install --upgrade xmpppy
 
 
 *****
@@ -145,3 +140,7 @@ Other projects
 - https://github.com/fritzy/SleekXMPP
 - https://dev.gajim.org/gajim/python-nbxmpp
 - https://github.com/xmpppy/xmpppy/files/4346179/xmpp_libs.xlsx
+
+
+.. _RFC3920: https://datatracker.ietf.org/doc/rfc3920/
+.. _RFC3921: https://datatracker.ietf.org/doc/rfc3921/
