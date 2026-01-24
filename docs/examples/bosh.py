@@ -36,7 +36,7 @@ def showhelp(*args):
   -h|--help Show Help
 
 """
-    print tpl.format(*args)
+    print(tpl.format(*args))
 
 def connect(username, password, resource,  server='', port='', bosh='', use_srv=False):
     """
@@ -55,7 +55,7 @@ def connect(username, password, resource,  server='', port='', bosh='', use_srv=
     return con
 
 def message(con, stanze):
-    print stanze
+    print(stanze)
     return stanze
 
 def step(conn):

@@ -39,9 +39,9 @@ class Bot:
 if __name__ == '__main__':
 
     if len(sys.argv) < 2:
-        print "Syntax: xtalk JID"
+        print("Syntax: xtalk JID")
         sys.exit(0)
-    
+
     tojid=sys.argv[1]
     
     jidparams={}
@@ -53,9 +53,9 @@ if __name__ == '__main__':
     for mandatory in ['jid','password']:
         if mandatory not in jidparams.keys():
             open(os.environ['HOME']+'/.xtalk','w').write('#Uncomment fields before use and type in correct credentials.\n#JID=romeo@montague.net/resource (/resource is optional)\n#PASSWORD=juliet\n')
-            print 'Please point ~/.xtalk config file to valid JID for sending messages.'
+            print('Please point ~/.xtalk config file to valid JID for sending messages.')
             sys.exit(0)
-    
+
     jid=xmpp.protocol.JID(jidparams['jid'])
     cl=xmpp.Client(jid.getDomain())#,debug=[])
     
