@@ -71,24 +71,25 @@ def GoOn(conn):
 
 if len(sys.argv)<3:
     print("Usage: bot.py username@server.net password")
-else:
-    jid=xmpp.JID(sys.argv[1])
-    user,server,password=jid.getNode(),jid.getDomain(),sys.argv[2]
+    sys.exit(1)
 
-    conn=xmpp.Client(server)#,debug=[])
-    conres=conn.connect()
-    if not conres:
-        print("Unable to connect to server %s!"%server)
-        sys.exit(1)
-    if conres != 'tls':
-        print("Warning: unable to estabilish secure connection - TLS failed!")
-    authres=conn.auth(user,password)
-    if not authres:
-        print("Unable to authorize on %s - check login/password."%server)
-        sys.exit(1)
-    if authres != 'sasl':
-        print("Warning: unable to perform SASL auth os %s. Old authentication method used!"%server)
-    conn.RegisterHandler('message',messageCB)
-    conn.sendInitPresence()
-    print("Bot started.")
-    GoOn(conn)
+jid=xmpp.JID(sys.argv[1])
+user,server,password=jid.getNode(),jid.getDomain(),sys.argv[2]
+
+conn=xmpp.Client(server)#,debug=[])
+conres=conn.connect()
+if not conres:
+    print("Unable to connect to server %s!"%server)
+    sys.exit(1)
+if conres != 'tls':
+    print("Warning: unable to estabilish secure connection - TLS failed!")
+authres=conn.auth(user,password)
+if not authres:
+    print("Unable to authorize on %s - check login/password."%server)
+    sys.exit(1)
+if authres != 'sasl':
+    print("Warning: unable to perform SASL auth os %s. Old authentication method used!"%server)
+conn.RegisterHandler('message',messageCB)
+conn.sendInitPresence()
+print("Bot started.")
+GoOn(conn)
