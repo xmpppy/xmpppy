@@ -51,8 +51,7 @@ jobs:
 
     - name: Set up project
       run: |
-        pip install --upgrade --editable='.'
-        pip install -r requirements-test.txt
+        pip install --upgrade --editable='.[test]'
 
     - name: Run software tests
       run: |

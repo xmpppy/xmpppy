@@ -111,22 +111,16 @@ within the code base.
 Development
 ***********
 
-::
+Acquire sources and bootstrap sandbox::
 
     git clone https://github.com/xmpppy/xmpppy
     cd xmpppy
     python3 -m venv .venv
     source .venv/bin/activate
-    pip install --editable='.[test]' --upgrade
+    pip install --upgrade --editable='.[test]'
 
+Run software tests::
 
-**************
-Software tests
-**************
-
-::
-
-    pip install -r requirements-test.txt
     docker compose --file tests/compose.yml up
     pytest
 
