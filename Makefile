@@ -21,4 +21,4 @@ build:
 	uvx --with=build python -m build
 
 pypi-upload:
-	uvx twine upload --skip-existing --verbose dist/*.tar.gz
+	uvx twine upload --skip-existing --verbose dist/*.tar.gz dist/*.whl
