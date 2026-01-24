@@ -79,6 +79,5 @@ After 0.6.0 release:
 - [x] Retroactively add changelog.
 - [o] Integrate documentation about alternative installation variants. Add note about virtualenv and pipx.
 - [o] Add more example programs as command line entrypoints.
-- [o] Update documentation files doc/*.html
-- [o] Run the Black code formatter
+- [o] Update documentation files ``doc/*.html``
 - [o] Documentation: Add note about installing DNS libraries (dnspython or pydns) for querying SRV records.
