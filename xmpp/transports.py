@@ -158,7 +158,7 @@ class TCPsocket(PlugIn):
                 try:
                     self._sock = socket.socket(af, socktype, proto)
                     self._sock.connect(sa)
-                    self._send=self._sock.sendall
+                    self._send=self._sock.send
                     self._recv=self._sock.recv
                     self.DEBUG("Successfully connected to remote host %s"%repr(server),'start')
                     return 'ok'
@@ -219,23 +219,34 @@ class TCPsocket(PlugIn):
             raise IOError("Disconnected from server")
         return received
 
-    def send(self,raw_data,retry_timeout=1):
+    def send(self,raw_data,retry_timeout=0):
         """ Writes raw outgoing data. Blocks until done.
             If supplied data is unicode string, encodes it to utf-8 before send."""
         #print('type:', type(raw_data))
         if type(raw_data)==type(''): raw_data = raw_data
         elif type(raw_data)!=type(''): raw_data = ustr(raw_data)
         raw_data=ensure_binary(raw_data,'utf-8')
+        left_to_send = len(raw_data)
+        total_sent = 0
+        retry = 0
+        data = b''
         try:
-            sent = 0
-            while not sent:
+            while left_to_send:
                 try:
-                    self._send(raw_data)
-                    sent = 1
+                    if retry == 0:
+                        data = raw_data[total_sent:]
+                    bytes_sent = self._send(data)
+                    total_sent += bytes_sent
+                    left_to_send -= bytes_sent
                 except socket.error as e:
+                    self.DEBUG("Exception %s while sending %s / %s bytes" % (e, total_sent, left_to_send), 'warn')
                     if self.check_pending(e, 'sending', 'waiting to retry'):
+                        retry += 1
                         continue
                     raise
+            if not retry == 0:
+                self.DEBUG("Finally sent %s bytes of data after %s retries" % (total_sent, retry), 'warn')
+                retry = 0
             # Avoid printing messages that are empty keepalive packets.
             if raw_data.strip():
                 self.DEBUG(raw_data,'sent')
