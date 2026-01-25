@@ -7,6 +7,12 @@ in progress
 ===========
 - Fixed ``wait`` and ``route`` parameters for Bosh transport. Thanks, @soul4code.
 - Fixed ``receive`` when message is empty. Thanks, @soul4code.
+- Improved send performances when using SSL. Thanks, @CyrilPeponnet.
+
+  - Keep buffer between two tries to avoid SSL warning.
+  - Use ``socket.send`` instead of sendall for better exception catching.
+  - Set ``select.select`` timeout to ``0`` to avoid to block processing while
+    waiting.
 
 2025-08-09 0.7.2
 ================
