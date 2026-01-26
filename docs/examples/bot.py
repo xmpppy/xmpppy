@@ -71,6 +71,7 @@ def GoOn(conn):
 
 if len(sys.argv)<3:
     print("Usage: bot.py username@server.net password")
+    sys.exit(1)
 else:
     jid=xmpp.JID(sys.argv[1])
     user,server,password=jid.getNode(),jid.getDomain(),sys.argv[2]
