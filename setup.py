@@ -50,7 +50,7 @@ setup(name='xmpppy',
           "test": [
               "pathlib2; python_version<'3'",
               "pytest<10",
-              "pytest-cov<8",
+              "pytest-cov<7",
               "pytz",
           ],
       }
