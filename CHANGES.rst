@@ -5,6 +5,9 @@ xmpppy changelog
 
 in progress
 ===========
+
+2026-02-08 0.7.3
+================
 - Fixed ``wait`` and ``route`` parameters for Bosh transport. Thanks, @soul4code.
 - Fixed ``receive`` when message is empty. Thanks, @soul4code.
 - Fixed memory leak by removing stanza once callback called.
