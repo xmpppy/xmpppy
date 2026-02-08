@@ -24,11 +24,3 @@ def timestamp_iso():
     now = dt.datetime.now(tz=pytz.timezone("Europe/Berlin"))
     now = now - dt.timedelta(microseconds=now.microsecond)
     return now.isoformat()
-
-
-@pytest.fixture(autouse=True)
-def prosody_register_user(run):
-    try:
-        run("docker compose --file=tests/compose.yml exec prosody prosodyctl register testdrive localhost secret")
-    except:
-        logger.error("Failed to register XMPP user. Subsequent tests will likely fail. Is Prosody running?")

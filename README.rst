@@ -116,10 +116,17 @@ Acquire sources and bootstrap sandbox::
 
 Run software tests::
 
-    docker compose --file tests/compose.yml up
+    # Provide an XMPP server on `localhost`.
+    # Ensure user account `testdrive` with password `secret` exists.
     pytest
 
-Run particular tests::
+Run software tests using Prosody in Docker::
+
+    docker compose --file=tests/compose.yml up
+    docker compose --file=tests/compose.yml exec prosody prosodyctl register testdrive localhost secret
+    pytest
+
+Run particular test cases::
 
     pytest --no-cov -k compile
 

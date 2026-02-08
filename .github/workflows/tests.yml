@@ -56,6 +56,7 @@ jobs:
     - name: Run software tests
       run: |
         docker compose --file tests/compose.yml up --detach --wait
+        docker compose --file=tests/compose.yml exec prosody prosodyctl register testdrive localhost secret
         pytest
 
     - name: Upload coverage to Codecov
