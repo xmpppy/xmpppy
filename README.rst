@@ -106,6 +106,9 @@ within the code base.
 Development
 ***********
 
+Sandbox
+=======
+
 Acquire sources and bootstrap sandbox::
 
     git clone https://github.com/xmpppy/xmpppy
@@ -114,21 +117,32 @@ Acquire sources and bootstrap sandbox::
     source .venv/bin/activate
     pip install --upgrade --editable='.[test]'
 
+Software tests
+==============
+
+Running the software tests requires a local XMPP server and a specific user account.
+
+:TCP (ipv4):    ``localhost:5222``
+:XMPP vhost:    ``localhost``
+:JID:           ``testdrive@localhost``
+:Password:      ``secret``
+
+The server needs to support the core XMPP specification, it does not need to
+federate with other servers, nor provide TLS upgrades or other remote accesses.
+
 Run software tests::
 
-    # Provide an XMPP server on `localhost`.
-    # Ensure user account `testdrive` with password `secret` exists.
-    pytest
-
-Run software tests using Prosody in Docker::
-
-    docker compose --file=tests/compose.yml up
-    docker compose --file=tests/compose.yml exec prosody prosodyctl register testdrive localhost secret
     pytest
 
 Run particular test cases::
 
     pytest --no-cov -k compile
+
+Run software tests using Prosody XMPP through the accompanied Compose file::
+
+    docker compose --file=tests/compose.yml up
+    docker compose --file=tests/compose.yml exec prosody prosodyctl register testdrive localhost secret
+    pytest
 
 
 *******
