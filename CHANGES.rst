@@ -5,6 +5,12 @@ xmpppy changelog
 
 in progress
 ===========
+- Improved send performances when using SSL. Thanks, @CyrilPeponnet.
+
+  - Keep buffer between two tries to avoid SSL warning.
+  - Use ``socket.send`` instead of sendall for better exception catching.
+  - Set ``select.select`` timeout to ``0`` to avoid to block processing while
+    waiting.
 
 2026-02-08 0.7.3
 ================
