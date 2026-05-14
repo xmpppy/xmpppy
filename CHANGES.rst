@@ -5,6 +5,8 @@ xmpppy changelog
 
 in progress
 ===========
+- Fixed ``UnicodeDecodeError`` while logging large stanzas by using ``backslashreplace`` handler.
+  Thanks, @vthriller and @normanr.
 
 2026-02-08 0.7.3
 ================

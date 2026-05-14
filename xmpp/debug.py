@@ -397,7 +397,7 @@ class Debug:
 
     colors={}
     def Show(self, flag, msg, prefix=''):
-        msg=ensure_str(msg,'utf-8')
+        msg=ensure_str(msg,'utf-8','backslashreplace')
         msg=msg.replace('\r','\\r').replace('\n','\\n').replace('><','>\n  <')
         if not colors_enabled: pass
         elif prefix in self.colors: msg=self.colors[prefix]+msg+color_none
