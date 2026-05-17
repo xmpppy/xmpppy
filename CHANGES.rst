@@ -7,6 +7,7 @@ in progress
 ===========
 - Fixed ``UnicodeDecodeError`` while logging large stanzas by using ``backslashreplace`` handler.
   Thanks, @vthriller and @normanr.
+- Improved compatibility with Python 2. Thanks, @vbontchev.
 
 2026-02-08 0.7.3
 ================
