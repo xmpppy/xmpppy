@@ -30,7 +30,7 @@ def ustr(what):
     if isinstance(what, str): return what
     try: r=what.__str__()
     except AttributeError: r=str(what)
-    if not isinstance(r, str): return str(r,ENCODING)
+    if not isinstance(r, str): return r.decode(ENCODING)
     return r
 
 class Node(object):

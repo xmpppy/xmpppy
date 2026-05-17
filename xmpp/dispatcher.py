@@ -116,7 +116,10 @@ class Dispatcher(PlugIn):
         for handler in self._cycleHandlers: handler(self)
         if len(self._pendingExceptions) > 0:
             _pendingException = self._pendingExceptions.pop()
-            raise _pendingException[0](_pendingException[1]).with_traceback(_pendingException[2])
+            ex = _pendingException[0](_pendingException[1])
+            if hasattr(ex, "with_traceback"):
+                ex = ex.with_traceback(_pendingException[2])
+            raise ex
         if self._owner.Connection.pending_data(timeout):
             try: data=self._owner.Connection.receive()
             except IOError: return
