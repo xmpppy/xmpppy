@@ -21,8 +21,10 @@ Can be used both for client and transport authentication.
 
 from .protocol import *
 from .client import PlugIn
-import base64,random,re
+import base64,re,secrets
 from . import dispatcher
+import hmac
+from .scram import SCRAM_MECHANISMS
 from hashlib import md5,sha1
 from six import ensure_str,ensure_binary
 
@@ -113,6 +115,8 @@ class SASL(PlugIn):
         PlugIn.__init__(self)
         self.username=username
         self.password=password
+        self.mechanism=None
+        self.scram_state={}
 
     def plugin(self,owner):
         if 'version' not in self._owner.Dispatcher.Stream._document_attrs: self.startsasl='not-supported'
@@ -150,17 +154,36 @@ class SASL(PlugIn):
         self._owner.RegisterHandler('challenge',self.SASLHandler,xmlns=NS_SASL)
         self._owner.RegisterHandler('failure',self.SASLHandler,xmlns=NS_SASL)
         self._owner.RegisterHandler('success',self.SASLHandler,xmlns=NS_SASL)
-        if "ANONYMOUS" in mecs and self.username == None:
+        node=None
+        cb_type, cb_data = self._tls_channel_binding()
+        cb_available = bool(cb_data)
+        if "SCRAM-SHA-256-PLUS" in mecs and cb_data:
+            node=self._build_scram_auth('SCRAM-SHA-256-PLUS', cb_type, cb_data)
+        elif "SCRAM-SHA-256" in mecs:
+            node=self._build_scram_auth('SCRAM-SHA-256', cb_available=cb_available)
+        elif "SCRAM-SHA-1-PLUS" in mecs and cb_data:
+            node=self._build_scram_auth('SCRAM-SHA-1-PLUS', cb_type, cb_data)
+        elif "SCRAM-SHA-1" in mecs:
+            node=self._build_scram_auth('SCRAM-SHA-1', cb_available=cb_available)
+        elif "ANONYMOUS" in mecs and self.username is None:
+            self.mechanism='ANONYMOUS'
             node=Node('auth',attrs={'xmlns':NS_SASL,'mechanism':'ANONYMOUS'})
         elif "DIGEST-MD5" in mecs:
+            self.mechanism='DIGEST-MD5'
             node=Node('auth',attrs={'xmlns':NS_SASL,'mechanism':'DIGEST-MD5'})
         elif "PLAIN" in mecs:
+            self.mechanism='PLAIN'
             sasl_data='%s\x00%s\x00%s'%(self.username+'@'+self._owner.Server,self.username,self.password)
             node=Node('auth',attrs={'xmlns':NS_SASL,'mechanism':'PLAIN'},payload=[B64(sasl_data)])
         else:
             self.startsasl='failure'
-            self.DEBUG('I can only use DIGEST-MD5 and PLAIN mecanisms.','error')
+            self.DEBUG('I can only use SCRAM-SHA-256(+)/SCRAM-SHA-1(+), DIGEST-MD5 and PLAIN mechanisms.','error')
             return
+        if node:
+            try:
+                self.mechanism = node.getAttr('mechanism')
+            except Exception:
+                pass
         self.startsasl='in-process'
         self._owner.send(node.__str__())
         raise NodeProcessed
@@ -169,12 +192,38 @@ class SASL(PlugIn):
         """ Perform next SASL auth step. Used internally. """
         if challenge.getNamespace()!=NS_SASL: return
         if challenge.getName()=='failure':
+            try:
+                reason_node = challenge.getChildren()[0]
+            except Exception:
+                reason_node = challenge
+            reason_text = ''
+            try:
+                for c in challenge.getChildren():
+                    if c.getName() == 'text':
+                        reason_text = c.getData() or ''
+                        break
+            except Exception:
+                pass
+            if self.mechanism and self.mechanism.endswith('-PLUS') and 'binding' in reason_text.lower():
+                mech = self.mechanism.replace('-PLUS', '')
+                self.DEBUG('Server rejected channel binding, falling back to %s' % mech, 'warn')
+                self.mechanism = mech
+                node = self._build_scram_auth(mech, cb_available=True)
+                self.startsasl = 'in-process'
+                self._owner.send(node.__str__())
+                raise NodeProcessed
             self.startsasl='failure'
-            try: reason=challenge.getChildren()[0]
-            except: reason=challenge
-            self.DEBUG('Failed SASL authentification: %s'%reason,'error')
+            self.DEBUG('Failed SASL authentification: %s'%reason_node,'error')
             raise NodeProcessed
         elif challenge.getName()=='success':
+            if self.mechanism and self.mechanism.startswith('SCRAM-SHA-') and challenge.getData():
+                data=ensure_str(base64.b64decode(challenge.getData()),CHARSET_ENCODING)
+                attrs=self._scram_parse(data)
+                expected=self.scram_state.get('server_signature')
+                if expected and attrs.get('v')!=expected:
+                    self.startsasl='failure'
+                    self.DEBUG('SCRAM server signature mismatch','error')
+                    raise NodeProcessed
             self.startsasl='success'
             self.DEBUG('Successfully authenticated with remote server.','ok')
             handlers=self._owner.Dispatcher.dumpHandlers()
@@ -183,7 +232,9 @@ class SASL(PlugIn):
             self._owner.Dispatcher.restoreHandlers(handlers)
             self._owner.User=self.username
             raise NodeProcessed
-########################################3333
+        if self.mechanism and self.mechanism.startswith('SCRAM-SHA-'):
+            self._handle_scram_challenge(challenge)
+            raise NodeProcessed
         incoming_data=challenge.getData()
         chal={}
         data=base64.b64decode(incoming_data)
@@ -198,10 +249,7 @@ class SASL(PlugIn):
             resp['username']=self.username
             resp['realm']=self._owner.Server
             resp['nonce']=chal['nonce']
-            cnonce=''
-            for i in range(7):
-                cnonce+=hex(int(random.random()*65536*4096))[2:]
-            resp['cnonce']=cnonce
+            resp['cnonce']=secrets.token_hex(24)
             resp['nc']=('00000001')
             resp['qop']='auth'
             resp['digest-uri']='xmpp/'+self._owner.Server
@@ -214,7 +262,6 @@ class SASL(PlugIn):
             for key in ['charset','username','realm','nonce','nc','cnonce','digest-uri','response','qop']:
                 if key in ['nc','qop','response','charset']: sasl_data+="%s=%s,"%(key,resp[key])
                 else: sasl_data+='%s="%s",'%(key,resp[key])
-########################################3333
             node=Node('response',attrs={'xmlns':NS_SASL},payload=[B64(sasl_data[:-1])])
             self._owner.send(node.__str__())
         elif 'rspauth' in chal: self._owner.send(Node('response',attrs={'xmlns':NS_SASL}).__str__())
@@ -222,6 +269,60 @@ class SASL(PlugIn):
             self.startsasl='failure'
             self.DEBUG('Failed SASL authentification: unknown challenge','error')
         raise NodeProcessed
+
+    def _tls_channel_binding(self):
+        """Return (cb_type, cb_data) if TLS channel binding data is available."""
+        try:
+            conn = getattr(self._owner, 'Connection', None)
+            sslobj = getattr(conn, '_sslObj', None)
+            if not sslobj:
+                return (None, None)
+            if hasattr(sslobj, 'version') and sslobj.version() == 'TLSv1.3':
+                if hasattr(sslobj, 'export_keying_material'):
+                    data = sslobj.export_keying_material('EXPORTER-Channel-Binding', 32)
+                    return ('tls-exporter', data)
+            if hasattr(sslobj, 'get_channel_binding'):
+                data = sslobj.get_channel_binding('tls-unique')
+                if data:
+                    return ('tls-unique', data)
+        except Exception as exc:
+            self.DEBUG('Channel binding unavailable: %s'%exc,'warn')
+        return (None, None)
+
+    def _scram_escape(self,value):
+        return value.replace('=','=3D').replace(',','=2C')
+
+    def _scram_build_gs2(self, cb_type=None, cb_available=False):
+        if cb_type:
+            return 'p=%s,,' % cb_type
+        if cb_available:
+            return 'y,,'
+        return 'n,,'
+
+    def _build_scram_auth(self, mechanism, cb_type=None, cb_data=b'', cb_available=False):
+        mech_cls = SCRAM_MECHANISMS.get(mechanism)
+        if not mech_cls:
+            self.startsasl = 'failure'
+            self.DEBUG('Unknown SCRAM mechanism: %s' % mechanism, 'error')
+            return None
+        self._scram_mechanism = mech_cls(self)
+        self.mechanism = mechanism
+        return self._scram_mechanism.build_client_first(mechanism, cb_type, cb_data, cb_available)
+
+    def _scram_parse(self, data):
+        attrs={}
+        for item in data.split(','):
+            if '=' in item:
+                k,v=item.split('=',1)
+                attrs[k]=v
+        return attrs
+
+    def _handle_scram_challenge(self,challenge):
+        if getattr(self, '_scram_mechanism', None) is None:
+            self.startsasl = 'failure'
+            self.DEBUG('No SCRAM mechanism available to handle challenge', 'error')
+            return
+        self._scram_mechanism.handle_server_first(self.mechanism, challenge)
 
 class Bind(PlugIn):
     """ Bind some JID to the current connection to allow router know of our location."""
