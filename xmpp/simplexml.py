@@ -18,6 +18,7 @@
 I'm personally using it in many other separate projects. It is designed to be as standalone as possible."""
 
 import xml.parsers.expat
+import weakref
 
 def XMLescape(txt):
     """Returns provided string with symbols & < > " replaced by their respective XML entities."""
@@ -160,8 +161,8 @@ class Node(object):
             raise AttributeError("Use namespace=x instead of attrs={'xmlns':x}")
         if node:
             newnode=node
-            node.parent = self
-        else: newnode=Node(tag=name, parent=self, attrs=attrs, payload=payload)
+            node.parent = weakref.proxy(self) 
+        else: newnode=Node(tag=name, parent=weakref.proxy(self), attrs=attrs, payload=payload)
         if namespace:
             newnode.setNamespace(namespace)
         self.kids.append(newnode)
@@ -267,7 +268,7 @@ class Node(object):
     def setParent(self, node):
         """ Sets node's parent to "node". WARNING: do not checks if the parent already present
             and not removes the node from the list of childs of previous parent. """
-        self.parent = node
+        self.parent = weakref.proxy(node) if node else None
     def setPayload(self,payload,add=0):
         """ Sets node payload according to the list specified. WARNING: completely replaces all node's
             previous content. If you wish just to add child or CDATA - use addData or addChild methods. """
